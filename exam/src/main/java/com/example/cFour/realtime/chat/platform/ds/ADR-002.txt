@@ -54,15 +54,6 @@ Batch Update: هر ۵ ثانیه، آخرین lastReadMessageId هر عضو در
 Aggregated Count: فقط تعداد کل خوانندگان ذخیره می‌شود (نه لیست افراد).
 نمایش: "۵۰,۰۰۰ نفر خوانده‌اند" (تقریبی با HyperLogLog).
 Trade-off: دقت کمتر در ازای مقیاس‌پذیری.
-ذخیره‌سازی Cassandra:
-sql
-CREATE TABLE read_receipts (
-  conversation_id UUID,
-  user_id UUID,
-  last_read_sequence BIGINT,
-  updated_at TIMESTAMP,
-  PRIMARY KEY ((conversation_id), user_id)
-);
 
 
 ۳. Hybrid Fan-out (Write vs Read)

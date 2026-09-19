@@ -48,6 +48,8 @@ Away Messages
 قوانین شرطی (مثلاً "اعلان‌ها را بین ۱۱ شب تا ۷ صبح خاموش کن") نیاز به Rule Engine دارند.
 Block باید فوری اعمال شود (تأخیر < ۱ ثانیه).
 حجم تنظیمات: ۱۰۰M کاربر × ۵۰ تنظیم = ۵B رکورد!
+
+
 تصمیم (Decision)
 معماری Settings Service + Rule Engine + Cross-Device Sync + Redis Cache انتخاب می‌شود.
 
@@ -83,13 +85,6 @@ Conflict Resolution: Last-Write-Wins با Version Check.
 
 ۴. Privacy Enforcement در سرور (نه Client)
 تنظیمات Privacy فقط در سرور اعمال می‌شوند تا قابل دور زدن نباشند.
-مثال Last Seen:
-Client درخواست Last Seen کاربر B را می‌دهد.
-Server چک می‌کند: آیا A در Contacts کاربر B است؟
-اگر Privacy = "Contacts" و A در Contacts نیست → Return NULL.
-مثال Read Receipt:
-اگر کاربر B Read Receipt را خاموش کند، Server به A اطلاع نمی‌دهد.
-ولی B همچنان Read Receipt دیگران را می‌بیند (تقارن).
 مثال Block:
 Server چک می‌کند: آیا فرستنده در Block List گیرنده است؟
 اگر بله → پیام ذخیره نمی‌شود (یا Flag می‌شود).
@@ -107,22 +102,12 @@ Redis Structure:
 
 text
 SET user:{A}:blocked:{B} 1 EX 3600
-SMEMBERS user:{A}:blocked  → لیست کامل
+MEMBERS user:{A}:blocked  → لیست کامل
 Enforcement: در Message Service قبل از ذخیره پیام، Block List چک می‌شود.
 
 
 ۶. Group Settings (با نقش‌های Admin/Member)
 هر گروه تنظیمات مخصوص خود دارد:
-sql
-CREATE TABLE group_settings (
-  group_id UUID PRIMARY KEY,
-  who_can_send_messages ENUM('ADMINS', 'EVERYONE'),
-  who_can_edit_info ENUM('ADMINS', 'EVERYONE'),
-  who_can_add_members ENUM('ADMINS', 'EVERYONE'),
-  approve_new_members BOOLEAN,
-  disappearing_messages_ttl INT, -- ثانیه
-  updated_at TIMESTAMP
-);
 Admin Roles: Creator, Admin, Member (با Permissions مختلف).
 Approve New Members: برای گروه‌های بزرگ، درخواست عضویت به Admin می‌رود.
 Cache در Redis با TTL=۵min.
@@ -148,7 +133,6 @@ SET group:{groupId}:settings {JSON} EX 300  # Group Settings
 Invalidation: هنگام تغییر، Kafka Event → Cache Invalidate.
 
 Warm-up: هنگام Login، تنظیمات از DB به Redis Load می‌شود.
-
 
 
 گزینه‌های بررسی‌شده (Alternatives Considered)
