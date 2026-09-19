@@ -1,0 +1,823 @@
+{
+  "version": "31.3.2",
+  "pages": [
+    {
+      "id": "k9vwPw8YiWg8kLMzgoGi",
+      "name": "Context",
+      "cells": [
+        {
+          "id": "c1",
+          "type": "layer"
+        },
+        {
+          "id": "title",
+          "type": "node",
+          "parent": "c1",
+          "label": "Chat Platform — System Context (C4 Level 1)"
+        },
+        {
+          "id": "user",
+          "type": "node",
+          "parent": "c1",
+          "label": "End User\n[Person]\n\nChats, calls, status,\nsettings"
+        },
+        {
+          "id": "gadmin",
+          "type": "node",
+          "parent": "c1",
+          "label": "Group Admin\n[Person]\n\nManages members,\ngroup settings"
+        },
+        {
+          "id": "business",
+          "type": "node",
+          "parent": "c1",
+          "label": "Business User\n[Person]\n\nAuto-reply, catalog,\nBusiness API"
+        },
+        {
+          "id": "platform",
+          "type": "node",
+          "parent": "c1",
+          "label": "Chat Platform\n[Software System]\n\nReal-time messaging\nwith E2EE"
+        },
+        {
+          "id": "ext-push",
+          "type": "node",
+          "parent": "c1",
+          "label": "Push Provider\n[External System]\n\nFCM / APNs\nPush Notifications"
+        },
+        {
+          "id": "ext-sms",
+          "type": "node",
+          "parent": "c1",
+          "label": "SMS Provider\n[External System]\n\nKavenegar / Twilio\nOTP Verification"
+        },
+        {
+          "id": "ext-cdn",
+          "type": "node",
+          "parent": "c1",
+          "label": "CDN\n[External System]\n\nCloudFront\nMedia Delivery"
+        },
+        {
+          "id": "ext-s3",
+          "type": "node",
+          "parent": "c1",
+          "label": "Object Storage\n[External System]\n\nAWS S3\nMedia + Backup"
+        },
+        {
+          "id": "ext-b2b",
+          "type": "node",
+          "parent": "c1",
+          "label": "Business Partners\n[External System]\n\nEnterprise via REST/Webhook"
+        },
+        {
+          "id": "e1",
+          "type": "edge",
+          "parent": "c1",
+          "source": "user",
+          "target": "platform",
+          "label": "Chats, calls\n[WSS + HTTPS]"
+        },
+        {
+          "id": "e2",
+          "type": "edge",
+          "parent": "c1",
+          "source": "gadmin",
+          "target": "platform",
+          "label": "Manages group\n[HTTPS]"
+        },
+        {
+          "id": "e3",
+          "type": "edge",
+          "parent": "c1",
+          "source": "business",
+          "target": "platform",
+          "label": "Auto-reply, API\n[HTTPS + Webhook]"
+        },
+        {
+          "id": "e4",
+          "type": "edge",
+          "parent": "c1",
+          "source": "platform",
+          "target": "ext-push",
+          "label": "Push notifications\n[HTTPS]"
+        },
+        {
+          "id": "e5",
+          "type": "edge",
+          "parent": "c1",
+          "source": "platform",
+          "target": "ext-sms",
+          "label": "OTP SMS\n[HTTPS/REST]"
+        },
+        {
+          "id": "e6",
+          "type": "edge",
+          "parent": "c1",
+          "source": "platform",
+          "target": "ext-cdn",
+          "label": "Media delivery\n[HTTPS]"
+        },
+        {
+          "id": "e7",
+          "type": "edge",
+          "parent": "c1",
+          "source": "platform",
+          "target": "ext-s3",
+          "label": "Stores media\n[AWS SDK]"
+        },
+        {
+          "id": "e8",
+          "type": "edge",
+          "parent": "c1",
+          "source": "ext-b2b",
+          "target": "platform",
+          "label": "API/Webhook\n[HTTPS]"
+        }
+      ]
+    },
+    {
+      "id": "t4xRQy25w5kM4FzO0-FR",
+      "name": "Container",
+      "cells": [
+        {
+          "id": "t1",
+          "type": "layer"
+        },
+        {
+          "id": "title2",
+          "type": "node",
+          "parent": "t1",
+          "label": "Chat Platform — Container Diagram (C4 Level 2)"
+        },
+        {
+          "id": "app-user",
+          "type": "node",
+          "parent": "t1",
+          "label": "User App\n[React Native]\n\nChat, Status, Calls"
+        },
+        {
+          "id": "app-admin",
+          "type": "node",
+          "parent": "t1",
+          "label": "Group Admin Panel\n[React]\n\nMember management"
+        },
+        {
+          "id": "app-biz",
+          "type": "node",
+          "parent": "t1",
+          "label": "Business Portal\n[React + REST]\n\nCatalog, Auto-reply"
+        },
+        {
+          "id": "lb",
+          "type": "node",
+          "parent": "t1",
+          "label": "Load Balancer\n[HAProxy]\n\nSticky Sessions\nTLS Termination"
+        },
+        {
+          "id": "ws-gw",
+          "type": "node",
+          "parent": "t1",
+          "label": "WebSocket Gateway\n[Netty]\nPort: 8080\n\n1M conn/server\n100 servers"
+        },
+        {
+          "id": "api-gw",
+          "type": "node",
+          "parent": "t1",
+          "label": "API Gateway\n[Kong]\nPort: 8000\n\nREST Routing, Auth"
+        },
+        {
+          "id": "msg-svc",
+          "type": "node",
+          "parent": "t1",
+          "label": "Message Service\n[Spring Boot]\nPort: 8081\n\nOrdering, Fan-out\nLamport Clock"
+        },
+        {
+          "id": "group-svc",
+          "type": "node",
+          "parent": "t1",
+          "label": "Group Service\n[Spring Boot]\nPort: 8082\n\nMembers, Roles\nSettings"
+        },
+        {
+          "id": "user-svc",
+          "type": "node",
+          "parent": "t1",
+          "label": "User Service\n[Spring Boot]\nPort: 8083\n\nAuth, Profile\nPresence"
+        },
+        {
+          "id": "settings-svc",
+          "type": "node",
+          "parent": "t1",
+          "label": "Settings Service\n[Spring Boot]\nPort: 8084\n\nPrivacy, Notification\nBlock/Unblock"
+        },
+        {
+          "id": "crypto-svc",
+          "type": "node",
+          "parent": "t1",
+          "label": "Cryptography Service\n[Spring Boot]\nPort: 8085\n\nSignal Protocol\nKey Management"
+        },
+        {
+          "id": "media-svc",
+          "type": "node",
+          "parent": "t1",
+          "label": "Media Service\n[Spring Boot]\nPort: 8086\n\nUpload, Presigned URLs\nS3 Integration"
+        },
+        {
+          "id": "notif-svc",
+          "type": "node",
+          "parent": "t1",
+          "label": "Notification Service\n[Spring Boot]\nPort: 8087\n\nPush, Email, SMS"
+        },
+        {
+          "id": "archive-svc",
+          "type": "node",
+          "parent": "t1",
+          "label": "Archive Service\n[Spring Boot]\nPort: 8088\n\nTiered Storage\nGDPR"
+        },
+        {
+          "id": "discovery",
+          "type": "node",
+          "parent": "t1",
+          "label": "Service Discovery\n[Eureka]\n\nService Registry"
+        },
+        {
+          "id": "config",
+          "type": "node",
+          "parent": "t1",
+          "label": "Config Server\n[Spring Cloud Config]\n\nGit Backend"
+        },
+        {
+          "id": "kafka",
+          "type": "node",
+          "parent": "t1",
+          "label": "Apache Kafka\n[Event Bus]\nPort: 9092\n\nmessages, read-receipts\nfanout-events"
+        },
+        {
+          "id": "redis",
+          "type": "node",
+          "parent": "t1",
+          "label": "Redis Cluster\n[Cache]\nPort: 6379\n\nConnection Registry\nPresence, Idempotency"
+        },
+        {
+          "id": "cassandra",
+          "type": "node",
+          "parent": "t1",
+          "label": "Cassandra\n[Wide Column DB]\nPort: 9042\n\nMessages\nRead Receipts"
+        },
+        {
+          "id": "pg",
+          "type": "node",
+          "parent": "t1",
+          "label": "PostgreSQL\n[RDBMS]\nPort: 5432\n\nUsers, Settings\nGroups"
+        },
+        {
+          "id": "s3",
+          "type": "node",
+          "parent": "t1",
+          "label": "S3 / Glacier\n[Object Storage]\n\nMedia, Backup\nCold Archive"
+        },
+        {
+          "id": "ee1",
+          "type": "edge",
+          "parent": "t1",
+          "source": "app-user",
+          "target": "lb",
+          "label": "WSS"
+        },
+        {
+          "id": "ee2",
+          "type": "edge",
+          "parent": "t1",
+          "source": "app-admin",
+          "target": "lb",
+          "label": "HTTPS"
+        },
+        {
+          "id": "ee3",
+          "type": "edge",
+          "parent": "t1",
+          "source": "app-biz",
+          "target": "lb",
+          "label": "HTTPS"
+        },
+        {
+          "id": "ee4",
+          "type": "edge",
+          "parent": "t1",
+          "source": "lb",
+          "target": "ws-gw",
+          "label": "Route WS"
+        },
+        {
+          "id": "ee5",
+          "type": "edge",
+          "parent": "t1",
+          "source": "lb",
+          "target": "api-gw",
+          "label": "Route REST"
+        },
+        {
+          "id": "ee6",
+          "type": "edge",
+          "parent": "t1",
+          "source": "api-gw",
+          "target": "msg-svc",
+          "label": "Routes"
+        },
+        {
+          "id": "ee7",
+          "type": "edge",
+          "parent": "t1",
+          "source": "api-gw",
+          "target": "group-svc",
+          "label": "Routes"
+        },
+        {
+          "id": "ee8",
+          "type": "edge",
+          "parent": "t1",
+          "source": "api-gw",
+          "target": "user-svc",
+          "label": "Routes"
+        },
+        {
+          "id": "ee9",
+          "type": "edge",
+          "parent": "t1",
+          "source": "api-gw",
+          "target": "settings-svc",
+          "label": "Routes"
+        },
+        {
+          "id": "ee10",
+          "type": "edge",
+          "parent": "t1",
+          "source": "msg-svc",
+          "target": "kafka",
+          "label": "Publishes"
+        },
+        {
+          "id": "ee11",
+          "type": "edge",
+          "parent": "t1",
+          "source": "ws-gw",
+          "target": "redis",
+          "label": "Connection map"
+        },
+        {
+          "id": "ee12",
+          "type": "edge",
+          "parent": "t1",
+          "source": "msg-svc",
+          "target": "cassandra",
+          "label": "Read/Write"
+        },
+        {
+          "id": "ee13",
+          "type": "edge",
+          "parent": "t1",
+          "source": "user-svc",
+          "target": "pg",
+          "label": "CRUD"
+        },
+        {
+          "id": "ee14",
+          "type": "edge",
+          "parent": "t1",
+          "source": "group-svc",
+          "target": "pg",
+          "label": "CRUD"
+        },
+        {
+          "id": "ee15",
+          "type": "edge",
+          "parent": "t1",
+          "source": "settings-svc",
+          "target": "pg",
+          "label": "CRUD"
+        },
+        {
+          "id": "ee16",
+          "type": "edge",
+          "parent": "t1",
+          "source": "crypto-svc",
+          "target": "pg",
+          "label": "Keys"
+        },
+        {
+          "id": "ee17",
+          "type": "edge",
+          "parent": "t1",
+          "source": "media-svc",
+          "target": "s3",
+          "label": "Presigned"
+        },
+        {
+          "id": "ee18",
+          "type": "edge",
+          "parent": "t1",
+          "source": "archive-svc",
+          "target": "s3",
+          "label": "Archive"
+        },
+        {
+          "id": "ee19",
+          "type": "edge",
+          "parent": "t1",
+          "source": "notif-svc",
+          "target": "kafka",
+          "label": "Consume"
+        },
+        {
+          "id": "ee20",
+          "type": "edge",
+          "parent": "t1",
+          "source": "msg-svc",
+          "target": "discovery",
+          "label": "Registers"
+        },
+        {
+          "id": "ee21",
+          "type": "edge",
+          "parent": "t1",
+          "source": "msg-svc",
+          "target": "config",
+          "label": "Config"
+        },
+        {
+          "id": "ee22",
+          "type": "edge",
+          "parent": "t1",
+          "source": "settings-svc",
+          "target": "kafka",
+          "label": "Publish settings"
+        },
+        {
+          "id": "ee23",
+          "type": "edge",
+          "parent": "t1",
+          "source": "ws-gw",
+          "target": "kafka",
+          "label": "Consume fanout"
+        }
+      ]
+    },
+    {
+      "id": "9xcVUjL0yl3WaQPdYs5z",
+      "name": "COmponent",
+      "cells": [
+        {
+          "id": "q1",
+          "type": "layer"
+        },
+        {
+          "id": "title3",
+          "type": "node",
+          "parent": "q1",
+          "label": "Message Service + Cryptography Service — Components (C4 Level 3)"
+        },
+        {
+          "id": "grp-msg",
+          "type": "node",
+          "parent": "q1",
+          "label": "Message Service [Spring Boot]"
+        },
+        {
+          "id": "mc",
+          "type": "node",
+          "parent": "q1",
+          "label": "MessageController\n[Spring REST]\n\n+ sendMessage(cmd)\n+ editMessage(id, text)\n+ deleteMessage(id)\n+ getMessages(convId, from, to)"
+        },
+        {
+          "id": "ms",
+          "type": "node",
+          "parent": "q1",
+          "label": "MessageService\n[Spring Service]\n\n+ send(cmd)\n+ persist(message)\n+ publishToKafka()"
+        },
+        {
+          "id": "sg",
+          "type": "node",
+          "parent": "q1",
+          "label": "SequenceGenerator\n[Redis Atomic]\n\n+ next(convId): long"
+        },
+        {
+          "id": "lc",
+          "type": "node",
+          "parent": "q1",
+          "label": "LamportClock\n[Spring Component]\n\n+ tick(): long\n+ update(received)\n+ compare(other)"
+        },
+        {
+          "id": "mr",
+          "type": "node",
+          "parent": "q1",
+          "label": "MessageRepository\n[Cassandra]\n\n+ save(message)\n+ findByConversation()\n+ findBySequence()"
+        },
+        {
+          "id": "idem",
+          "type": "node",
+          "parent": "q1",
+          "label": "IdempotencyGuard\n[Redis]\n\n+ checkAndSet(clientMsgId)\n+ release(key)"
+        },
+        {
+          "id": "fs",
+          "type": "node",
+          "parent": "q1",
+          "label": "FanoutService\n[Hybrid]\n\n+ fanoutOnWrite(conv, msg)\n+ fanoutOnRead(conv, userId)\n+ threshold = 100"
+        },
+        {
+          "id": "block",
+          "type": "node",
+          "parent": "q1",
+          "label": "BlockListChecker\n[Redis Set]\n\n+ isBlocked(user, sender)\n+ loadBlockList(user)"
+        },
+        {
+          "id": "kprod",
+          "type": "node",
+          "parent": "q1",
+          "label": "KafkaProducer\n[Spring Kafka]\n\n+ publish(topic, event)"
+        },
+        {
+          "id": "r-m1",
+          "type": "edge",
+          "parent": "q1",
+          "source": "mc",
+          "target": "ms"
+        },
+        {
+          "id": "r-m2",
+          "type": "edge",
+          "parent": "q1",
+          "source": "ms",
+          "target": "sg"
+        },
+        {
+          "id": "r-m3",
+          "type": "edge",
+          "parent": "q1",
+          "source": "ms",
+          "target": "lc"
+        },
+        {
+          "id": "r-m4",
+          "type": "edge",
+          "parent": "q1",
+          "source": "ms",
+          "target": "mr"
+        },
+        {
+          "id": "r-m5",
+          "type": "edge",
+          "parent": "q1",
+          "source": "ms",
+          "target": "idem"
+        },
+        {
+          "id": "r-m6",
+          "type": "edge",
+          "parent": "q1",
+          "source": "ms",
+          "target": "fs"
+        },
+        {
+          "id": "r-m7",
+          "type": "edge",
+          "parent": "q1",
+          "source": "ms",
+          "target": "block"
+        },
+        {
+          "id": "r-m8",
+          "type": "edge",
+          "parent": "q1",
+          "source": "fs",
+          "target": "kprod"
+        },
+        {
+          "id": "grp-crypto",
+          "type": "node",
+          "parent": "q1",
+          "label": "Cryptography Service [Spring Boot]"
+        },
+        {
+          "id": "cc",
+          "type": "node",
+          "parent": "q1",
+          "label": "CryptoController\n[Spring REST]\n\n+ generatePreKeys()\n+ uploadIdentityKey()\n+ getBundle(userId)"
+        },
+        {
+          "id": "sigsess",
+          "type": "node",
+          "parent": "q1",
+          "label": "SignalSession\n[Signal Protocol]\n\n+ encrypt(plaintext, session)\n+ decrypt(ciphertext, session)\n+ ratchet()"
+        },
+        {
+          "id": "km",
+          "type": "node",
+          "parent": "q1",
+          "label": "KeyManager\n[Spring Component]\n\n+ generatePreKeys()\n+ rotateSignedPreKey()\n+ fetchBundle(userId)"
+        },
+        {
+          "id": "kr",
+          "type": "node",
+          "parent": "q1",
+          "label": "KeyRepository\n[PostgreSQL]\n\n+ savePublicKey()\n+ findIdentityKey()\n+ findPreKeys()"
+        },
+        {
+          "id": "kb",
+          "type": "node",
+          "parent": "q1",
+          "label": "KeyBackupService\n[Argon2 + S3]\n\n+ backup(userId, pin)\n+ restore(userId, pin)\n+ deleteBackup()"
+        },
+        {
+          "id": "r-c1",
+          "type": "edge",
+          "parent": "q1",
+          "source": "cc",
+          "target": "km"
+        },
+        {
+          "id": "r-c2",
+          "type": "edge",
+          "parent": "q1",
+          "source": "km",
+          "target": "sigsess"
+        },
+        {
+          "id": "r-c3",
+          "type": "edge",
+          "parent": "q1",
+          "source": "km",
+          "target": "kr"
+        },
+        {
+          "id": "r-c4",
+          "type": "edge",
+          "parent": "q1",
+          "source": "km",
+          "target": "kb"
+        }
+      ]
+    },
+    {
+      "id": "1WO1TZYogpVkPbtY3TGX",
+      "name": "Code",
+      "cells": [
+        {
+          "id": "z1",
+          "type": "layer"
+        },
+        {
+          "id": "title4",
+          "type": "node",
+          "parent": "z1",
+          "label": "Code Diagram — Message + SignalSession (C4 Level 4)"
+        },
+        {
+          "id": "grp-m",
+          "type": "node",
+          "parent": "z1",
+          "label": "Message Service — Domain"
+        },
+        {
+          "id": "cls-mc",
+          "type": "node",
+          "parent": "z1",
+          "label": "MessageController\n- service: MessageService\n- idempotency: IdempotencyGuard\n+ sendMessage(cmd): MessageId\n+ editMessage(id, text): void\n+ deleteMessage(id): void\n+ getMessages(convId, from, to): List",
+          "html": "<div style='background:#dae8fc;padding:5px;font-weight:bold;border-bottom:1px solid #6c8ebf'>MessageController</div><div style='text-align:left;padding:5px;font-size:11px'>- service: MessageService<br>- idempotency: IdempotencyGuard</div><div style='border-top:1px solid #6c8ebf;text-align:left;padding:5px;font-size:11px'>+ sendMessage(cmd): MessageId<br>+ editMessage(id, text): void<br>+ deleteMessage(id): void<br>+ getMessages(convId, from, to): List</div>"
+        },
+        {
+          "id": "cls-ms",
+          "type": "node",
+          "parent": "z1",
+          "label": "MessageService\n- repo: MessageRepository\n- seqGen: SequenceGenerator\n- clock: LamportClock\n- fanout: FanoutService\n- blockList: BlockListChecker\n+ send(cmd): Message\n+ persist(m): void\n- assignSequence(m): void\n- assignLamport(m): void\n+ publishToKafka(m): void",
+          "html": "<div style='background:#d5e8d4;padding:5px;font-weight:bold;border-bottom:1px solid #82b366'>MessageService</div><div style='text-align:left;padding:5px;font-size:11px'>- repo: MessageRepository<br>- seqGen: SequenceGenerator<br>- clock: LamportClock<br>- fanout: FanoutService<br>- blockList: BlockListChecker</div><div style='border-top:1px solid #82b366;text-align:left;padding:5px;font-size:11px'>+ send(cmd): Message<br>+ persist(m): void<br>- assignSequence(m): void<br>- assignLamport(m): void<br>+ publishToKafka(m): void</div>"
+        },
+        {
+          "id": "cls-msg",
+          "type": "node",
+          "parent": "z1",
+          "label": "Message\n- id: UUID\n- conversationId: UUID\n- senderId: UUID\n- lamportClock: long\n- sequence: long\n- serverTimestamp: Instant\n- clientMessageId: UUID\n- content: byte[] (encrypted)\n- type: Text|Media|System\n- isDeleted: boolean",
+          "html": "<div style='background:#ffe6cc;padding:5px;font-weight:bold;border-bottom:1px solid #d79b00'>Message</div><div style='text-align:left;padding:5px;font-size:11px'>- id: UUID<br>- conversationId: UUID<br>- senderId: UUID<br>- lamportClock: long<br>- sequence: long<br>- serverTimestamp: Instant<br>- clientMessageId: UUID<br>- content: byte[] (encrypted)<br>- type: Text|Media|System<br>- isDeleted: boolean</div>"
+        },
+        {
+          "id": "cls-lc",
+          "type": "node",
+          "parent": "z1",
+          "label": "LamportClock\n- clock: AtomicLong\n+ tick(): long\n+ update(received: long): void\n+ compare(other): int",
+          "html": "<div style='background:#fff2cc;padding:5px;font-weight:bold;border-bottom:1px solid #d6b656'>LamportClock</div><div style='text-align:left;padding:5px;font-size:11px'>- clock: AtomicLong</div><div style='border-top:1px solid #d6b656;text-align:left;padding:5px;font-size:11px'>+ tick(): long<br>+ update(received: long): void<br>+ compare(other): int</div>"
+        },
+        {
+          "id": "cls-seq",
+          "type": "node",
+          "parent": "z1",
+          "label": "SequenceGenerator\n- redis: RedisTemplate\n+ next(convId: UUID): long",
+          "html": "<div style='background:#fff2cc;padding:5px;font-weight:bold;border-bottom:1px solid #d6b656'>SequenceGenerator</div><div style='text-align:left;padding:5px;font-size:11px'>- redis: RedisTemplate</div><div style='border-top:1px solid #d6b656;text-align:left;padding:5px;font-size:11px'>+ next(convId: UUID): long</div>"
+        },
+        {
+          "id": "cls-idem",
+          "type": "node",
+          "parent": "z1",
+          "label": "IdempotencyGuard\n- redis: RedisTemplate\n+ checkAndSet(clientMsgId, ttl): boolean\n+ release(clientMsgId): void",
+          "html": "<div style='background:#f8cecc;padding:5px;font-weight:bold;border-bottom:1px solid #b85450'>IdempotencyGuard</div><div style='text-align:left;padding:5px;font-size:11px'>- redis: RedisTemplate</div><div style='border-top:1px solid #b85450;text-align:left;padding:5px;font-size:11px'>+ checkAndSet(clientMsgId, ttl): boolean<br>+ release(clientMsgId): void</div>"
+        },
+        {
+          "id": "rel-m1",
+          "type": "edge",
+          "parent": "z1",
+          "source": "cls-mc",
+          "target": "cls-ms",
+          "label": "1"
+        },
+        {
+          "id": "rel-m2",
+          "type": "edge",
+          "parent": "z1",
+          "source": "cls-ms",
+          "target": "cls-msg",
+          "label": "1..*"
+        },
+        {
+          "id": "rel-m3",
+          "type": "edge",
+          "parent": "z1",
+          "source": "cls-ms",
+          "target": "cls-lc",
+          "label": "uses"
+        },
+        {
+          "id": "rel-m4",
+          "type": "edge",
+          "parent": "z1",
+          "source": "cls-ms",
+          "target": "cls-seq",
+          "label": "uses"
+        },
+        {
+          "id": "rel-m5",
+          "type": "edge",
+          "parent": "z1",
+          "source": "cls-ms",
+          "target": "cls-idem",
+          "label": "uses"
+        },
+        {
+          "id": "grp-s",
+          "type": "node",
+          "parent": "z1",
+          "label": "Cryptography Service — Signal Protocol"
+        },
+        {
+          "id": "cls-cc",
+          "type": "node",
+          "parent": "z1",
+          "label": "CryptoController\n- keyManager: KeyManager\n- session: SignalSession\n+ generatePreKeys(): List\n+ uploadIdentityKey(key): void\n+ fetchBundle(userId): PreKeyBundle",
+          "html": "<div style='background:#dae8fc;padding:5px;font-weight:bold;border-bottom:1px solid #6c8ebf'>CryptoController</div><div style='text-align:left;padding:5px;font-size:11px'>- keyManager: KeyManager<br>- session: SignalSession</div><div style='border-top:1px solid #6c8ebf;text-align:left;padding:5px;font-size:11px'>+ generatePreKeys(): List<PreKey><br>+ uploadIdentityKey(key): void<br>+ fetchBundle(userId): PreKeyBundle</div>"
+        },
+        {
+          "id": "cls-sig",
+          "type": "node",
+          "parent": "z1",
+          "label": "SignalSession\n- ratchet: DoubleRatchet\n- rootKey: byte[]\n- sendingChain: ChainKey\n- receivingChain: ChainKey\n+ encrypt(plaintext): Ciphertext\n+ decrypt(ciphertext): byte[]\n- ratchet(): void\n- deriveMessageKey(): byte[]",
+          "html": "<div style='background:#e1d5e7;padding:5px;font-weight:bold;border-bottom:1px solid #9673a6'>SignalSession</div><div style='text-align:left;padding:5px;font-size:11px'>- ratchet: DoubleRatchet<br>- rootKey: byte[]<br>- sendingChain: ChainKey<br>- receivingChain: ChainKey</div><div style='border-top:1px solid #9673a6;text-align:left;padding:5px;font-size:11px'>+ encrypt(plaintext): Ciphertext<br>+ decrypt(ciphertext): byte[]<br>- ratchet(): void<br>- deriveMessageKey(): byte[]</div>"
+        },
+        {
+          "id": "cls-km",
+          "type": "node",
+          "parent": "z1",
+          "label": "KeyManager\n- repo: KeyRepository\n- backup: KeyBackupService\n+ generatePreKeys(count): void\n+ rotateSignedPreKey(): void\n+ fetchBundle(userId): PreKeyBundle\n+ deleteAllKeys(userId): void",
+          "html": "<div style='background:#e1d5e7;padding:5px;font-weight:bold;border-bottom:1px solid #9673a6'>KeyManager</div><div style='text-align:left;padding:5px;font-size:11px'>- repo: KeyRepository<br>- backup: KeyBackupService</div><div style='border-top:1px solid #9673a6;text-align:left;padding:5px;font-size:11px'>+ generatePreKeys(count): void<br>+ rotateSignedPreKey(): void<br>+ fetchBundle(userId): PreKeyBundle<br>+ deleteAllKeys(userId): void</div>"
+        },
+        {
+          "id": "cls-kb",
+          "type": "node",
+          "parent": "z1",
+          "label": "KeyBackupService\n- s3: S3Client\n- argon2: Argon2\n+ backup(userId, pin): void\n+ restore(userId, pin): Keys\n+ deleteBackup(userId): void",
+          "html": "<div style='background:#ffe6cc;padding:5px;font-weight:bold;border-bottom:1px solid #d79b00'>KeyBackupService</div><div style='text-align:left;padding:5px;font-size:11px'>- s3: S3Client<br>- argon2: Argon2</div><div style='border-top:1px solid #d79b00;text-align:left;padding:5px;font-size:11px'>+ backup(userId, pin): void<br>+ restore(userId, pin): Keys<br>+ deleteBackup(userId): void</div>"
+        },
+        {
+          "id": "rel-c1",
+          "type": "edge",
+          "parent": "z1",
+          "source": "cls-cc",
+          "target": "cls-km",
+          "label": "1"
+        },
+        {
+          "id": "rel-c2",
+          "type": "edge",
+          "parent": "z1",
+          "source": "cls-km",
+          "target": "cls-sig",
+          "label": "uses"
+        },
+        {
+          "id": "rel-c3",
+          "type": "edge",
+          "parent": "z1",
+          "source": "cls-km",
+          "target": "cls-kb",
+          "label": "uses"
+        }
+      ]
+    }
+  ]
+}
