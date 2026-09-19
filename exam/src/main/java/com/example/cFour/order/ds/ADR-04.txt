@@ -1,0 +1,37 @@
+✅ نقاط قوت:
+
+i18n و UTC را درست انتخاب کردی
+
+❌ نقاط ضعف:
+
+Geohashing اصلاً نداری! (در عنوان بود ولی در ADR نبود)
+
+Elasticsearch Analyzer برای هر زبان نداری
+
+Currency Conversion نداری
+
+گزینه‌ی اول (Hardcoding) وقت تلف کردن است
+
+نسخه اصلاحی (۱۰/۱۰):
+### ADR-004: چندزبانگی، ارز، و Geohashing
+
+**Decision:**
+۱. **i18n**: i18next + فایل JSON
+۲. **Timezone**: UTC در DB + تبدیل در Frontend
+۳. **Currency**:
+   - نرخ‌ها از **API بانک مرکزی** هر ۱ ساعت
+   - Cache در Redis با TTL=۱h
+   - تبدیل در Backend
+۴. **Geohashing برای جستجوی مکانی:**
+   - Geohash سطح ۹ (~۵m) برای رستوران‌ها
+   - Redis GEO برای راننده‌ها
+   - Elasticsearch `geo_point` برای جستجوهای ترکیبی
+۵. **Elasticsearch Analyzer:**
+   - `persian_analyzer` (arabic_normalization + persian_stemmer)
+   - `english_analyzer` (standard + snowball)
+
+**Consequences:**
+- مثبت: جستجوی مکانی < ۱۰۰ms، پشتیبانی کامل زبان‌ها
+- منفی: پیچیدگی نگهداری تحلیلگرها
+
+**Related C4 Level:** Component (LocalizationService + GeoService)

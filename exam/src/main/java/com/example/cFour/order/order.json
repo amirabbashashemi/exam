@@ -1,0 +1,755 @@
+{
+  "version": "31.3.2",
+  "pages": [
+    {
+      "id": "VLvURoXfGBkGtlDCFBSy",
+      "name": "Context",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "dC1oSBcrQkK79fOk7ey2-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Customer",
+            "c4Type": "Person",
+            "c4Description": "Customer"
+          }
+        },
+        {
+          "id": "dC1oSBcrQkK79fOk7ey2-2",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Order",
+            "c4Type": "Software System",
+            "c4Description": "Order"
+          }
+        },
+        {
+          "id": "nHY9Gqdpk1C4dKBjmoZW-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Courier",
+            "c4Type": "Person",
+            "c4Description": "Courier"
+          }
+        },
+        {
+          "id": "nHY9Gqdpk1C4dKBjmoZW-6",
+          "type": "edge",
+          "parent": "1",
+          "source": "dC1oSBcrQkK79fOk7ey2-1",
+          "target": "dC1oSBcrQkK79fOk7ey2-2",
+          "label": "%c4Description%\n[%c4Technology%]",
+          "html": "<div style=\"text-align: left\"><div style=\"text-align: center\"><b>%c4Description%</b></div><div style=\"text-align: center\">[%c4Technology%]</div></div>",
+          "metadata": {
+            "c4Type": "Relationship",
+            "c4Technology": "e.g. JSON/HTTP",
+            "c4Description": "e.g. Makes API calls"
+          }
+        },
+        {
+          "id": "nHY9Gqdpk1C4dKBjmoZW-7",
+          "type": "edge",
+          "parent": "1",
+          "source": "nHY9Gqdpk1C4dKBjmoZW-1",
+          "target": "dC1oSBcrQkK79fOk7ey2-2",
+          "label": "%c4Description%\n[%c4Technology%]",
+          "html": "<div style=\"text-align: left\"><div style=\"text-align: center\"><b>%c4Description%</b></div><div style=\"text-align: center\">[%c4Technology%]</div></div>",
+          "metadata": {
+            "c4Type": "Relationship",
+            "c4Technology": "e.g. JSON/HTTP",
+            "c4Description": "e.g. Makes API calls"
+          }
+        },
+        {
+          "id": "nHY9Gqdpk1C4dKBjmoZW-8",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Resturant Manager",
+            "c4Type": "Person",
+            "c4Description": "Resturant Manager"
+          }
+        },
+        {
+          "id": "nHY9Gqdpk1C4dKBjmoZW-9",
+          "type": "edge",
+          "parent": "1",
+          "source": "nHY9Gqdpk1C4dKBjmoZW-8",
+          "target": "dC1oSBcrQkK79fOk7ey2-2",
+          "label": "%c4Description%\n[%c4Technology%]",
+          "html": "<div style=\"text-align: left\"><div style=\"text-align: center\"><b>%c4Description%</b></div><div style=\"text-align: center\">[%c4Technology%]</div></div>",
+          "metadata": {
+            "c4Type": "Relationship",
+            "c4Technology": "e.g. JSON/HTTP",
+            "c4Description": "e.g. Makes API calls"
+          }
+        }
+      ]
+    },
+    {
+      "id": "FU4qZWdo8h87dcjvtm28",
+      "name": "Container",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ArchiveService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Archive"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-2",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "SagaService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "SAGA"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-3",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "OrderService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Order"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-4",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Postgress",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Oracle Database 12",
+            "c4Description": "database"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-5",
+          "type": "edge",
+          "parent": "1",
+          "source": "sFsTUjUKfhLrcxfubAXC-3",
+          "target": "sFsTUjUKfhLrcxfubAXC-4",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-6",
+          "type": "edge",
+          "parent": "1",
+          "source": "1B4159NFCiyzxLgCpgqk-1",
+          "target": "sFsTUjUKfhLrcxfubAXC-4",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-7",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Postgress",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Oracle Database 12",
+            "c4Description": "Archive Database"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-8",
+          "type": "edge",
+          "parent": "1",
+          "source": "sFsTUjUKfhLrcxfubAXC-1",
+          "target": "sFsTUjUKfhLrcxfubAXC-7",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-9",
+          "type": "edge",
+          "parent": "1",
+          "source": "sFsTUjUKfhLrcxfubAXC-3",
+          "target": "sFsTUjUKfhLrcxfubAXC-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-10",
+          "type": "edge",
+          "parent": "1",
+          "source": "1B4159NFCiyzxLgCpgqk-1",
+          "target": "sFsTUjUKfhLrcxfubAXC-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-11",
+          "type": "edge",
+          "parent": "1",
+          "source": "sFsTUjUKfhLrcxfubAXC-2",
+          "target": "1B4159NFCiyzxLgCpgqk-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-12",
+          "type": "edge",
+          "parent": "1",
+          "source": "sFsTUjUKfhLrcxfubAXC-2",
+          "target": "sFsTUjUKfhLrcxfubAXC-3",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-13",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ELK",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Oracle Database 12",
+            "c4Description": "Elastic Search"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-14",
+          "type": "edge",
+          "parent": "1",
+          "source": "sFsTUjUKfhLrcxfubAXC-3",
+          "target": "sFsTUjUKfhLrcxfubAXC-13",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "sFsTUjUKfhLrcxfubAXC-15",
+          "type": "edge",
+          "parent": "1",
+          "source": "1B4159NFCiyzxLgCpgqk-1",
+          "target": "sFsTUjUKfhLrcxfubAXC-13",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "1B4159NFCiyzxLgCpgqk-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "PaymentService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Payment"
+          }
+        },
+        {
+          "id": "vvle0zQc4pGV5pq4b9V5-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Container name",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Apache Kafka, etc.",
+            "c4Description": "Description of message bus type container role/responsibility."
+          }
+        },
+        {
+          "id": "vvle0zQc4pGV5pq4b9V5-2",
+          "type": "edge",
+          "parent": "1",
+          "source": "vvle0zQc4pGV5pq4b9V5-1",
+          "target": "sFsTUjUKfhLrcxfubAXC-2",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "vvle0zQc4pGV5pq4b9V5-3",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Service registry",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Service registry"
+          }
+        },
+        {
+          "id": "vvle0zQc4pGV5pq4b9V5-4",
+          "type": "edge",
+          "parent": "1",
+          "source": "vvle0zQc4pGV5pq4b9V5-3",
+          "target": "sFsTUjUKfhLrcxfubAXC-3",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "vvle0zQc4pGV5pq4b9V5-5",
+          "type": "edge",
+          "parent": "1",
+          "source": "vvle0zQc4pGV5pq4b9V5-3",
+          "target": "sFsTUjUKfhLrcxfubAXC-2",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "vvle0zQc4pGV5pq4b9V5-6",
+          "type": "edge",
+          "parent": "1",
+          "source": "vvle0zQc4pGV5pq4b9V5-3",
+          "target": "sFsTUjUKfhLrcxfubAXC-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "vvle0zQc4pGV5pq4b9V5-7",
+          "type": "edge",
+          "parent": "1",
+          "source": "vvle0zQc4pGV5pq4b9V5-3",
+          "target": "1B4159NFCiyzxLgCpgqk-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        }
+      ]
+    },
+    {
+      "id": "UZBMGtMBfhT7We42KhGt",
+      "name": "Component",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ArchiveService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Archive"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-2",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "OrderService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Order"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-3",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Postgress",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Oracle Database 12",
+            "c4Description": "database"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-4",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-2",
+          "target": "RMkFdMS0Z9NYsNB4PThz-3",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-5",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-15",
+          "target": "RMkFdMS0Z9NYsNB4PThz-3",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-6",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Postgress",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Oracle Database 12",
+            "c4Description": "Archive Database"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-7",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-1",
+          "target": "RMkFdMS0Z9NYsNB4PThz-6",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-8",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-2",
+          "target": "RMkFdMS0Z9NYsNB4PThz-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-9",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-15",
+          "target": "RMkFdMS0Z9NYsNB4PThz-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-10",
+          "type": "edge",
+          "parent": "1",
+          "source": "EyZUoVn7Z5v_IV3yLcPF-1",
+          "target": "RMkFdMS0Z9NYsNB4PThz-15",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-11",
+          "type": "edge",
+          "parent": "1",
+          "source": "EyZUoVn7Z5v_IV3yLcPF-1",
+          "target": "RMkFdMS0Z9NYsNB4PThz-2",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-12",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ELK",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Oracle Database 12",
+            "c4Description": "Elastic Search"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-13",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-2",
+          "target": "RMkFdMS0Z9NYsNB4PThz-12",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-14",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-15",
+          "target": "RMkFdMS0Z9NYsNB4PThz-12",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-15",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "PaymentService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Payment"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-16",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Container name",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Apache Kafka, etc.",
+            "c4Description": "Description of message bus type container role/responsibility."
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-17",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-16",
+          "target": "EyZUoVn7Z5v_IV3yLcPF-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-18",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Service registry",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Service registry"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-19",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-18",
+          "target": "RMkFdMS0Z9NYsNB4PThz-2",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-20",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-18",
+          "target": "EyZUoVn7Z5v_IV3yLcPF-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-21",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-18",
+          "target": "RMkFdMS0Z9NYsNB4PThz-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "RMkFdMS0Z9NYsNB4PThz-22",
+          "type": "edge",
+          "parent": "1",
+          "source": "RMkFdMS0Z9NYsNB4PThz-18",
+          "target": "RMkFdMS0Z9NYsNB4PThz-15",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "EyZUoVn7Z5v_IV3yLcPF-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "SagaService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "SAGA"
+          }
+        },
+        {
+          "id": "Lix-1UPDQYMeyFLJwmrC-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Snap",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "SnapService"
+          }
+        },
+        {
+          "id": "Lix-1UPDQYMeyFLJwmrC-2",
+          "type": "edge",
+          "parent": "1",
+          "source": "Lix-1UPDQYMeyFLJwmrC-1",
+          "target": "RMkFdMS0Z9NYsNB4PThz-18",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "Lix-1UPDQYMeyFLJwmrC-3",
+          "type": "edge",
+          "parent": "1",
+          "source": "Lix-1UPDQYMeyFLJwmrC-1",
+          "target": "RMkFdMS0Z9NYsNB4PThz-2",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nM335vYK_RXiidJlc95G",
+      "name": "Code",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "aCDz0S15EvIkedSbAhYL-1",
+          "type": "node",
+          "parent": "1",
+          "label": "SagaService\n- sagaRepository: SagaRepository\n+ saveState(): String\n+ start(String sagaId): String\n+ order(String sagaId):String\n+ pay(String sagaId):String\n + reverse(String sagaId):Long",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>SagaService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">- sagaRepository:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Saga</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Repository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ saveState(): String</p><p style=\"margin:0px;margin-left:4px;\">+ start(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">String sagaId</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): String</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ order(</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">String sagaId</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">):</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">String</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ pay(</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">String sagaId</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">):String</span></p><div>&nbsp;+ reverse(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">String sagaId</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">):Long</span></div><div><br></div>"
+        },
+        {
+          "id": "aCDz0S15EvIkedSbAhYL-2",
+          "type": "node",
+          "parent": "1",
+          "label": "OrderService\n- orderRepository: OrderRepository\n+ searchResturant(ResturantCriteria criteria): ResturantDto\n+ insertResturant(ResturantDto dto): void\n+ updateResturant(ResturantDto dto): ResturantDto\n+ deleteResturant(Long id): void\n+ asignCourier(Long orderId, Long courierId): void\n+ getCourierPlace(Long CourierId): CourierPlaceDto\n+ getFoodInfo(FoodCriteria criteria): FoodDto\n+ getShift(Date from, Date to):ShiftDto\n+ getFoodSugestion(UserDto dto): List<FoodDto>",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>OrderService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">- orderRepository:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">OrderRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ searchResturant(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Resturant</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Criteria criteria</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): ResturantDto</span></p><p style=\"margin:0px;margin-left:4px;\">+ insertResturant(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Resturant</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Dto dto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): void</span></p><p style=\"margin:0px;margin-left:4px;\">+ updateResturant(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Resturant</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Dto dto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): ResturantDto</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ deleteResturant(Long id): void</span></p><p style=\"margin:0px;margin-left:4px;\">+ asignCourier(Long orderId, Long courierId): void</p><p style=\"margin:0px;margin-left:4px;\">+ getCourierPlace(Long CourierId):&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">CourierPlaceDto</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ getFoodInfo(FoodCriteria criteria): FoodDto</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ getShift(Date from, Date to):</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ShiftDto</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ getFoodSugestion(UserDto dto): List&lt;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">FoodDto&gt;</span></p>"
+        },
+        {
+          "id": "hdmwkRKHj17VsOzEv8Su-1",
+          "type": "node",
+          "parent": "1",
+          "label": "ArchiveService\n- archiveRepository: ArchiveRepository\n+ searchResturant(ResturantCriteria criteria): ResturantDto\n+ searchOrder(OrderCriteria criteria):OrderDto\n+ searchCourier(CourierCriteria criteria):CourierDto\n+ searchPaymentInfo(PaymentCriteria criteria):PaymentDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>ArchiveService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">- archiveRepository:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ArchiveRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ searchResturant(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Resturant</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Criteria criteria): ResturantDto</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ searchOrder(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Order</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Criteria criteria</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">):</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">OrderDto</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ searchCourier(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Courier</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Criteria criteria</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">):Courier</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Dto</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ searchPaymentInfo(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Payment</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Criteria criteria</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">):Payment</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Dto</span></p>"
+        },
+        {
+          "id": "hdmwkRKHj17VsOzEv8Su-2",
+          "type": "edge",
+          "parent": "1",
+          "source": "aCDz0S15EvIkedSbAhYL-1",
+          "target": "aCDz0S15EvIkedSbAhYL-2",
+          "label": "Use"
+        },
+        {
+          "id": "hdmwkRKHj17VsOzEv8Su-3",
+          "type": "edge",
+          "parent": "1",
+          "source": "aCDz0S15EvIkedSbAhYL-2",
+          "target": "hdmwkRKHj17VsOzEv8Su-1",
+          "label": "Use"
+        },
+        {
+          "id": "hdmwkRKHj17VsOzEv8Su-4",
+          "type": "node",
+          "parent": "1",
+          "label": "PaymentService\n- paymentRepository: PaymentRepository\n+ payByCredit(UserDto userdto, Long orderId): boolean\n+ refaund(Long paymentId):boolean",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>PaymentService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">-&nbsp;<b style=\"text-align: center;\">payment</b>Repository:&nbsp;<b style=\"text-align: center;\">Payment</b><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Repository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ payByCredit(UserDto userdto, Long orderId): boolean</p><p style=\"margin:0px;margin-left:4px;\">+ refaund(Long paymentId):boolean</p><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "hdmwkRKHj17VsOzEv8Su-5",
+          "type": "node",
+          "parent": "1",
+          "label": "InvoiceService\n- invoiceRepository: InvoiceRepository\n+ add(InvoiceDto dto): InvoiceDto\n+ edit(InvoiceDto dto): InvoiceDto\n+ delete(InvoiceDto dto): void\n+ update(InvoiceDto dto): InvoiceDto \n+ cancelInvoice(Long id):void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>InvoiceService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">- invoiceRepository:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">InvoiceRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ add(InvoiceDto dto<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">InvoiceDto</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ edit(InvoiceDto dto<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">InvoiceDto</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ delete(InvoiceDto dto<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ update(InvoiceDto dto<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">):&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">InvoiceDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ cancelInvoice(Long id):void</p>"
+        },
+        {
+          "id": "hdmwkRKHj17VsOzEv8Su-6",
+          "type": "edge",
+          "parent": "1",
+          "source": "aCDz0S15EvIkedSbAhYL-2",
+          "target": "hdmwkRKHj17VsOzEv8Su-5"
+        },
+        {
+          "id": "hdmwkRKHj17VsOzEv8Su-7",
+          "type": "edge",
+          "parent": "1",
+          "source": "aCDz0S15EvIkedSbAhYL-1",
+          "target": "hdmwkRKHj17VsOzEv8Su-4",
+          "label": "Use"
+        },
+        {
+          "id": "hdmwkRKHj17VsOzEv8Su-8",
+          "type": "node",
+          "parent": "1",
+          "label": "SnapService\n-\n+ getCourierPlace(Long orderId): CourierPlaceDto\n+ showCourierPlace(Long orderId): CourierPlaceDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>SnapService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">-</p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ getCourierPlace(Long orderId<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): CourierPlaceDto</span></p><p style=\"margin: 0px 0px 0px 4px;\">+&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">showCourierPlace(Long&nbsp;</span>orderId<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): CourierPlaceDto</span></p><p style=\"margin: 0px 0px 0px 4px;\"><br></p>"
+        }
+      ]
+    }
+  ]
+}

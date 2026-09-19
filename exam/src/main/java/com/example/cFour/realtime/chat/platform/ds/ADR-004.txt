@@ -1,0 +1,68 @@
+ADR-004: Signal Protocol (E2EE) + Media Storage + i18n
+عنوان: پشتیبانی از چندزبانگی، Media، و E2EE
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله
+چت خصوصی باید E2EE واقعی داشته باشد (سرور نتواند رمزگشایی کند).
+
+Media (عکس/ویدیو/فایل تا ۱۰۰MB) باید ذخیره و توزیع شود.
+چندزبانگی (fa, en, ar) + RTL/LTR.
+Multi-device Support (کاربر ۳ دستگاه دارد).
+Key Backup برای بازیابی هنگام تعویض دستگاه.
+
+تصمیم
+۱. E2EE با Signal Protocol (نه AES!)
+X3DH برای Key Exchange اولیه.
+Double Ratchet برای Forward Secrecy (هر پیام Session Key جدید).
+سرور فقط Ciphertext می‌بیند.
+
+
+۲. Key Management
+Identity Key (بلندمدت)
+Signed Pre-key (rotate هر هفته)
+One-time Pre-keys (۱۰۰ عدد)
+سرور فقط Public Keyها را ذخیره می‌کند (PostgreSQL).
+
+
+۳. Multi-device
+هر Device یک Identity Key جداگانه.
+پیام به همه Deviceها Encrypt می‌شود.
+Sync از طریق سرور (Ciphertext).
+
+
+۴. Key Backup
+کاربر با PIN (Argon2 hash) پشتیبان می‌گیرد.
+Backup Encrypted در S3.
+Restore فقط با PIN.
+
+
+۵. Media Storage
+S3 (Encrypted at Rest با SSE).
+Media Key جداگانه (نه Session Key).
+CDN برای توزیع.
+Presigned URL برای دسترسی.
+
+
+۶. i18n
+i18next + JSON files.
+RTL/LTR با dir attribute.
+Client-side rendering.
+
+
+۷. Server-side Search (چالش E2EE)
+چون سرور نمی‌تواند رمزگشایی کند:
+Client-side Index در Device.
+Encrypted Search Index در S3 (اختیاری).
+Alternatives
+گزینه	دلیل رد
+AES فقط	E2EE نیست، سرور می‌تواند رمزگشایی کند
+RSA فقط	کند، Forward Secrecy ندارد
+Hardcode i18n	نیاز به نسخه‌گذاری برای هر زبان
+Consequences
+مثبت: E2EE واقعی، Forward Secrecy، Multi-device، پشتیبانی چندزبانه.
+منفی: پیچیدگی Signal Protocol، Server-side Search غیرممکن، Key Recovery سخت.
+ریسک‌ها:
+Private Key لو برود → Key Rotation.
+کاربر PIN را فراموش کند → Backup از دست می‌رود.
+

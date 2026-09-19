@@ -1,0 +1,950 @@
+{
+  "version": "31.3.2",
+  "pages": [
+    {
+      "id": "v0qubGjVoCkS9j5dkIKj",
+      "name": "Context",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "3CV64_O5AdtV4wEijqET-6",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Streamer",
+            "c4Type": "Person",
+            "c4Description": "Streamer"
+          }
+        },
+        {
+          "id": "3CV64_O5AdtV4wEijqET-7",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Viewer",
+            "c4Type": "Person",
+            "c4Description": "Viewer"
+          }
+        },
+        {
+          "id": "3CV64_O5AdtV4wEijqET-8",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Manager",
+            "c4Type": "Person",
+            "c4Description": "Manager"
+          }
+        },
+        {
+          "id": "3CV64_O5AdtV4wEijqET-9",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Video Streaming Platform",
+            "c4Type": "Software System",
+            "c4Description": "Video Streaming Platform"
+          }
+        },
+        {
+          "id": "3CV64_O5AdtV4wEijqET-10",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Application%]",
+          "html": "<font style=\"font-size: 16px\"><b><div style=\"text-align: left\">%c4Name%</div></b></font><div style=\"text-align: left\">[%c4Application%]</div>",
+          "metadata": {
+            "c4Name": "Context",
+            "c4Type": "Context",
+            "c4Application": "Video Streaming Platform"
+          }
+        },
+        {
+          "id": "3CV64_O5AdtV4wEijqET-11",
+          "type": "edge",
+          "parent": "1",
+          "source": "3CV64_O5AdtV4wEijqET-6",
+          "target": "3CV64_O5AdtV4wEijqET-9",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "3CV64_O5AdtV4wEijqET-12",
+          "type": "edge",
+          "parent": "1",
+          "source": "3CV64_O5AdtV4wEijqET-7",
+          "target": "3CV64_O5AdtV4wEijqET-9",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "3CV64_O5AdtV4wEijqET-13",
+          "type": "edge",
+          "parent": "1",
+          "source": "3CV64_O5AdtV4wEijqET-8",
+          "target": "3CV64_O5AdtV4wEijqET-9",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fXq184QT90pZ7jGtyock",
+      "name": "Container",
+      "cells": [
+        {
+          "id": "uI8KsFjzXkP4D67J-FIw-1",
+          "type": "layer"
+        },
+        {
+          "id": "uI8KsFjzXkP4D67J-FIw-3",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Kafka",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Apache Kafka, etc.",
+            "c4Description": "Kafka"
+          }
+        },
+        {
+          "id": "uI8KsFjzXkP4D67J-FIw-15",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Application%]",
+          "html": "<font style=\"font-size: 16px\"><b><div style=\"text-align: left\">%c4Name%</div></b></font><div style=\"text-align: left\">[%c4Application%]</div>",
+          "metadata": {
+            "c4Name": "Video Streaming Platform Container ",
+            "c4Type": "ContainerScopeBoundary",
+            "c4Application": "Container"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-25",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-0",
+          "target": "HGtus81IwUhLyvskzXMe-23"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-0",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ArchiveService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Archive"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-1",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "TranscodingService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Transcoding"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-21",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-2",
+          "target": "uI8KsFjzXkP4D67J-FIw-3"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-2",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "UserService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "User"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-3",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "VideoService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Video"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-4",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Discovery Service ",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Service Discovery"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-5",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ApiGateway",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "ApiGateway"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-6",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-0",
+          "target": "HGtus81IwUhLyvskzXMe-5",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-8",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-1",
+          "target": "HGtus81IwUhLyvskzXMe-5"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-11",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-2",
+          "target": "HGtus81IwUhLyvskzXMe-5"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-12",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-3",
+          "target": "HGtus81IwUhLyvskzXMe-5"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-13",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-0",
+          "target": "HGtus81IwUhLyvskzXMe-4"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-14",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-1",
+          "target": "HGtus81IwUhLyvskzXMe-4"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-15",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-2",
+          "target": "HGtus81IwUhLyvskzXMe-4"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-16",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-3",
+          "target": "HGtus81IwUhLyvskzXMe-4"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-17",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Load Balancer",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Apache Kafka, etc.",
+            "c4Description": "Load Balancer"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-18",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-17",
+          "target": "HGtus81IwUhLyvskzXMe-5"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-19",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-0",
+          "target": "uI8KsFjzXkP4D67J-FIw-3"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-20",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-1",
+          "target": "uI8KsFjzXkP4D67J-FIw-3"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-22",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-3",
+          "target": "uI8KsFjzXkP4D67J-FIw-3"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-23",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "postgress",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Oracle Database 12",
+            "c4Description": "User Information Database"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-24",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Casandra",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Oracle Database 12",
+            "c4Description": "Video DB"
+          }
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-26",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-1",
+          "target": "HGtus81IwUhLyvskzXMe-24"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-27",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-2",
+          "target": "HGtus81IwUhLyvskzXMe-23"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-28",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-2",
+          "target": "HGtus81IwUhLyvskzXMe-24"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-29",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-3",
+          "target": "HGtus81IwUhLyvskzXMe-24"
+        },
+        {
+          "id": "HGtus81IwUhLyvskzXMe-30",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-3",
+          "target": "HGtus81IwUhLyvskzXMe-23"
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-0",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "StreamService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Stream"
+          }
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-1",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "rBmDsIm5h_msGIu_RTyP-0",
+          "target": "HGtus81IwUhLyvskzXMe-4"
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-2",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "rBmDsIm5h_msGIu_RTyP-0",
+          "target": "HGtus81IwUhLyvskzXMe-5"
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-3",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "rBmDsIm5h_msGIu_RTyP-0",
+          "target": "HGtus81IwUhLyvskzXMe-24"
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-4",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "rBmDsIm5h_msGIu_RTyP-0",
+          "target": "HGtus81IwUhLyvskzXMe-23"
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-5",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "rBmDsIm5h_msGIu_RTyP-0",
+          "target": "uI8KsFjzXkP4D67J-FIw-3"
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-6",
+          "type": "node",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Config Server",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Config Server"
+          }
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-7",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "rBmDsIm5h_msGIu_RTyP-0",
+          "target": "rBmDsIm5h_msGIu_RTyP-6"
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-8",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-3",
+          "target": "rBmDsIm5h_msGIu_RTyP-6"
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-9",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-2",
+          "target": "rBmDsIm5h_msGIu_RTyP-6"
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-10",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-1",
+          "target": "rBmDsIm5h_msGIu_RTyP-6"
+        },
+        {
+          "id": "rBmDsIm5h_msGIu_RTyP-11",
+          "type": "edge",
+          "parent": "uI8KsFjzXkP4D67J-FIw-1",
+          "source": "HGtus81IwUhLyvskzXMe-0",
+          "target": "rBmDsIm5h_msGIu_RTyP-6"
+        }
+      ]
+    },
+    {
+      "id": "xurHUA6VPxptKNRr2lMh",
+      "name": "Component",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "8jLxphM3wriCJWIbYmNN-2",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ArchiveComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Archive"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-4",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "UserComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "User"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-5",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "RecommenationComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Recommenation"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-7",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "AuthComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Auth"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-9",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ProfileComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Profile"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-6",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "TranscodingComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Transcoding"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-12",
+          "type": "edge",
+          "parent": "1",
+          "source": "BiQQkBcvxptLKQcWP2Ds-4",
+          "target": "BiQQkBcvxptLKQcWP2Ds-7"
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-13",
+          "type": "edge",
+          "parent": "1",
+          "source": "BiQQkBcvxptLKQcWP2Ds-4",
+          "target": "BiQQkBcvxptLKQcWP2Ds-9"
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-15",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "VideoSpliter",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Spliter"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-16",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "EncoderComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Encoder"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-17",
+          "type": "edge",
+          "parent": "1",
+          "source": "BiQQkBcvxptLKQcWP2Ds-6",
+          "target": "BiQQkBcvxptLKQcWP2Ds-15"
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-18",
+          "type": "edge",
+          "parent": "1",
+          "source": "BiQQkBcvxptLKQcWP2Ds-6",
+          "target": "BiQQkBcvxptLKQcWP2Ds-16"
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-19",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ConcatenatorComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Concatenator"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-20",
+          "type": "edge",
+          "parent": "1",
+          "source": "BiQQkBcvxptLKQcWP2Ds-6",
+          "target": "BiQQkBcvxptLKQcWP2Ds-19"
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-21",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ArchiveComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Archive"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-22",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "RetriveComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Retrive"
+          }
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-23",
+          "type": "edge",
+          "parent": "1",
+          "source": "8jLxphM3wriCJWIbYmNN-2",
+          "target": "BiQQkBcvxptLKQcWP2Ds-21"
+        },
+        {
+          "id": "BiQQkBcvxptLKQcWP2Ds-24",
+          "type": "edge",
+          "parent": "1",
+          "source": "8jLxphM3wriCJWIbYmNN-2",
+          "target": "BiQQkBcvxptLKQcWP2Ds-22"
+        },
+        {
+          "id": "g1bxNcXae9z_ISgk3_Q3-1",
+          "type": "edge",
+          "parent": "1",
+          "source": "BiQQkBcvxptLKQcWP2Ds-4",
+          "target": "BiQQkBcvxptLKQcWP2Ds-5"
+        },
+        {
+          "id": "y-tbgDiiAPs71Qc3aN2R-4",
+          "type": "edge",
+          "parent": "1",
+          "source": "y-tbgDiiAPs71Qc3aN2R-1",
+          "target": "y-tbgDiiAPs71Qc3aN2R-2"
+        },
+        {
+          "id": "y-tbgDiiAPs71Qc3aN2R-5",
+          "type": "edge",
+          "parent": "1",
+          "source": "y-tbgDiiAPs71Qc3aN2R-1",
+          "target": "y-tbgDiiAPs71Qc3aN2R-3"
+        },
+        {
+          "id": "y-tbgDiiAPs71Qc3aN2R-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "VideoComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Video"
+          }
+        },
+        {
+          "id": "y-tbgDiiAPs71Qc3aN2R-2",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "UploadComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Upload"
+          }
+        },
+        {
+          "id": "y-tbgDiiAPs71Qc3aN2R-3",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "DownloadComponent",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Download"
+          }
+        }
+      ]
+    },
+    {
+      "id": "RuBwu2yjuULWsVDiBsKY",
+      "name": "Code",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "364N6hYugEe9S4iP0TBn-1",
+          "type": "node",
+          "parent": "1",
+          "label": "Profile\n- prifileRepository: ProfileRepository\n+ like(comment Comment):Void\n+ comment(message String): Void\n+ subscribe(comment Comment):Void\n+ chageProfile(dto: ProfileDto ): Void\n+ editInformation(dto: ProfileDto ): Void\n+ changepassword(newPass: String ):Void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>Profile</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">- prifileRepository: ProfileRepository</p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ l<span style=\"background-color: transparent;\">ike(comment Comment):Void</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent;\">+ comment(message&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">String</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): Void</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent;\">+ subscribe</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">(comment Comment):Void</span></p><p style=\"margin:0px;margin-left:4px;\">+ chageProfile(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">dto:&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ProfileDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): Void</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ editInformation(dto:&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ProfileDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): Void</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ changepassword(newPass:&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">String</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">):Void</span></p>"
+        },
+        {
+          "id": "hQGJ6ztmgSCED6wl5ZL_-1",
+          "type": "node",
+          "parent": "1",
+          "label": "Recommendation\n\n+ recommend(userId: Long): VideoDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>Recommendation</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ recommend(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">userId:&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Long): VideoDto</span></p>"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-6",
+          "type": "edge",
+          "parent": "1",
+          "source": "q5Ud7OtJCL1OHfEbKsrw-1",
+          "target": "LNerbFZsFW6akqrZ1but-7"
+        },
+        {
+          "id": "q5Ud7OtJCL1OHfEbKsrw-1",
+          "type": "node",
+          "parent": "1",
+          "label": "VideoSpliterController\n- videoSpliterService: VideoSpliterService\n+ split(dto: VideoDto): List\n+ encode(videobytes: Byte[]): List\n+ concat(videoDtos: List): VideoDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>VideoSpliterController</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">- videoSpliterService:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">VideoSpliterService</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ split(dto: VideoDto): List</p><p style=\"margin:0px;margin-left:4px;\">+ encode(videobytes: Byte[]): List</p><p style=\"margin:0px;margin-left:4px;\">+ concat(videoDtos:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">List</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): VideoDto</span></p>"
+        },
+        {
+          "id": "LNerbFZsFW6akqrZ1but-3",
+          "type": "edge",
+          "parent": "1",
+          "source": "JAFAo1-s_LKvY-Q4G-Tf-1",
+          "target": "LNerbFZsFW6akqrZ1but-1"
+        },
+        {
+          "id": "JAFAo1-s_LKvY-Q4G-Tf-1",
+          "type": "node",
+          "parent": "1",
+          "label": "ArchiveController\n- archiveService: ArchiveService \n+ archive(archiveDto: ArchiveDto): void\n+ retrieve(videoId: Long): VideoDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>ArchiveController</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">-&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">archiveService:&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ArchiveService</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ archive(archiveDto: A<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">rchiveDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): void</span></p><p style=\"margin:0px;margin-left:4px;\">+ retrieve(videoId: Long): VideoDto</p><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "LNerbFZsFW6akqrZ1but-1",
+          "type": "node",
+          "parent": "1",
+          "label": "ArchiveService\n- archiveRepository: ArchiveRepository \n+ archive(archiveDto: ArchiveDto): void\n+ retrieve(videoId: Long): VideoDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>ArchiveService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">-&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">archive</span>Repository<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">:&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ArchiveRepository</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ archive(archiveDto: A<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">rchiveDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): void</span></p><p style=\"margin:0px;margin-left:4px;\">+ retrieve(videoId: Long): VideoDto</p><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "LNerbFZsFW6akqrZ1but-4",
+          "type": "node",
+          "parent": "1",
+          "label": "ArchiveRepository\n\n+ archive(archiveDto: ArchiveDto): void\n+ retrieve(videoId: Long): VideoDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>ArchiveRepository</i></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ archive(archiveDto: A<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">rchiveDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): void</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ retrieve(videoId: Long): VideoDto</p>"
+        },
+        {
+          "id": "LNerbFZsFW6akqrZ1but-6",
+          "type": "edge",
+          "parent": "1",
+          "source": "LNerbFZsFW6akqrZ1but-1",
+          "target": "LNerbFZsFW6akqrZ1but-4"
+        },
+        {
+          "id": "LNerbFZsFW6akqrZ1but-7",
+          "type": "node",
+          "parent": "1",
+          "label": "VideoSpliterService\n- videoSpliterRepository: VideoSpliterRepository\n+ split(dto: VideoDto): List\n+ encode(videobytes: Byte[]): List\n+ concat(videoDtos: List): VideoDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>VideoSpliterService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"text-align: center; margin: 0px 0px 0px 4px;\"><span style=\"text-align: left;\">- videoSpliterRepository: </span><span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); text-align: left; background-color: transparent;\">V</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); text-align: left;\">ideoSpliterRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ split(dto: VideoDto): List</p><p style=\"margin:0px;margin-left:4px;\">+ encode(videobytes: Byte[]): List</p><p style=\"margin:0px;margin-left:4px;\">+ concat(videoDtos:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">List</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): VideoDto</span></p>"
+        },
+        {
+          "id": "LNerbFZsFW6akqrZ1but-8",
+          "type": "node",
+          "parent": "1",
+          "label": "ArchiveRepository\n\n+ archive(archiveDto: ArchiveDto): void\n+ retrieve(videoId: Long): VideoDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>ArchiveRepository</i></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ archive(archiveDto: A<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">rchiveDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): void</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ retrieve(videoId: Long): VideoDto</p>"
+        },
+        {
+          "id": "LNerbFZsFW6akqrZ1but-9",
+          "type": "edge",
+          "parent": "1",
+          "source": "LNerbFZsFW6akqrZ1but-7",
+          "target": "LNerbFZsFW6akqrZ1but-8"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-5",
+          "type": "edge",
+          "parent": "1",
+          "source": "HHS1pa4JlA5BbeQVv7fa-1",
+          "target": "HHS1pa4JlA5BbeQVv7fa-2"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-1",
+          "type": "node",
+          "parent": "1",
+          "label": "VideoController\n- videoService: VideoService\n+ download(videoId: Long): VideoDto\n+ upload(videobytes: Byte[]): void\n+ stream(videoId: Long): VideoDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>VideoController</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">- videoService:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">VideoService</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ download(videoId: <span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\">Long</span>): VideoDto</p><p style=\"margin:0px;margin-left:4px;\">+ upload(videobytes: Byte[]): void</p><p style=\"margin:0px;margin-left:4px;\">+ stream(videoId:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Long</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): VideoDto</span></p>"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-2",
+          "type": "node",
+          "parent": "1",
+          "label": "VideoService\n- videorepository: VideoRepository\n+ download(videoId: Long): VideoDto\n+ upload(videobytes: Byte[]): void\n+ stream(videoId: Long): VideoDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>VideoService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">- videorepository:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">VideoRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ download(videoId: <span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\">Long</span>): VideoDto</p><p style=\"margin:0px;margin-left:4px;\">+ upload(videobytes: Byte[]): void</p><p style=\"margin:0px;margin-left:4px;\">+ stream(videoId:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Long</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): VideoDto</span></p>"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-3",
+          "type": "node",
+          "parent": "1",
+          "label": "VideoRepository\n- videorepository: VideoRepository\n+ download(videoId: Long): VideoDto\n+ upload(videobytes: Byte[]): void\n+ stream(videoId: Long): VideoDto",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>VideoRepository</i></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">- videorepository: <span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\">VideoRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ download(videoId: <span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\">Long</span>): VideoDto</p><p style=\"margin: 0px 0px 0px 4px;\">+ upload(videobytes: Byte[]): void</p><p style=\"margin: 0px 0px 0px 4px;\">+ stream(videoId: <span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Long</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): VideoDto</span></p>"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-4",
+          "type": "edge",
+          "parent": "1",
+          "source": "HHS1pa4JlA5BbeQVv7fa-2",
+          "target": "HHS1pa4JlA5BbeQVv7fa-3"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-7",
+          "type": "node",
+          "parent": "1",
+          "label": "AuthService\n- authRepository: AuthRepository\n+ authenticate(): Boolean\n+ authorization(): Boolean\n+ login(): Void\n+ loginout(): Void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>AuthService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">- authRepository:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">AuthRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ authenticate(): Boolean</p><p style=\"margin:0px;margin-left:4px;\">+ authorization(): Boolean</p><p style=\"margin:0px;margin-left:4px;\">+ login(): Void</p><p style=\"margin:0px;margin-left:4px;\">+ loginout(): Void</p>"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-8",
+          "type": "node",
+          "parent": "1",
+          "label": "AuthRepository\n\n+ authenticate(): Boolean\n+ authorization(): Boolean\n+ login(): Void\n+ loginout(): Void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>AuthRepository</i></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ authenticate(): Boolean</p><p style=\"margin: 0px 0px 0px 4px;\">+ authorization(): Boolean</p><p style=\"margin: 0px 0px 0px 4px;\">+ login(): Void</p><p style=\"margin: 0px 0px 0px 4px;\">+ loginout(): Void</p>"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-9",
+          "type": "edge",
+          "parent": "1",
+          "source": "HHS1pa4JlA5BbeQVv7fa-7",
+          "target": "HHS1pa4JlA5BbeQVv7fa-8"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-11",
+          "type": "node",
+          "parent": "1",
+          "label": "AuthRepository\n\n+ authenticate(): Boolean\n+ authorization(): Boolean\n+ login(): Void\n+ loginout(): Void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>AuthRepository</i></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ authenticate(): Boolean</p><p style=\"margin: 0px 0px 0px 4px;\">+ authorization(): Boolean</p><p style=\"margin: 0px 0px 0px 4px;\">+ login(): Void</p><p style=\"margin: 0px 0px 0px 4px;\">+ loginout(): Void</p>"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-14",
+          "type": "edge",
+          "parent": "1",
+          "source": "HHS1pa4JlA5BbeQVv7fa-12",
+          "target": "364N6hYugEe9S4iP0TBn-1"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-17",
+          "type": "edge",
+          "parent": "1",
+          "source": "HHS1pa4JlA5BbeQVv7fa-12",
+          "target": "hQGJ6ztmgSCED6wl5ZL_-1"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-18",
+          "type": "edge",
+          "parent": "1",
+          "source": "HHS1pa4JlA5BbeQVv7fa-12",
+          "target": "HHS1pa4JlA5BbeQVv7fa-7"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-12",
+          "type": "node",
+          "parent": "1",
+          "label": "UserController\n- authService: AuthService\n- profileService: ProfileService\n- recommendationService:RecommendationService\n+ like(comment Comment):Void\n+ comment(message String): Void\n+ subscribe(comment Comment):Void\n+ chageProfile(dto: ProfileDto ): Void\n+ editInformation(dto: ProfileDto ): Void\n+ changepassword(newPass: String ):Void\n+ recommend(userId: Long): VideoDto\n+ authenticate(): Boolean\n+ authorization(): Boolean\n+ login(): Void\n+ loginout(): Void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>UserController</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">- authService: A</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">uthService</span></p><p style=\"margin: 0px 0px 0px 4px;\">- profileService: P<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">rofileService</span></p><div><p style=\"margin: 0px 0px 0px 4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">- recommendationService:R</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ecommendationService</span></p></div><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ l<span style=\"background-color: transparent;\">ike(comment Comment):Void</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent;\">+ comment(message&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">String</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): Void</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent;\">+ subscribe</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">(comment Comment):Void</span></p><p style=\"margin:0px;margin-left:4px;\">+ chageProfile(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">dto:&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ProfileDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): Void</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ editInformation(dto:&nbsp;</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ProfileDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): Void</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\">+ changepassword(new</span><span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\">Pass: </span><span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\">String</span><span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\"> </span><span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\">):Void</span></p><p style=\"margin:0px;margin-left:4px;\">+ recommend(<span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\">userId: </span><span style=\"color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); background-color: transparent;\">Long): VideoDto</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ authenticate(): Boolean</p><p style=\"margin: 0px 0px 0px 4px;\">+ authorization(): Boolean</p><p style=\"margin: 0px 0px 0px 4px;\">+ login(): Void</p><p style=\"margin: 0px 0px 0px 4px;\">+ loginout(): Void</p>"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-15",
+          "type": "node",
+          "parent": "1",
+          "label": "ProfileRepository\n\n+ like(comment Comment):Void\n+ comment(message String): Void\n+ subscribe(comment Comment):Void\n+ chageProfile(dto: ProfileDto ): Void\n+ editInformation(dto: ProfileDto ): Void\n+ changepassword(newPass: String ):Void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>ProfileRepository</i></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ l<span style=\"background-color: transparent;\">ike(comment Comment):Void</span></p><p style=\"margin: 0px 0px 0px 4px;\"><span style=\"background-color: transparent;\">+ comment(message </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">String</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): Void</span></p><p style=\"margin: 0px 0px 0px 4px;\"><span style=\"background-color: transparent;\">+ subscribe</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">(comment Comment):Void</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ chageProfile(<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">dto: </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ProfileDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): Void</span></p><p style=\"margin: 0px 0px 0px 4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ editInformation(dto: </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">ProfileDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">): Void</span></p><p style=\"margin: 0px 0px 0px 4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ changepassword(newPass: </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">String</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">):Void</span></p>"
+        },
+        {
+          "id": "HHS1pa4JlA5BbeQVv7fa-16",
+          "type": "edge",
+          "parent": "1",
+          "source": "364N6hYugEe9S4iP0TBn-1",
+          "target": "HHS1pa4JlA5BbeQVv7fa-15"
+        }
+      ]
+    }
+  ]
+}

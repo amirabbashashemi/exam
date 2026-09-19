@@ -1,0 +1,56 @@
+نقاط قوت:
+
+Saga را درست انتخاب کردی
+
+Orchestration vs Choreography را مقایسه کردی
+
+نقاط ضعف:
+
+تصمیم می‌گوید "انتخاب Saga" ولی نوع آن (Orchestration یا Choreography) را مشخص نکردی!
+
+Consequences خالی است! این یعنی ۲ نمره از دست رفته
+
+Idempotency را اصلاً نداری
+
+Compensating Transaction را توضیح ندادی
+
+نگفتی اگر Saga شکست خورد، چطور Rollback می‌شود
+
+نسخه نمره‌فول (۱۰/۱۰):
+### ADR-002: رزرو هم‌زمان هتل و پرواز با Saga Orchestration
+
+**Context:**
+کاربر ممکن است هم‌زمان هتل و پرواز رزرو کند. اگر پرواز رزرو شد ولی هتل پر بود،
+باید تراکنش پرواز برگشت داده شود. این یک **تراکنش توزیع‌شده (Distributed Transaction)**
+است که ACID در آن معنا ندارد و نیاز به **Eventual Consistency** داریم.
+
+**Decision:**
+استفاده از **Saga Pattern** با الگوی **Orchestration**:
+
+- یک سرویس **Saga Orchestrator** مرکزی (در C4: `OrchestrationController`)
+  مراحل را هماهنگ می‌کند.
+- مراحل (Steps):
+  ۱. **Reserve Flight** (Hold صندلی برای ۱۵ دقیقه)
+  ۲. **Reserve Hotel** (Hold اتاق برای ۱۵ دقیقه)
+  ۳. **Process Payment** (پرداخت)
+  ۴. **Confirm Flight + Confirm Hotel** (تأیید نهایی)
+- **Compensating Transactions** (در صورت شکست):
+  - اگر مرحله ۳ شکست خورد → Cancel Flight + Cancel Hotel
+  - اگر مرحله ۴ شکست خورد → Refund Payment + Cancel Flight + Cancel Hotel
+- **Idempotency Key**: هر درخواست رزرو یک `request_id` یکتا دارد که در Redis
+  با TTL=۲۴h ذخیره می‌شود تا از رزرو دوبار جلوگیری کند.
+
+**Alternatives Considered:**
+- *Saga Choreography*: رد شد چون پیگیری تراکنش‌های پیچیده (هتل + پرواز + پرداخت)
+  بدون Orchestrator مرکزی بسیار سخت می‌شود و debugging آن دشوار است.
+- *Two-Phase Commit (2PC)*: رد شد چون در سیستم‌های توزیع‌شده با سرویس‌های خارجی
+  (GDS، OTA) قابل پیاده‌سازی نیست و Availability را به شدت کاهش می‌دهد.
+- *Best Effort*: رد شد چون در پرداخت مالی غیرقابل قبول است.
+
+**Consequences:**
+- مثبت: شفافیت کامل مراحل، قابلیت Retry و Rollback خودکار، جداسازی منطق کسب‌وکار
+- منفی: Orchestrator یک Single Point of Failure است (نیاز به HA)
+- نیاز به **State Machine** برای ذخیره وضعیت Saga (در PostgreSQL یا Redis)
+- پیچیدگی تست سناریوهای شکست
+
+**Related C4 Level:** Container Level 2 (SAGA Container) + Component Level 3 (OrchestrationService)

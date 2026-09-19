@@ -1,0 +1,32 @@
+### ADR-002: تخصیص راننده با Distributed Lock (جلوگیری از Race Condition)
+
+**Context:**
+وقتی دو سفارش همزمان در یک منطقه ثبت می‌شود، ممکن است یک راننده به هر دو
+تخصیص یابد. همچنین اگر راننده قبول کرد ولی بعد Cancel کرد، باید سفارش
+دوباره تخصیص یابد. پرداخت هم باید consistency داشته باشد.
+
+**Decision:**
+
+۱. **Distributed Lock با Redis Redlock:**
+   - هنگام تخصیص: `SET courier:{id}:lock {orderId} NX EX 30`
+   - فقط یک Order می‌تواند راننده را قفل کند
+   - اگر راننده بعد از ۳۰ ثانیه پاسخ نداد → آزادسازی و تخصیص به راننده بعدی
+
+۲. **Saga Orchestration برای Order:**
+   - مراحل: Reserve Restaurant → Assign Courier → Charge Payment → Confirm
+   - اگر Courier Cancel کرد → Compensate: Re-assign + Refund if needed
+   - Idempotency Key برای هر سفارش
+
+۳. **Optimistic Locking در PostgreSQL:**
+   - فیلد `version` در جدول `courier`
+   - UPDATE با شرط version برای جلوگیری از race
+
+**Alternatives Considered:**
+- *Pessimistic Lock (SELECT FOR UPDATE)*: رد شد چون در مقیاس بالا deadlock می‌سازد.
+- *Database Unique Constraint*: رد شد چون flexible نیست.
+
+**Consequences:**
+- مثبت: هیچ راننده‌ای دو سفارش همزمان نمی‌گیرد
+- منفی: نیاز به مدیریت Lock Timeout و Recovery
+
+**Related C4 Level:** Component (MatchingEngine + Redis)

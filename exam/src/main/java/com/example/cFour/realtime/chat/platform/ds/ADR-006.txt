@@ -1,0 +1,48 @@
+ADR-006: UX سه‌گانه (User, Group Admin, Business)
+عنوان: کاربردپذیری (UX) برای کاربر عادی، ادمین گروه، و Business
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله
+سه نقش کاربری با نیازهای کاملاً متفاوت:
+
+کاربر عادی: چت، تماس، استاتوس، تنظیمات ساده.
+ادمین گروه: مدیریت اعضا، تنظیمات گروه، تأیید عضویت (گروه‌های بزرگ).
+Business (WhatsApp Business): ساعت کاری، پاسخ خودکار، کاتالوگ، API.
+
+یک UI واحد نمی‌تواند هر سه را بهینه پوشش دهد.
+
+تصمیم
+۱. سه رابط کاربری مجزا
+نقش	پلتفرم	تکنولوژی
+کاربر عادی	Mobile	React Native
+ادمین گروه	Mobile + Web	React Native + React
+Business	Web + API	React + REST + Webhook
+
+
+۲. اشتراک‌گذاری کامپوننت‌ها
+کتابخانه مشترک UI (Design System).
+i18next برای چندزبانگی.
+RTL/LTR و Dark Mode.
+
+
+۳. Business API
+REST API برای پیام‌های Template.
+Webhook برای دریافت پیام‌ها.
+داشبورد تحلیلی (Web).
+
+
+۴. Group Admin Panel
+مدیریت اعضا (Add/Remove/Promote).
+تنظیمات گروه (Who can send/edit/add).
+تأیید عضویت برای گروه‌های بزرگ.
+
+Alternatives
+گزینه	دلیل رد
+UI واحد برای همه	UX هر نقش خراب می‌شود
+فقط Mobile	Business نیاز به Desktop دارد
+بدون Business API	Enterprise نمی‌تواند یکپارچه شود
+Consequences
+مثبت: UX بهینه برای هر نقش، امنیت، جداسازی منطق.
+منفی: هزینه توسعه سه کدبیس، نگهداری پیچیده‌تر.
+ریسک: Sync بین پلتفرم‌ها → Design System مشترک.

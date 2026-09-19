@@ -1,0 +1,945 @@
+{
+  "version": "31.3.2",
+  "pages": [
+    {
+      "id": "f8HRaUoVxMg62R_zsPPr",
+      "name": "Context",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "_kuw_Qp2_9Q0i_7Lp5_G-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "end user",
+            "c4Type": "Person",
+            "c4Description": "end user"
+          }
+        },
+        {
+          "id": "_kuw_Qp2_9Q0i_7Lp5_G-5",
+          "type": "edge",
+          "parent": "1",
+          "source": "_kuw_Qp2_9Q0i_7Lp5_G-2",
+          "target": "_kuw_Qp2_9Q0i_7Lp5_G-3"
+        },
+        {
+          "id": "_kuw_Qp2_9Q0i_7Lp5_G-2",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "admin",
+            "c4Type": "Person",
+            "c4Description": "admin"
+          }
+        },
+        {
+          "id": "_kuw_Qp2_9Q0i_7Lp5_G-3",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Schat",
+            "c4Type": "Software System",
+            "c4Description": "Real-time Chat Platform"
+          }
+        },
+        {
+          "id": "_kuw_Qp2_9Q0i_7Lp5_G-4",
+          "type": "edge",
+          "parent": "1",
+          "source": "_kuw_Qp2_9Q0i_7Lp5_G-1",
+          "target": "_kuw_Qp2_9Q0i_7Lp5_G-3"
+        }
+      ]
+    },
+    {
+      "id": "yWIp563sBSOLcxpP_Trt",
+      "name": "Container",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "UserService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "UserService: "
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-2",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "FeedService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "FeedService"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-3",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "CryptographyService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "CryptographyService"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-4",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ArchiveService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "ArchiveService"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-5",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Service Registry",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Service Registry"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-6",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Config Server",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Config Server"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-7",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-2",
+          "target": "6-g8feIwnv8juxY5Aose-6"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-8",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-3",
+          "target": "6-g8feIwnv8juxY5Aose-6"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-9",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-4",
+          "target": "6-g8feIwnv8juxY5Aose-6"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-10",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-1",
+          "target": "6-g8feIwnv8juxY5Aose-6"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-11",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-2",
+          "target": "6-g8feIwnv8juxY5Aose-5"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-12",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-3",
+          "target": "6-g8feIwnv8juxY5Aose-5"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-13",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-4",
+          "target": "6-g8feIwnv8juxY5Aose-5"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-14",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-1",
+          "target": "6-g8feIwnv8juxY5Aose-5"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-15",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Database ",
+            "c4Type": "Container",
+            "c4Technology": "Cassandra",
+            "c4Description": "Database for saving file and media"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-16",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-2",
+          "target": "6-g8feIwnv8juxY5Aose-15"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-17",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Relational Database ",
+            "c4Type": "Container",
+            "c4Technology": "Postgress",
+            "c4Description": "Database for saving user informations"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-19",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "NoSql database",
+            "c4Type": "Container",
+            "c4Technology": "Redis",
+            "c4Description": "Shared Memory"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-20",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-1",
+          "target": "6-g8feIwnv8juxY5Aose-19"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-21",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-19",
+          "target": "6-g8feIwnv8juxY5Aose-17"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-22",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-2",
+          "target": "6-g8feIwnv8juxY5Aose-19"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-23",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Database",
+            "c4Type": "Container",
+            "c4Technology": "S3",
+            "c4Description": "Archive database"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-24",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-4",
+          "target": "6-g8feIwnv8juxY5Aose-23"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-27",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-25",
+          "target": "6-g8feIwnv8juxY5Aose-23"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-25",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "JobService",
+            "c4Type": "Container",
+            "c4Technology": "java spring",
+            "c4Description": "JobService"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-26",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-25",
+          "target": "6-g8feIwnv8juxY5Aose-15"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-28",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-1",
+          "target": "6-g8feIwnv8juxY5Aose-25"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-29",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-2",
+          "target": "6-g8feIwnv8juxY5Aose-25"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-30",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-25",
+          "target": "6-g8feIwnv8juxY5Aose-19"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-32",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-31",
+          "target": "6-g8feIwnv8juxY5Aose-33"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-31",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "loadbalancer",
+            "c4Type": "Container",
+            "c4Technology": "HA Proxy",
+            "c4Description": "Load Balancer"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-33",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Gateway",
+            "c4Type": "Container",
+            "c4Technology": "Spring API gateway",
+            "c4Description": "API Gateway"
+          }
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-34",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-33",
+          "target": "6-g8feIwnv8juxY5Aose-6"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-35",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-33",
+          "target": "6-g8feIwnv8juxY5Aose-5"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-36",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-33",
+          "target": "6-g8feIwnv8juxY5Aose-2"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-37",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-33",
+          "target": "6-g8feIwnv8juxY5Aose-3"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-38",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-33",
+          "target": "6-g8feIwnv8juxY5Aose-4"
+        },
+        {
+          "id": "6-g8feIwnv8juxY5Aose-39",
+          "type": "edge",
+          "parent": "1",
+          "source": "6-g8feIwnv8juxY5Aose-33",
+          "target": "6-g8feIwnv8juxY5Aose-1"
+        }
+      ]
+    },
+    {
+      "id": "v57WhwjWQXF2tDQiASqH",
+      "name": "Component",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "ALEbkqf7el3Fp80TR5Ts-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "FeedService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "FeedService"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-14",
+          "type": "edge",
+          "parent": "1",
+          "source": "mAdFG2Q66IDWjryKfMJb-1",
+          "target": "mAdFG2Q66IDWjryKfMJb-12"
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "UserService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "UserService: "
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-2",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "CryptographyService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "CryptographyService"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-3",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ArchiveService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "ArchiveService"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-4",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Message ",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Message Component"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-5",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Group ",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Group Component"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-6",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Crypto",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Crypto Component"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-7",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Archive",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Archive Component"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-8",
+          "type": "edge",
+          "parent": "1",
+          "source": "ALEbkqf7el3Fp80TR5Ts-1",
+          "target": "mAdFG2Q66IDWjryKfMJb-4"
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-9",
+          "type": "edge",
+          "parent": "1",
+          "source": "ALEbkqf7el3Fp80TR5Ts-1",
+          "target": "mAdFG2Q66IDWjryKfMJb-5"
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-10",
+          "type": "edge",
+          "parent": "1",
+          "source": "mAdFG2Q66IDWjryKfMJb-2",
+          "target": "mAdFG2Q66IDWjryKfMJb-6"
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-11",
+          "type": "edge",
+          "parent": "1",
+          "source": "mAdFG2Q66IDWjryKfMJb-3",
+          "target": "mAdFG2Q66IDWjryKfMJb-7"
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-12",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Profile",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Profile Component"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-13",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "User",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "User Component"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-15",
+          "type": "edge",
+          "parent": "1",
+          "source": "mAdFG2Q66IDWjryKfMJb-1",
+          "target": "mAdFG2Q66IDWjryKfMJb-13"
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-16",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "JobService",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "JobService"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-18",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Job ",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Job Component"
+          }
+        },
+        {
+          "id": "mAdFG2Q66IDWjryKfMJb-19",
+          "type": "edge",
+          "parent": "1",
+          "source": "mAdFG2Q66IDWjryKfMJb-16",
+          "target": "mAdFG2Q66IDWjryKfMJb-18"
+        }
+      ]
+    },
+    {
+      "id": "HOvwvkG7-ukHBIQu45AY",
+      "name": "Code",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-8",
+          "type": "node",
+          "parent": "1",
+          "label": "MessageService\n+ messageRepository: MessageRepository\n+ sendMessage(userId:String, message:String)\n+ showMessageBasedOnSendTime()\n+ ediMessage()\n\n+ deleteMessage()\n+ sendMessageToGroup()\n\n+ showGroupMessage()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>MessageService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ messageRepository:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">MessageRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ sendMessage(userId:String, message<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">:String</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">)</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent;\">+ showMessageBasedOnSendTime()</span></p><p style=\"margin:0px;margin-left:4px;\">+ ediMessage()</p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent;\"></span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;deleteMessage()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;sendMessageToGroup()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent;\"></span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;showGroupMessage()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\"><br></span></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-10",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-9",
+          "target": "PBMtLLTdshamB4iVPvh0-8"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-9",
+          "type": "node",
+          "parent": "1",
+          "label": "MessageController\n+ messageService: MessageService\n+ sendMessage(userId:String, message:String)\n+ showMessageBasedOnSendTime()\n+ ediMessage()\n\n+ deleteMessage()\n+ sendMessageToGroup()\n\n+ showGroupMessage()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>MessageController</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ messageService:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">MessageService</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ sendMessage(userId:String, message<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">:String</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">)</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent;\">+ showMessageBasedOnSendTime()</span></p><p style=\"margin:0px;margin-left:4px;\">+ ediMessage()</p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent;\"></span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;deleteMessage()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;sendMessageToGroup()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent;\"></span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;showGroupMessage()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\"><br></span></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-11",
+          "type": "node",
+          "parent": "1",
+          "label": "<<Interface>>\nMessageRepository\n\n+ sendMessage(userId:String, message:String)\n+ showMessageBasedOnSendTime()\n+ ediMessage()\n\n+ deleteMessage()\n+ sendMessageToGroup()\n\n+ showGroupMessage()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>&lt;&lt;Interface&gt;&gt;</i><br><b>MessageRepository</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ sendMessage(userId:String, message<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">:String</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">)</span></p><p style=\"margin: 0px 0px 0px 4px;\"><span style=\"background-color: transparent;\">+ showMessageBasedOnSendTime()</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ ediMessage()</p><p style=\"margin: 0px 0px 0px 4px;\"><span style=\"background-color: transparent;\"></span></p><p style=\"margin: 0px 0px 0px 4px;\">+ deleteMessage()</p><p style=\"margin: 0px 0px 0px 4px;\">+ sendMessageToGroup()</p><p style=\"margin: 0px 0px 0px 4px;\"><span style=\"background-color: transparent;\"></span></p><p style=\"margin: 0px 0px 0px 4px;\">+ showGroupMessage()</p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-12",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-8",
+          "target": "PBMtLLTdshamB4iVPvh0-11"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-13",
+          "type": "node",
+          "parent": "1",
+          "label": "<<Interface>>\nJpaRepository",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>&lt;&lt;Interface&gt;&gt;</i><br><b>JpaRepository</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\"><br></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-14",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-11",
+          "target": "PBMtLLTdshamB4iVPvh0-13"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-17",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-15",
+          "target": "PBMtLLTdshamB4iVPvh0-16"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-15",
+          "type": "node",
+          "parent": "1",
+          "label": "GroupController\n+ groupService: GroupService\n+ createGroup()\n+ addUserToGroup()\n\n+ deleteUserToGroup()\n+ editGroupName()\n+ editLogo()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>GroupController</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ groupService:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">GroupService</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">createGroup()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;addUserToGroup()</span></p><p style=\"margin:0px;margin-left:4px;\"></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;deleteUserToGroup()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+ editGroupName()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+ editLogo()</span></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-16",
+          "type": "node",
+          "parent": "1",
+          "label": "GroupService\n+ groupRepository: GroupRepository\n+ createGroup()\n+ addUserToGroup()\n\n+ deleteUserToGroup()\n+ editGroupName()\n+ editLogo()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>GroupService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ groupRepository:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">GroupRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">createGroup()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;addUserToGroup()</span></p><p style=\"margin:0px;margin-left:4px;\"></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;deleteUserToGroup()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+ editGroupName()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+ editLogo()</span></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-18",
+          "type": "node",
+          "parent": "1",
+          "label": "<<Interface>>\nGroupRepository\n\n+ createGroup()\n+ addUserToGroup()\n\n+ deleteUserToGroup()\n+ editGroupName()\n+ editLogo()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>&lt;&lt;Interface&gt;&gt;</i><br><b>GroupRepository</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ <span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">createGroup()</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ addUserToGroup()</p><p style=\"margin: 0px 0px 0px 4px;\"></p><p style=\"margin: 0px 0px 0px 4px;\">+ deleteUserToGroup()</p><p style=\"margin: 0px 0px 0px 4px;\">+ editGroupName()</p><p style=\"margin: 0px 0px 0px 4px;\">+ editLogo()</p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-19",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-16",
+          "target": "PBMtLLTdshamB4iVPvh0-18"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-20",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-18",
+          "target": "PBMtLLTdshamB4iVPvh0-13"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-29",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-21",
+          "target": "PBMtLLTdshamB4iVPvh0-22"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-21",
+          "type": "node",
+          "parent": "1",
+          "label": "CryptographyController\n+ cryptographyService: CryptographyService\n+ encrypt()\n+ decrypt()\n\n+ hash()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>CryptographyController</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ cryptographyService: Cryptography<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ encrypt<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;</span>decrypt<span style=\"white-space: normal;\">()</span></p><p style=\"margin:0px;margin-left:4px;\"></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;</span>hash<span style=\"white-space: normal;\">()</span></p><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-22",
+          "type": "node",
+          "parent": "1",
+          "label": "CryptographyService\n+ cryptographyRepository: CryptographyRepository\n+ encrypt()\n+ decrypt()\n\n+ hash()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>CryptographyService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ cryptographyRepository: Cryptography<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Repository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ encrypt<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;</span>decrypt<span style=\"white-space: normal;\">()</span></p><p style=\"margin:0px;margin-left:4px;\"></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;</span>hash<span style=\"white-space: normal;\">()</span></p><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-23",
+          "type": "node",
+          "parent": "1",
+          "label": "<<Interface>>\nCryptographyRepository\n\n+ encrypt()\n+ decrypt()\n\n+ hash()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>&lt;&lt;Interface&gt;&gt;</i><br><b>CryptographyRepository</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ encrypt<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">()</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ decrypt()</p><p style=\"margin: 0px 0px 0px 4px;\"></p><p style=\"margin: 0px 0px 0px 4px;\">+ hash()</p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-24",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-22",
+          "target": "PBMtLLTdshamB4iVPvh0-23"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-25",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-23",
+          "target": "PBMtLLTdshamB4iVPvh0-13"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-28",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-26",
+          "target": "PBMtLLTdshamB4iVPvh0-27"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-26",
+          "type": "node",
+          "parent": "1",
+          "label": "ArchiveController\n+ archiveService: ArchiveService\n+ archive()\n+ retrive()",
+          "html": "<p style=\"text-align: center; margin: 4px 0px 0px;\"><span style=\"background-color: transparent; text-align: left;\"><b>Archive</b></span><b>Controller</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ archiveService: Archive<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+&nbsp;<span style=\"white-space: normal;\"><span style=\"background-color: transparent;\">archive()</span></span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;retrive()</span></p><div><br></div><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-27",
+          "type": "node",
+          "parent": "1",
+          "label": "ArchiveController\n+ archiveService: ArchiveService\n+ archive()\n+ retrive()",
+          "html": "<p style=\"text-align: center; margin: 4px 0px 0px;\"><span style=\"background-color: transparent; text-align: left;\"><b>Archive</b></span><b>Controller</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ archiveService: Archive<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+&nbsp;<span style=\"white-space: normal;\"><span style=\"background-color: transparent;\">archive()</span></span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;retrive()</span></p><div><br></div><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-30",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-32",
+          "target": "PBMtLLTdshamB4iVPvh0-13"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-31",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-27",
+          "target": "PBMtLLTdshamB4iVPvh0-32"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-32",
+          "type": "node",
+          "parent": "1",
+          "label": "<<Interface>>\nArchiveRepository\n\n+ encrypt()\n+ decrypt()\n\n+ hash()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>&lt;&lt;Interface&gt;&gt;</i><br><b>ArchiveRepository</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ encrypt<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">()</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ decrypt()</p><p style=\"margin: 0px 0px 0px 4px;\"></p><p style=\"margin: 0px 0px 0px 4px;\">+ hash()</p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-41",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-33",
+          "target": "PBMtLLTdshamB4iVPvh0-34"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-33",
+          "type": "node",
+          "parent": "1",
+          "label": "ProfileController\n+ profileService: ProfileService\n+ setProfile ()\n+ doSetting()\n+ showPresence(userId)",
+          "html": "<p style=\"text-align: center; margin: 4px 0px 0px;\"><span style=\"background-color: transparent; text-align: left;\"><b>Profile</b></span><b>Controller</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ profileService: Profile<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+&nbsp;<span style=\"background-color: transparent;\">setProfile ()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;doSetting()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;<span style=\"background-color: transparent;\">showPresence(userId)</span></span></p><div><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"><br></span></div><div><br></div><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-34",
+          "type": "node",
+          "parent": "1",
+          "label": "ProfileService\n+ profileRepository: ProfileRepository\n+ setProfile ()\n+ doSetting()\n+ showPresence(userId)",
+          "html": "<p style=\"text-align: center; margin: 4px 0px 0px;\"><span style=\"background-color: transparent; text-align: left;\"><b>Profile</b></span><b>Service</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ profileRepository: Profile<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Repository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+&nbsp;<span style=\"background-color: transparent;\">setProfile ()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;doSetting()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;<span style=\"background-color: transparent;\">showPresence(userId)</span></span></p><div><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"><br></span></div><div><br></div><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-36",
+          "type": "node",
+          "parent": "1",
+          "label": "<<Interface>>\nArchiveRepository\n\n+ encrypt()\n+ decrypt()\n\n+ hash()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>&lt;&lt;Interface&gt;&gt;</i><br><b>ArchiveRepository</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ encrypt<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">()</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ decrypt()</p><p style=\"margin: 0px 0px 0px 4px;\"></p><p style=\"margin: 0px 0px 0px 4px;\">+ hash()</p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-37",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-34",
+          "target": "PBMtLLTdshamB4iVPvh0-36"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-38",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-36",
+          "target": "PBMtLLTdshamB4iVPvh0-13"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-46",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-40",
+          "target": "PBMtLLTdshamB4iVPvh0-43"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-40",
+          "type": "node",
+          "parent": "1",
+          "label": "UserController\n+ userService: UserService\n+ sendFile() \n+ login()\n+ logout()\n+ changepass()\nbanUser()",
+          "html": "<p style=\"text-align: center; margin: 4px 0px 0px;\"><span style=\"background-color: transparent; text-align: left;\"><b>User</b></span><b>Controller</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ userService: User<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;sendFile()&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;login()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;logout()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;changepass()</span></p><p style=\"margin: 0px 0px 0px 4px;\">banUser()</p><div><br></div><div><br></div><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-43",
+          "type": "node",
+          "parent": "1",
+          "label": "UserService\n+ userRepository: UserRepository\n+ sendFile() \n+ login()\n+ logout()\n+ changepass()\n+ banUser()",
+          "html": "<p style=\"text-align: center; margin: 4px 0px 0px;\"><span style=\"background-color: transparent; text-align: left;\"><b>User</b></span><b>Service</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ user<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Repository</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">: User</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Repository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;sendFile()&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;login()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;logout()</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;changepass()</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ banUser()</p><div><br></div><div><br></div><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-44",
+          "type": "node",
+          "parent": "1",
+          "label": "<<Interface>>\nUserRepository\n\n+ encrypt()\n+ decrypt()\n\n+ hash()\n+ banUser()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>&lt;&lt;Interface&gt;&gt;</i><br><b>UserRepository</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">+ encrypt<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">()</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ decrypt()</p><p style=\"margin: 0px 0px 0px 4px;\"></p><p style=\"margin: 0px 0px 0px 4px;\">+ hash()</p><p style=\"margin: 0px 0px 0px 4px;\">+&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">banUser()</span></p><div><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"><br></span></div>"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-45",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-43",
+          "target": "PBMtLLTdshamB4iVPvh0-44"
+        },
+        {
+          "id": "PBMtLLTdshamB4iVPvh0-47",
+          "type": "edge",
+          "parent": "1",
+          "source": "PBMtLLTdshamB4iVPvh0-44",
+          "target": "PBMtLLTdshamB4iVPvh0-13"
+        },
+        {
+          "id": "9hLGlJLBp2dc8XmYdHgG-7",
+          "type": "edge",
+          "parent": "1",
+          "source": "9hLGlJLBp2dc8XmYdHgG-1",
+          "target": "9hLGlJLBp2dc8XmYdHgG-2"
+        },
+        {
+          "id": "9hLGlJLBp2dc8XmYdHgG-1",
+          "type": "node",
+          "parent": "1",
+          "label": "FeedController\n+ feedService: FeedService\n+ isReadReceipt()\n+ typingIndicator()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>FeedController</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ feedService:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">FeedService</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+&nbsp;<span style=\"white-space: normal;\"><span style=\"background-color: transparent;\">isReadReceipt()</span></span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;typingIndicator()<span style=\"white-space:pre\">\t</span></span></p><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "9hLGlJLBp2dc8XmYdHgG-2",
+          "type": "node",
+          "parent": "1",
+          "label": "FeedService\n+ feedRepository: FeedRepository\n+ isReadReceipt()\n+ typingIndicator()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><b>FeedService</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ feedRepository:&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">FeedRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+&nbsp;<span style=\"white-space: normal;\"><span style=\"background-color: transparent;\">isReadReceipt()</span></span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"white-space: normal;\">+&nbsp;typingIndicator()<span style=\"white-space:pre\">\t</span></span></p><p style=\"margin:0px;margin-left:4px;\"><br></p>"
+        },
+        {
+          "id": "9hLGlJLBp2dc8XmYdHgG-4",
+          "type": "node",
+          "parent": "1",
+          "label": "<<Interface>>\nFeedRepository\n\n+ isReadReceipt()\n+ typingIndicator()",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><i>&lt;&lt;Interface&gt;&gt;</i><br><b>FeedRepository</b></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><br></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+ </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">isReadReceipt()</span></p><p style=\"margin: 0px 0px 0px 4px;\">+ typingIndicator()<span style=\"white-space: pre;\">\t</span></p><p style=\"margin: 0px 0px 0px 4px;\"><br></p>"
+        },
+        {
+          "id": "9hLGlJLBp2dc8XmYdHgG-5",
+          "type": "edge",
+          "parent": "1",
+          "source": "9hLGlJLBp2dc8XmYdHgG-2",
+          "target": "9hLGlJLBp2dc8XmYdHgG-4"
+        },
+        {
+          "id": "9hLGlJLBp2dc8XmYdHgG-6",
+          "type": "edge",
+          "parent": "1",
+          "source": "9hLGlJLBp2dc8XmYdHgG-4",
+          "target": "PBMtLLTdshamB4iVPvh0-13"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+ADR-001: WebSocket Gateway + Sharding + Connection Registry + Hybrid Fan-out
+عنوان: مقیاس‌پذیری و عملکرد در تحویل بلادرنگ (۱۰۰M کاربر همزمان، ۱۰B پیام در روز)
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله (Context)
+پلتفرم پیام‌رسان باید پیام‌ها را به ۱۰۰ میلیون کاربر همزمان با تأخیر کمتر از ۵۰۰ میلی‌ثانیه تحویل دهد. حجم پیام‌ها ۱۰ میلیارد در روز است. علاوه بر این:
+کاربران باید Presence (آنلاین/آفلاین) و Typing Indicator را بلادرنگ ببینند.
+پیام‌ها باید در گروه‌های تا ۱۰۰,۰۰۰ عضوی Fan-out شوند.
+کاربران آفلاین باید پیام‌ها را هنگام اتصال مجدد دریافت کنند.
+سیستم باید در برابر قطعی سرور مقاوم باشد (Reconnection).
+چالش اصلی این است که REST Stateless برای این حجم از Connection پاسخگو نیست، و Fan-out ساده در گروه‌های بزرگ باعث انفجار پیام می‌شود.
+
+
+تصمیم (Decision)
+معماری ترکیبی WebSocket + Sharding + Connection Registry + Hybrid Fan-out + Kafka انتخاب می‌شود.
+
+۱. WebSocket Gateway (Netty)
+ارتباط Persistent بین Client و Server برقرار می‌شود (نه REST).
+Protocol: WSS (WebSocket Secure) برای رمزنگاری در Transit.
+هر سرور با Netty (Event-driven, Non-blocking) تا ۱ میلیون Connection را هندل می‌کند.
+با ۱۰۰ سرور → ۱۰۰ میلیون Connection همزمان.
+سرور می‌تواند Push کند (تأخیر < ۱۰۰ms) بدون Polling.
+
+۲. Connection Registry (Redis)
+نگاشت userId → serverId در Redis ذخیره می‌شود:
+SET user:{userId}:server {serverId} EX 60
+هنگام ارسال پیام به کاربر، سرور مقصد از Redis خوانده می‌شود.
+اگر کاربر آفلاین باشد، پیام در Kafka صف می‌شود تا هنگام اتصال مجدد تحویل داده شود.
+Pub/Sub در Redis برای انتشار رویدادهای Presence (آنلاین/آفلاین/آخرین بازدید).
+
+۳. Sharding بر اساس userId
+هر کاربر همیشه به یک سرور مشخص وصل می‌شود:
+serverId = hash(userId) % 100
+Consistent Hashing برای Rebalancing هنگام افزودن/حذف سرور.
+مزیت: Locality — پیام‌های یک کاربر همیشه در یک سرور Cache می‌شوند.
+Load Balancer (HAProxy) با Sticky Sessions بر اساس userId.
+
+۴. Kafka برای Async Delivery
+Topic: messages با Partition بر اساس conversationId.
+Producer: Message Service → Kafka
+Consumer: WebSocket Gateway (هر سرور مصرف‌کننده پارتیشن مربوطه)
+Exactly-Once Delivery با Idempotent Producer + Consumer Offset.
+Topic جداگانه presence-events برای Online/Offline.
+Topic fanout-events برای گروه‌های بزرگ.
+
+۵. Hybrid Fan-out (کلید مقیاس‌پذیری گروه‌ها)
+گروه < ۱۰۰ نفر: Fan-out on Write
+هنگام ارسال پیام، Kafka Event به همه Members Push می‌شود.
+تأخیر کم، Load متوسط.
+گروه > ۱۰۰ نفر: Fan-out on Read
+پیام فقط در Conversation ذخیره می‌شود (یک ردیف).
+کاربر هنگام باز کردن چت، Pull می‌کند.
+برای گروه ۱۰۰,۰۰۰ عضوی: صفر Push، فقط Read when needed.
+آستانه (۱۰۰) قابل تنظیم توسط Config Server.
+
+۶. Reconnection & Offline Handling
+Client هنگام قطعی، Resume Token دریافت می‌کند.
+هنگام اتصال مجدد، آخرین messageId را می‌فرستد.
+سرور پیام‌های از دست رفته را از Kafka (Offset) یا Cassandra می‌خواند.
+Exponential Backoff: ۱s, ۲s, ۴s, ۸s, ۱۶s برای Reconnect.
+گزینه‌های بررسی‌شده (Alternatives Considered)
+
+Alternative 1: REST Polling
+مزایا:
+پیاده‌سازی ساده
+Stateless، مقیاس‌پذیری افقی راحت
+منطبق بر HTTP
+معایب:
+تأخیر بالا (Polling هر ۱ ثانیه → تأخیر ۱s > ۵۰۰ms)
+۱۰۰M کاربر × Polling = ۱۰۰M Request در ثانیه
+بار زیاد روی API Gateway
+مصرف Battery زیاد در Mobile
+دلیل رد: عدم توانایی در تحقق تأخیر < ۵۰۰ms و مصرف Bandwidth غیرقابل قبول.
+
+Alternative 2: فقط Kafka بدون WebSocket
+مزایا:
+مقیاس‌پذیری خطی
+جداسازی Producer/Consumer
+تحمل خطا
+معایب:
+Client نمی‌تواند Push دریافت کند
+نیاز به Polling → همان مشکل REST
+تأخیر بالا برای Real-time
+دلیل رد: Kafka به تنهایی نمی‌تواند به Client Push کند. WebSocket لایه‌ی تحویل به Client است.
+
+Alternative 3: Server-Sent Events (SSE)
+مزایا:
+ساده‌تر از WebSocket
+یک‌طرفه (Server → Client)
+بر پایه HTTP
+معایب:
+فقط یک‌طرفه (Client نمی‌تواند پیام بفرستد)
+برای Chat نیاز به یک کانال جداگانه برای ارسال
+پشتیبانی محدود در برخی مرورگرها
+Connection Limit (۶ در HTTP/1.1)
+دلیل رد: Chat نیاز به ارتباط دوطرفه دارد.
+
+Alternative 4: Fan-out on Write برای همه گروه‌ها
+مزایا:
+تأخیر کم (پیام فوری Push می‌شود)
+سادگی پیاده‌سازی
+معایب:
+گروه ۱۰۰,۰۰۰ عضوی → ۱۰۰,۰۰۰ Push برای یک پیام
+۱۰ پیام در دقیقه × ۱۰۰K = ۱M Push در دقیقه برای یک گروه!
+Kafka Partition پر می‌شود
+هزینه Bandwidth نجومی
+دلیل رد: غیرقابل تحمل در گروه‌های بزرگ.
+
+Alternative 5: Fan-out on Read برای همه گروه‌ها
+مزایا:
+Load کم روی Write
+مقیاس‌پذیری آسان
+معایب:
+کاربر باید برای دیدن هر پیام، Pull کند
+برای گروه‌های کوچک، تأخیر اضافه
+Load زیاد روی Read (هر کاربر هر بار Pull)
+دلیل رد: برای گروه‌های کوچک تأخیر اضافه می‌کند.
+پیامدها (Consequences)
+مثبت:
+تأخیر < ۱۰۰ms برای تحویل پیام (به مراتب کمتر از ۵۰۰ms مورد نیاز).
+مقیاس‌پذیری خطی: افزودن سرور جدید → ۱M Connection بیشتر.
+Hybrid Fan-out: بهینه برای هر اندازه گروه (کوچک: Write, بزرگ: Read).
+Offline Support: پیام‌ها در Kafka/Cassandra باقی می‌مانند.
+Presence بلادرنگ: Redis Pub/Sub برای Online/Offline.
+Reconnection سریع: با Resume Token + Exponential Backoff.
+تحمل خطا: اگر یک WebSocket Gateway از کار بیفتد، کاربران به سرور دیگر Reconnect می‌شوند.
+منفی:
+یچیدگی Connection Registry: نیاز به Redis با HA.
+Sticky Sessions: Load Balancer باید بر اساس userId مسیریابی کند.
+Reconnection Logic: Client باید پیچیدگی مدیریت قطعی را داشته باشد.
+حافظه زیاد: هر Connection ~۱۰KB → ۱۰۰M × ۱۰KB = ۱TB RAM (توزیع‌شده).
+Backpressure Management: در اوج ترافیک، Kafka ممکن است Lag کند.
+
+ریسک‌ها و راه‌حل:
+ریسک	راه‌حل
+Redis Down (Connection Registry)	Redis Sentinel + Cluster Mode
+Kafka Down	Buffer در حافظه سرور + Retry با Exponential Backoff
+WebSocket Gateway Crash	Client Reconnect به سرور دیگر (Load Balancer)
+Network Partition	Idempotency Key + Resume Token
+Thundering Herd در Reconnect	Jitter تصادفی (۰-۵s) + Exponential Backoff
+Memory Exhaustion	Connection Limit per Server + Horizontal Scale
+Fan-out Storm در گروه‌های بزرگ	Hybrid Fan-out (Write/Read) + Rate Limiting

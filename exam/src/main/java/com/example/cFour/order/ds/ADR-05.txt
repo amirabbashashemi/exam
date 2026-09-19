@@ -1,0 +1,84 @@
+✅ نقاط قوت:
+
+Hot/Warm/Cold را درست گفتی
+
+S3 Glacier را آوردی
+
+❌ نقاط ضعف:
+
+GPS Trail اصلاً نداری! (در عنوان بود ولی در ADR نبود)
+
+GDPR / Right to Erasure نداری
+
+Soft Delete نداری
+
+Compression برای GPS Trail نداری (حجم بسیار زیاد!)
+
+نسخه اصلاحی (۱۰/۱۰):
+
+### ADR-005: چرخه حیات GPS Trail و GDPR
+
+Context:
+GPS Trail روزانه ۵۰۰GB تولید می‌کند. GDPR حق فراموشی را الزامی کرده. 
+حجم داده با رشد کاربران انفجاری می‌شود.
+
+Decision:
+
+۱. Time-Series DB (TimescaleDB):
+   - Hypertable با Partitioning روی `timestamp` (روزانه)
+   - Index روی `(courier_id, timestamp)`
+
+۲. GPS Trail Lifecycle:
+   - Hot (۷ روز): TimescaleDB روی SSD
+     - Query سریع برای Tracking زنده
+   - Warm (۳ ماه): TimescaleDB با Compression
+     - Compression: Gorilla (۹۰٪ کاهش حجم)
+   - Cold (۱ سال): S3 Glacier (Parquet)
+     - فقط برای Audit و شکایات
+   - Beyond 1 year: حذف خودکار
+
+۳. Adaptive Sampling:
+   - در حال حرکت: هر ۳ ثانیه
+   - متوقف: هر ۳۰ ثانیه
+   - باتری < ۲۰٪: هر ۶۰ ثانیه
+   - بعد از تحویل: توقف کامل
+
+۴. GDPR Compliance:
+
+   الف) Right to Access:
+   - API: `GET /user/{id}/data` → خروجی JSON در ۳۰ روز
+   - Job شبانه که تمام داده کاربر را جمع می‌کند
+
+   ب) Right to Erasure (Soft Delete + Anonymize):
+   - `is_deleted = true` فوری
+   - بعد از ۳۰ روز: Anonymize
+     - نام، ایمیل، شماره → `USER_DELETED_12345`
+     - GPS Trail مشتری → حذف کامل (چون مالک داده، مشتری است)
+     - GPS Trail راننده → Anonymize (courier_id حذف، lat/lng نگه‌داشته)
+   - داده مالی → ۷ سال نگه‌داشته (قانون مالیات)
+
+   ج) Data Minimization:
+   - GPS با دقت ۵m کافی است (نه ۱m)
+   - فقط در طول سفارش جمع‌آوری (نه ۲۴ ساعته)
+
+   د) Consent:
+   - هنگام نصب اپ: تیک «رضایت به جمع‌آوری GPS»
+   - با توضیح شفاف: «برای تحویل دقیق، مسیر شما را ضبط می‌کنیم»
+
+۵. Compression Pipeline:
+   - Job شبانه: GPS قدیمی‌تر از ۷ روز → Gorilla Compression
+   - Snapping روی گراف جاده (کاهش ۷۰٪ نقاط تکراری)
+
+Alternatives Considered:
+- ذخیره GPS در PostgreSQL: رد شد چون INSERT ۲M/min نیاز به sharding دارد.
+- حذف کامل GPS Trail: رد شد چون GDPR اجازه می‌دهد Anonymize کنیم (کمتر هزینه‌بر).
+- بدون Sampling تطبیقی: رد شد چون باتری راننده ۳ ساعته تمام می‌شود.
+
+Consequences:
+- مثبت: کاهش ۹۰٪ حجم با Compression، Compliance با GDPR
+- منفی: پیچیدگی Time-Series DB، نیاز به Recovery از Cold Storage (۴۸ ساعت)
+- ریسک: اگر Job Compression خطا کند، حجم رشد می‌کند → Monitoring + Alert
+
+Related C4 Level: 
+- Container: ArchiveService + TimescaleDB + S3 Glacier
+- Component: GpsTrailService + GdprService

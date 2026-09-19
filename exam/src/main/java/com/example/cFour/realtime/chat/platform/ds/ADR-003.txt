@@ -1,0 +1,228 @@
+ADR-003: Settings Service + Rule Engine + Cross-Device Sync
+عنوان: پیکربندی آسان برای کاربر (Privacy، Notification، Block/Unblock، Group Settings)
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله (Context)
+پلتفرم پیام‌رسان باید به ۱۰۰ میلیون کاربر اجازه دهد تنظیمات شخصی خود را بدون کدنویسی و به‌صورت بلادرنگ تغییر دهند. این تنظیمات شامل:
+
+۱. Privacy (حریم خصوصی):
+Last Seen (آخرین بازدید): Everyone / Contacts / Nobody
+Profile Photo: Everyone / Contacts / Nobody
+Read Receipts: روشن/خاموش
+Who can message me: Everyone / Contacts
+Who can add me to groups: Everyone / Contacts
+Disappearing Messages: ۲۴h / ۷d / ۹۰d / Off
+
+
+۲. Notification (اعلان‌ها):
+Per-chat Mute (۱h, ۸h, ۱w, Forever)
+Do Not Disturb (بازه زمانی)
+Custom Sounds per contact/group
+Message Preview (روشن/خاموش)
+
+
+۳. Block/Unblock:
+Block کاربر (عدم دریافت پیام، عدم مشاهده Last Seen)
+Report کاربر (Spam, Abuse)
+Block List Management
+
+
+۴. Group Settings:
+Who can send messages: Admins / Everyone
+Who can edit group info: Admins / Everyone
+Who can add members: Admins / Everyone
+Approve new members (برای گروه‌های بزرگ)
+
+
+۵. Business Settings (WhatsApp Business):
+Business Hours
+Auto-reply Messages
+Catalog Management
+Away Messages
+
+
+چالش‌ها:
+تنظیمات باید بلادرنگ در همه Deviceهای کاربر Sync شوند.
+تنظیمات Privacy باید در سرور اعمال شوند (نه Client) تا قابل دور زدن نباشند.
+قوانین شرطی (مثلاً "اعلان‌ها را بین ۱۱ شب تا ۷ صبح خاموش کن") نیاز به Rule Engine دارند.
+Block باید فوری اعمال شود (تأخیر < ۱ ثانیه).
+حجم تنظیمات: ۱۰۰M کاربر × ۵۰ تنظیم = ۵B رکورد!
+تصمیم (Decision)
+معماری Settings Service + Rule Engine + Cross-Device Sync + Redis Cache انتخاب می‌شود.
+
+
+۱. Settings Service (میکروسرویس مستقل)
+سرویس جداگانه برای مدیریت همه تنظیمات کاربر.
+Database: PostgreSQL برای داده‌های ساختاریافته + JSONB برای تنظیمات پویا.
+
+
+۲. Rule Engine برای تنظیمات شرطی (Drools)
+قوانین در PostgreSQL (JSONB) ذخیره می‌شوند.
+Drools قوانین را در Runtime اعمال می‌کند.
+"اگر کاربر در حال تایپ است، Typing Indicator نمایش بده"
+"اگر گروه > ۱۰۰ عضو، اعلان را خلاصه کن"
+"اگر فرستنده در Block List است، پیام را Drop کن"
+Cache در Redis با TTL=۵ دقیقه برای Performance.
+
+
+۳. Cross-Device Sync (همگام‌سازی بین دستگاه‌ها)
+کاربر ممکن است ۳ دستگاه داشته باشد (موبایل، تبلت، لپ‌تاپ).
+تنظیمات باید در همه Deviceها بلادرنگ Sync شوند.
+
+مکانیزم:
+کاربر تنظیمات را در دستگاه ۱ تغییر می‌دهد.
+Settings Service → PostgreSQL + Kafka Event settings-changed.
+WebSocket Gateway → Push به همه Deviceهای کاربر.
+Clientها تنظیمات جدید را اعمال می‌کنند.
+Version-based Sync:
+هر تغییر یک version جدید می‌گیرد.
+اگر Client version قدیمی داشت → Server Full Sync می‌فرستد.
+Conflict Resolution: Last-Write-Wins با Version Check.
+
+
+۴. Privacy Enforcement در سرور (نه Client)
+تنظیمات Privacy فقط در سرور اعمال می‌شوند تا قابل دور زدن نباشند.
+مثال Last Seen:
+Client درخواست Last Seen کاربر B را می‌دهد.
+Server چک می‌کند: آیا A در Contacts کاربر B است؟
+اگر Privacy = "Contacts" و A در Contacts نیست → Return NULL.
+مثال Read Receipt:
+اگر کاربر B Read Receipt را خاموش کند، Server به A اطلاع نمی‌دهد.
+ولی B همچنان Read Receipt دیگران را می‌بیند (تقارن).
+مثال Block:
+Server چک می‌کند: آیا فرستنده در Block List گیرنده است؟
+اگر بله → پیام ذخیره نمی‌شود (یا Flag می‌شود).
+Block List در Redis Cache با TTL=۱h.
+
+
+۵. Block/Unblock (فوری و اتمیک)
+Block Flow:
+کاربر A → POST /api/settings/block با {userId: B}.
+Settings Service → PostgreSQL + Redis (Cache Block List).
+Kafka Event user-blocked → Notification Service (اطلاع به B؟ خیر).
+Fan-out Block: A دیگر پیام‌های B را نمی‌بیند، و B نمی‌تواند به A پیام بدهد.
+Unblock: مشابه، ولی Redis Cache Invalidate می‌شود.
+Redis Structure:
+
+text
+SET user:{A}:blocked:{B} 1 EX 3600
+SMEMBERS user:{A}:blocked  → لیست کامل
+Enforcement: در Message Service قبل از ذخیره پیام، Block List چک می‌شود.
+
+
+۶. Group Settings (با نقش‌های Admin/Member)
+هر گروه تنظیمات مخصوص خود دارد:
+sql
+CREATE TABLE group_settings (
+  group_id UUID PRIMARY KEY,
+  who_can_send_messages ENUM('ADMINS', 'EVERYONE'),
+  who_can_edit_info ENUM('ADMINS', 'EVERYONE'),
+  who_can_add_members ENUM('ADMINS', 'EVERYONE'),
+  approve_new_members BOOLEAN,
+  disappearing_messages_ttl INT, -- ثانیه
+  updated_at TIMESTAMP
+);
+Admin Roles: Creator, Admin, Member (با Permissions مختلف).
+Approve New Members: برای گروه‌های بزرگ، درخواست عضویت به Admin می‌رود.
+Cache در Redis با TTL=۵min.
+
+
+۷. WhatsApp Business Settings
+Business Hours: بازه‌های زمانی که پاسخ می‌دهند.
+Auto-reply: پیام خودکار در خارج از ساعت کاری.
+Catalog: لیست محصولات/خدمات.
+Away Message: پیام خودکار در تعطیلات.
+API برای Business: REST Endpoint جداگانه با API Key.
+Webhook: برای Incoming Messages.
+
+
+۸. Redis Cache برای Performance
+Cache Layers:
+
+text
+SET settings:{userId} {JSON} EX 300         # تنظیمات کامل
+SET privacy:{userId} {JSON} EX 300          # Privacy
+SET blocked:{userId} {JSON} EX 3600         # Block List
+SET group:{groupId}:settings {JSON} EX 300  # Group Settings
+Invalidation: هنگام تغییر، Kafka Event → Cache Invalidate.
+
+Warm-up: هنگام Login، تنظیمات از DB به Redis Load می‌شود.
+
+
+
+گزینه‌های بررسی‌شده (Alternatives Considered)
+Alternative 1: تنظیمات در Client-side فقط
+مزایا:
+پیاده‌سازی ساده
+بدون Load روی سرور
+سرعت بالا
+معایب:
+Privacy قابل دور زدن است (Client می‌تواند Ignore کند).
+Sync بین Deviceها ممکن نیست.
+اگر کاربر اپ را Reinstall کند، تنظیمات از دست می‌رود.
+امنیت پایین.
+دلیل رد: Privacy و Block باید در سرور اعمال شوند.
+
+
+Alternative 2: تنظیمات در Config Server (Spring Cloud Config)
+مزایا:
+Centralized
+Git-based Versioning
+معایب:
+برای Business User قابل استفاده نیست.
+فقط مقادیر ساده (Key-Value).
+نیاز به Restart برای اعمال.
+برای ۱۰۰M کاربر مقیاس نمی‌گیرد.
+دلیل رد: برای User Preferences طراحی نشده است.
+
+
+Alternative 3: Feature Toggle (LaunchDarkly)
+مزایا:
+Real-time
+UI برای مدیریت
+معایب:
+فقط Boolean (روشن/خاموش).
+برای قوانین شرطی مناسب نیست.
+هزینه بالا برای ۱۰۰M کاربر.
+دلیل رد: نمی‌تواند قوانین شرطی (If-Then) را پشتیبانی کند.
+
+
+Alternative 4: تنظیمات در Cassandra به جای PostgreSQL
+مزایا:
+مقیاس‌پذیری افقی
+Write Performance بالا
+معایب:
+Query پیچیده سخت است.
+Transaction Support ندارد.
+برای JSONB مناسب نیست.
+دلیل رد: PostgreSQL با JSONB و Index برای تنظیمات بهینه‌تر است.
+
+
+Alternative 5: Block List در Client-side
+مزایا:
+سرعت بالا
+بدون Load روی سرور
+معایب:
+قابل دور زدن (کاربر می‌تواند Cache پاک کند).
+Sync بین Deviceها ممکن نیست.
+اگر Block List بزرگ باشد (۱۰۰۰ کاربر)، Client کند می‌شود.
+دلیل رد: امنیت و Sync.
+پیامدها (Consequences)
+مثبت:
+پیکربندی آسان: کاربر بدون کدنویسی همه تنظیمات را تغییر می‌دهد.
+Privacy در سرور: غیرقابل دور زدن.
+Cross-Device Sync: تنظیمات بلادرنگ در همه Deviceها.
+Rule Engine: قوانین شرطی (DND, Auto-reply) به‌راحتی تعریف می‌شوند.
+مقیاس‌پذیری: Redis Cache + PostgreSQL برای ۱۰۰M کاربر.
+فوری بودن Block: تأخیر < ۱ ثانیه.
+Group Settings: کنترل کامل Admin بر گروه.
+WhatsApp Business: API جداگانه برای Enterprise.
+Optimistic Locking: جلوگیری از Conflict در Sync.
+منفی:
+پیچیدگی Rule Engine: نیاز به یادگیری Drools.
+Cache Invalidation: مدیریت سخت در ۱۰۰M کاربر.
+حجم داده: ۵B رکورد تنظیمات → نیاز به Sharding.
+Latency در Sync: هر تغییر → Kafka → WebSocket → Client (تأخیر ~۱۰۰ms).
+آموزش کاربر: کاربر باید Rule Builder را یاد بگیرد.
+هزینه Redis: ۱۰۰M کاربر × ۱KB = ۱۰۰GB RAM.

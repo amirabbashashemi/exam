@@ -1,0 +1,35 @@
+✅ نقاط قوت:
+
+CRUD API + PostgreSQL + ELK را درست گفتی
+
+Trade-offها را نوشتی
+
+❌ نقاط ضعف:
+
+Rule Engine نداری (اگر رستوران‌دار بخواهد «تخفیف ۲۰٪ بعد از ساعت ۹ شب» تعریف کند، چطور؟)
+
+Admin Panel را فقط اسم بردی
+
+DSL/JSON Schema نداری
+
+Event Publishing به Kafka نداری (برای اطلاع‌رسانی به سرویس‌های دیگر)
+
+نسخه اصلاحی (۱۰/۱۰):
+
+### ADR-003: پیکربندی آسان رستوران‌داران با Rule Engine
+
+**Decision:**
+۱. **Admin Panel (React + Form Builder)** برای رستوران‌داران
+۲. **CRUD API** روی PostgreSQL (JSONB برای منو)
+۳. **Rule Engine (Drools)** برای تخفیف‌های پویا:
+   - مثال: «۲۰٪ تخفیف بعد از ساعت ۹ شب»
+   - ذخیره در PostgreSQL (JSONB)
+   - Cache در Redis با TTL=۵min
+۴. **CDC (Debezium)** برای همگام‌سازی با Elasticsearch
+۵. **Event Publishing** به Kafka برای اطلاع‌رسانی به Order Service
+
+**Consequences:**
+- مثبت: صفر شدن نسخه‌گذاری، استقلال کامل رستوران‌داران
+- منفی: نیاز به آموزش، پیچیدگی Rule Engine
+
+**Related C4 Level:** Component (RestaurantService + PricingRuleEngine)

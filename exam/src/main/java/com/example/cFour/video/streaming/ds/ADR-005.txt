@@ -1,0 +1,68 @@
+
+---
+
+### ADR-05: چرخه حیات + Content Moderation (۴/۱۰)
+
+**✅ نقاط قوت:**
+- حذف منطقی + Anonymize را انتخاب کردی
+- بازه‌های زمانی را تعریف کردی
+
+**❌ نقاط ضعف:**
+
+۱. **Content Moderation را اصلاً نداری!** در سوال صریحاً آمده بود:
+
+
+
+
+**نسخه نمره‌فول (۱۰/۱۰):**
+
+```markdown
+### ADR-005: Data Lifecycle + Content Moderation
+
+**Context:**
+روزانه ۵۰۰ ساعت ویدیو آپلود می‌شود.
+هر ویدیو ۱۰GB (Original) + ۶۰GB (Transcoded) = ۷۰GB فضا.
+GDPR حق فراموشی را الزامی کرده.
+
+**Decision:**
+
+۱. **Content Moderation Pipeline:**
+   - آپلود → Kafka `video-uploaded`
+   - **AI Moderation Service** (TensorFlow Serving):
+     - تشخیص محتوای نامناسب (NSFW, Violence, Hate Speech)
+     - تشخیص کپی‌رایت (Audio Fingerprint)
+   - اگر Safe → منتشر
+   - اگر Flagged → صف بررسی انسانی
+   - اگر Blocked → حذف + اطلاع به Creator
+
+۲. **Tiered Storage:**
+   - **Hot (۳ ماه):** S3 Standard (دسترسی فوری)
+   - **Warm (۳ ماه - ۲ سال):** S3 Infrequent Access
+   - **Cold (>۲ سال):** S3 Glacier Deep Archive
+   - **Format:** Parquet (فشرده برای Archive)
+
+۳. **GDPR:**
+   - Soft Delete (`is_deleted`) فوری
+   - بعد از ۳۰ روز: Anonymize Metadata
+   - ویدیو + زیرنویس + کامنت → حذف کامل
+   - داده مالی (Monetization) → ۷ سال نگه‌داشته
+
+۴. **Restore Workflow:**
+   - درخواست کاربر → Kafka → Job
+   - بازیابی از Glacier (۳-۵ ساعت)
+   - اطلاع‌رسانی با Email
+
+۵. **Video Versions:**
+   - Original (۱۰GB) → S3 Glacier بعد از ۳۰ روز
+   - Transcoded (۶۰GB) → S3 Standard برای Streaming
+
+**Alternatives Considered:**
+- *حذف فیزیکی*: رد شد چون Foreign Key می‌شکند.
+- *بدون Content Moderation*: رد شد چون قانونی نیست.
+- *ذخیره همه در S3 Standard*: رد شد چون هزینه سرسام‌آور.
+
+**Consequences:**
+- مثبت: Compliance، کاهش ۹۰٪ هزینه Storage
+- منفی: تأخیر در بازیابی از Glacier، پیچیدگی Pipeline
+
+**Related C4 Level:** Container (ModerationService + ArchiveService + S3 Glacier)

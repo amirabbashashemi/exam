@@ -1,0 +1,212 @@
+ADR-002: Lamport Timestamp + Batch Read Receipt + Hybrid Fan-out
+عنوان: سازگاری (Consistency) در ترتیب پیام‌ها، Read Receipt، و Fan-out گروهی
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله (Context)
+در یک پلتفرم پیام‌رسان با ۱۰ میلیارد پیام در روز و ۱۰۰ میلیون کاربر، سه چالش اساسی Consistency وجود دارد:
+
+۱. ترتیب پیام‌ها (Message Ordering):
+اگر دو کاربر همزمان پیام بفرستند، کدام اول است؟
+ساعت کامپیوتر کاربران متفاوت است (Clock Skew).
+پیام‌ها ممکن است با تأخیر شبکه، Out of Order برسند.
+
+۲. Read Receipt (✓✓):
+کاربر می‌خواهد بداند پیامش خوانده شده یا نه.
+در گروه ۱۰۰,۰۰۰ عضوی، اگر هر عضو Read Receipt بفرستد → ۱۰۰K ردیف برای یک پیام!
+باید بین دقت و مقیاس‌پذیری تعادل برقرار کرد.
+
+۳. Fan-out گروهی:
+گروه ۱۰۰,۰۰۰ عضوی: اگر هر پیام به همه Push شود → ۱۰۰K ارسال برای یک پیام!
+۱۰ پیام در دقیقه × ۱۰۰K = ۱M ارسال در دقیقه برای یک گروه.
+Kafka Partition پر می‌شود و Bandwidth نجومی می‌شود.
+
+تصمیم (Decision)
+معماری ترکیبی Lamport Timestamp + Batch Read Receipt + Hybrid Fan-out انتخاب می‌شود.
+
+۱. ترتیب پیام‌ها با Lamport Timestamp
+هر پیام یک (lamportClock, sequence, serverTimestamp) دارد:
+lamportClock: عدد منطقی که با هر رویداد افزایش می‌یابد (نه ساعت واقعی).
+sequence: شماره ترتیبی یکتا در هر Conversation (Auto-increment).
+serverTimestamp: زمان سرور (UTC) برای نمایش به کاربر.
+الگوریتم Lamport:
+هنگام ارسال: lamportClock = max(localClock, receivedClock) + 1
+هنگام دریافت: localClock = max(localClock, receivedClock)
+Client پیام‌ها را بر اساس (lamportClock, sequence) می‌چیند.
+Server فقط sequence را تضمین می‌کند (Atomic Increment در Redis).
+ذخیره در Cassandra با Clustering Key: (conversationId, sequence).
+چرا Lamport و نه Unix Timestamp؟
+Unix Timestamp وابسته به ساعت سرور است → Clock Skew بین سرورها.
+Lamport Clock یک Total Order ایجاد می‌کند که مستقل از ساعت واقعی است.
+Server Timestamp فقط برای نمایش به کاربر استفاده می‌شود، نه ترتیب.
+
+۲. Read Receipt با Batch + Aggregation
+چت خصوصی (1-to-1):
+هر کاربر فقط lastReadMessageId را ذخیره می‌کند.
+Read Receipt فوری Push می‌شود (تأخیر < ۱۰۰ms).
+ذخیره در Redis: SET chat:{chatId}:{userId}:lastRead {messageId}
+گروه کوچک (< ۱۰۰ نفر):
+هر عضو lastReadMessageId را در Cassandra ذخیره می‌کند.
+Count تجمعی در Redis: INCR group:{groupId}:{messageId}:readCount
+نمایش: "۱۵ نفر خوانده‌اند"
+گروه بزرگ (> ۱۰۰ نفر):
+Batch Update: هر ۵ ثانیه، آخرین lastReadMessageId هر عضو در Cassandra ذخیره می‌شود.
+Aggregated Count: فقط تعداد کل خوانندگان ذخیره می‌شود (نه لیست افراد).
+نمایش: "۵۰,۰۰۰ نفر خوانده‌اند" (تقریبی با HyperLogLog).
+Trade-off: دقت کمتر در ازای مقیاس‌پذیری.
+ذخیره‌سازی Cassandra:
+sql
+CREATE TABLE read_receipts (
+  conversation_id UUID,
+  user_id UUID,
+  last_read_sequence BIGINT,
+  updated_at TIMESTAMP,
+  PRIMARY KEY ((conversation_id), user_id)
+);
+
+
+۳. Hybrid Fan-out (Write vs Read)
+آستانه قابل تنظیم (پیش‌فرض: ۱۰۰ نفر) در Config Server.
+گروه < ۱۰۰ نفر: Fan-out on Write
+هنگام ارسال پیام:
+پیام در Cassandra ذخیره می‌شود.
+Kafka Event به Topic fanout-small-group ارسال می‌شود.
+Consumer: پیام را به همه Members Push می‌کند (از طریق WebSocket Gateway).
+مزیت: تأخیر کم (پیام فوری می‌رسد).
+معایب: Load متناسب با تعداد Members.
+گروه > ۱۰۰ نفر: Fan-out on Read
+هنگام ارسال پیام:
+پیام فقط یک بار در Cassandra ذخیره می‌شود.
+Kafka Event به Topic fanout-large-group ارسال می‌شود.
+هیچ Push فوری انجام نمی‌شود.
+هنگام باز کردن چت توسط کاربر:
+کاربر آخرین lastReadSequence خود را می‌فرستد.
+سرور پیام‌های جدید را از Cassandra می‌خواند.
+فقط پیام‌های جدید (Delta) به کاربر Push می‌شود.
+مزیت: صفر Push برای ۱۰۰K عضو، Load ثابت.
+معایب: تأخیر بیشتر برای اعضای آنلاین (تا ۵ ثانیه).
+آستانه‌ی ۱۰۰ چرا؟
+گروه < ۱۰۰: Fan-out روی Write بهینه‌تر است (Kafka تحمل می‌کند).
+گروه > ۱۰۰: Fan-out روی Read اجباری است (Kafka منفجر می‌شود).
+
+۴. Kafka برای Consistency
+Topic messages با Partition بر اساس conversationId:
+تضمین ترتیب پیام‌ها در یک Conversation (Kafka Ordering).
+Producer با acks=all برای Exactly-Once.
+Consumer با Idempotent Processing.
+Topic read-receipts برای Batch Processing:
+Consumer هر ۵ ثانیه Batch را در Cassandra می‌نویسد.
+کاهش Load از ۱۰۰K Write/s به ۲۰ Write/s.
+Topic fanout-events برای Hybrid Fan-out:
+Consumer بر اساس اندازه گروه، Write یا Read را انتخاب می‌کند.
+
+۵. Idempotency برای جلوگیری از تکرار
+هر پیام یک clientMessageId یکتا دارد (UUID از Client).
+Server چک می‌کند: اگر clientMessageId قبلاً پردازش شده → نادیده بگیر.
+ذخیره در Redis با TTL=۲۴h: SET idem:{clientMessageId} 1 NX EX 86400
+این تضمین می‌کند که پیام‌های تکراری (به خاطر Retry شبکه) دوبار ذخیره نشوند.
+
+۶. Reconnection و پیام‌های از دست رفته
+Client هنگام قطعی، آخرین sequence را در Local Storage نگه می‌دارد.
+هنگام اتصال مجدد:
+Client → lastSequence=N به Server.
+Server پیام‌های sequence > N را از Cassandra می‌خواند.
+Delta (فقط پیام‌های جدید) به Client Push می‌شود.
+Client با Lamport Timestamp ترتیب را می‌چیند.
+گزینه‌های بررسی‌شده (Alternatives Considered)
+
+
+Alternative 1: Unix Timestamp (Nanosecond)
+مزایا:
+پیاده‌سازی ساده
+یکپارچگی در سراسر سیستم
+تبدیل آسان به Timezone
+معایب:
+Clock Skew بین سرورها (ممکن است تا ۱۰ms اختلاف باشد).
+اگر ساعت سرور اشتباه تنظیم شود، ترتیب پیام‌ها به هم می‌ریزد.
+NTP Sync لازم است ولی کافی نیست.
+در ترافیک بالا، دو پیام ممکن است همان Nanosecond را بگیرند.
+دلیل رد: عدم تضمین Total Order مستقل از ساعت واقعی.
+
+
+Alternative 2: زمان کامپیوتر کاربر
+مزایا:
+پیاده‌سازی بسیار ساده
+بدون سربار سرور
+معایب:
+کاربر می‌تواند ساعت دستگاه خود را تغییر دهد → ترتیب به هم می‌ریزد.
+Timezoneهای مختلف → ترتیب اشتباه.
+عدم امنیت (Spoofing).
+دلیل رد: غیرقابل اعتماد برای Consistency.
+
+
+Alternative 3: Vector Clock
+مزایا:
+تشخیص دقیق Causality (علیت).
+مناسب برای سیستم‌های Distributed.
+معایب:
+حجم زیاد (یک بردار برای هر کاربر).
+پیچیدگی زیاد در گروه‌های بزرگ.
+برای ۱۰۰K عضو → بردار ۱۰۰K عنصری!
+دلیل رد: Overkill برای Chat، حجم و پیچیدگی غیرقابل قبول.
+
+
+Alternative 4: Fan-out on Write برای همه گروه‌ها
+مزایا:
+تأخیر کم (پیام فوری می‌رسد)
+سادگی پیاده‌سازی
+معایب:
+گروه ۱۰۰K عضوی → ۱۰۰K Push برای یک پیام.
+۱۰ پیام در دقیقه × ۱۰۰K = ۱M Push در دقیقه.
+Kafka Partition پر می‌شود.
+هزینه Bandwidth نجومی.
+دلیل رد: غیرقابل تحمل در گروه‌های بزرگ.
+
+
+Alternative 5: Fan-out on Read برای همه گروه‌ها
+مزایا:
+Load کم روی Write
+مقیاس‌پذیری آسان
+معایب:
+گروه ۲ نفره: تأخیر اضافه (کاربر باید Pull کند).
+Load زیاد روی Read.
+تجربه کاربری ضعیف برای گروه‌های کوچک.
+دلیل رد: برای گروه‌های کوچک تأخیر اضافه می‌کند.
+
+
+Alternative 6: Read Receipt بدون Batch
+زایا:
+دقت کامل
+Real-time
+معایب:
+۱۰۰K Read Receipt برای یک پیام در گروه بزرگ.
+Load زیاد روی Cassandra.
+شبکه اشباع می‌شود.
+دلیل رد: غیرقابل تحمل در مقیاس.
+پیامدها (Consequences)
+مثبت:
+ترتیب دقیق پیام‌ها با Lamport Timestamp مستقل از ساعت واقعی.
+مقیاس‌پذیری Read Receipt: Batch + Aggregation → Load ثابت.
+Hybrid Fan-out: بهینه برای هر اندازه گروه.
+Idempotency: جلوگیری از پیام‌های تکراری.
+Reconnection سریع: فقط Delta دریافت می‌شود.
+Kafka Ordering: تضمین ترتیب در هر Conversation.
+کاهش Load از ۱M Push/min به ۱۰K Push/min برای گروه‌های بزرگ.
+منفی:
+یچیدگی Lamport Clock: نیاز به مدیریت Clock در Client و Server.
+تأخیر Read Receipt در گروه بزرگ: تا ۵ ثانیه.
+Hybrid Logic: نیاز به تشخیص اندازه گروه در Runtime.
+Cassandra Tuning: Clustering Key و Partition Key باید دقیق انتخاب شوند.
+Batch Update Overhead: Consumer باید State را مدیریت کند.
+
+
+ریسک‌ها و راه‌حل:
+ریسک	راه‌حل
+Clock Skew بین سرورها	NTP + Lamport Clock (مستقل از ساعت)
+Kafka Partition Hotspot	Partition بر اساس conversationId (نه userId)
+Batch Job Crash	Consumer Offset + DLQ + Retry
+Read Receipt از دست رفته	Kafka Retention (۷ روز) + Replay
+گروه ۱۰۰K عضوی در Fan-out on Write	آستانه‌ی ۱۰۰ نفر → Fan-out on Read
+پیام تکراری	Idempotency Key + Redis SETNX
+Cassandra Hot Partition	Partition بر اساس conversationId (Bucketing)
+Lamport Clock Overflow	۶۴ بیتی → غیرممکن (۲^۶۳ = ۹e۱۸)

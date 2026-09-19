@@ -1,0 +1,249 @@
+ADR-04: چندزبانگی + Geo-blocking (۴/۱۰)
+✅ نقاط قوت:
+
+IP Detection را درست انتخاب کردی
+
+AI Translation را بررسی کردی
+
+❌ نقاط ضعف:
+
+۱. AI Translation برای زیرنویس رسمی اشتباه است! کیفیت پایین، ترجمه نامفهوم. YouTube از AI استفاده می‌کند ولی به عنوان Auto-generated نه رسمی.
+
+۲. MaxMind را نداری! برای Geo-blocking:
+
+text
+MaxMind GeoIP2 Database → IP → Country
+مثال: IP 192.168.x.x → ایران → مجاز
+۳. Signed URLs را نداری! برای اعمال Geo-blocking:
+
+text
+CloudFront Signed URL با Geo Restriction
+یا
+API Gateway → بررسی IP → تولید Token
+۴. WebVTT Format را نداری:
+
+text
+زیرنویس‌ها باید در فرمت WebVTT ذخیره شوند
+هر زبان → یک فایل .vtt جدا
+CDN → توزیع
+Client → انتخاب زبان
+
+
+### ADR-004: Multi-language Subtitles + Geo-blocking
+عنوان: پشتیبانی از چندزبانگی، زیرنویس، و محدودیت جغرافیایی (Geo-blocking)
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله (Context)
+کاربران نهایی باید بتوانند ویدیوها را با زیرنویس به زبان دلخواه تماشا کنند و زبان رابط کاربری را آزادانه انتخاب نمایند. همچنین به دلیل قوانین کپی‌رایت و قراردادهای منطقه‌ای، برخی ویدیوها فقط باید در مناطق جغرافیایی مشخص در دسترس باشند. سیستم باید بتواند:
+
+زیرنویس به چندین زبان برای هر ویدیو فراهم کند
+
+زبان رابط کاربری (UI) را بدون نسخه‌گذاری تغییر دهد
+
+RTL/LTR را بر اساس زبان اعمال کند
+
+IP کاربر را تشخیص دهد و بر اساس آن محتوا را محدود یا آزاد کند
+
+از دور زدن محدودیت با VPN تا حد امکان جلوگیری کند
+
+URLهای CDN را امن نگه دارد تا Hot-linking ممکن نباشد
+
+تصمیم (Decision)
+۱. ذخیره‌سازی زیرنویس با WebVTT
+فرمت استاندارد WebVTT (W3C) برای همه زیرنویس‌ها
+
+ذخیره در S3: s3://video-transcoded/{videoId}/subtitles/{lang}.vtt
+
+افزودن به HLS Master Playlist با #EXT-X-MEDIA:TYPE=SUBTITLES
+
+پشتیبانی از انتخاب زبان توسط Client (hls.js / ExoPlayer)
+
+نمونه ساختار:
+
+text
+s3://video-transcoded/video-123/subtitles/
+├── fa.vtt
+├── en.vtt
+├── ar.vtt
+├── tr.vtt
+└── de.vtt
+۲. چندزبانگی رابط کاربری با i18next
+کتابخانه i18next برای Frontend
+
+فایل‌های JSON جداگانه برای هر زبان: public/locales/{lang}/translation.json
+
+تشخیص خودکار زبان از مرورگر + امکان انتخاب دستی
+
+RTL/LTR با CSS dir attribute:
+
+rtl برای fa, ar, he
+
+ltr برای en, tr, de
+
+۳. AI Translation به‌عنوان پیشنهاد (نه رسمی)
+Whisper (OpenAI) برای Speech-to-Text
+
+GPT-4 برای ترجمه به زبان‌های هدف
+
+ذخیره در subtitles/auto/ به عنوان زیرنویس خودکار
+
+Creator باید تأیید کند تا به subtitles/ منتقل شود
+
+کاربر در UI می‌بیند: "زیرنویس خودکار (تأییدنشده)"
+
+۴. Geo-blocking با MaxMind GeoIP2
+استفاده از MaxMind GeoIP2 Country Database
+
+ذخیره allowedCountries هر ویدیو در PostgreSQL (JSONB)
+
+Cache در Redis با TTL=۱h برای کاهش Query به MaxMind
+
+اعمال در API Gateway و Video Service:
+
+java
+public boolean canWatch(String userId, Long videoId, String ip) {
+    String country = geoService.getCountry(ip);
+    Set<String> allowed = redis.opsForSet().members("video:"+videoId+":allowed_countries");
+    if (allowed.contains("GLOBAL")) return true;
+    return allowed.contains(country);
+}
+۵. Signed URLs برای امنیت CDN
+تولید CloudFront Signed URLs با TTL=۴h
+
+امضا با Private Key (RSA 2048)
+
+Key Pair ID در Config نگهداری می‌شود
+
+ترکیب با Geo-blocking: فقط بعد از تأیید Geo، URL صادر می‌شود
+
+java
+String signedUrl = CloudFrontUrlSigner.sign(
+    resourceUrl, expiration, privateKeyPath, keyPairId);
+۶. تشخیص VPN (لایه اضافی)
+IPQualityScore API برای تشخیص VPN/Proxy
+
+فقط برای محتوای حساس به کپی‌رایت
+
+در صورت تشخیص VPN → Red Flag برای بررسی دستی
+
+گزینه‌های بررسی‌شده (Alternatives Considered)
+Alternative 1: Multi Subtitle File بدون AI Translation
+مزایا:
+
+کنترل کامل Creator بر ترجمه
+
+کیفیت بالای ترجمه انسانی
+
+معایب:
+
+برای ۱۰ زبان، Creator باید ۱۰ فایل دستی بسازد
+
+زمان‌بر و پرهزینه برای Creator
+
+کاربران از زبان‌های دیگر محروم می‌مانند
+
+دلیل رد: هزینه و زمان غیرقابل قبول برای مقیاس پلتفرم.
+
+Alternative 2: AI Translation فقط (بدون Creator Review)
+مزایا:
+
+پوشش خودکار همه زبان‌ها
+
+هزینه کم
+
+معایب:
+
+ترجمه نادقیق (اصطلاحات فنی)
+
+از دست رفتن لحن و احساس
+
+مشکلات قانونی (کپی‌رایت ترجمه)
+
+عدم تأیید Creator
+
+دلیل رد: کیفیت پایین برای محتوای حرفه‌ای.
+
+Alternative 3: Geo-blocking فقط با CDN (CloudFront Geo Restriction)
+مزایا:
+
+پیاده‌سازی ساده
+
+اعمال در Edge (سرعت بالا)
+
+معایب:
+
+فقط Country-level، نه City-level
+
+VPN را تشخیص نمی‌دهد
+
+نیاز به تنظیمات جداگانه برای هر ویدیو
+
+Cold Start تأخیر در به‌روزرسانی
+
+دلیل رد: عدم پوشش VPN و انعطاف کم.
+
+Alternative 4: IP Detection ساده (بدون MaxMind)
+مزایا:
+
+رایگان
+
+بدون وابستگی خارجی
+
+معایب:
+
+دقت پایین (~۹۰٪)
+
+نیاز به نگهداری دستی IP Ranges
+
+بدون IPv6 Support
+
+بدون City-level دقت
+
+دلیل رد: دقت پایین برای محتوای قانونی.
+
+Alternative 5: بدون Signed URLs
+مزایا:
+
+پیاده‌سازی ساده
+
+معایب:
+
+Hot-linking ممکن
+
+Geo-blocking بی‌اثر
+
+Bandwidth هدر می‌رود
+
+هیچ کنترلی روی CDN نیست
+
+دلیل رد: امنیت و هزینه غیرقابل قبول.
+
+پیامدها (Consequences)
+مثبت:
+پشتیبانی چندزبانه کامل: ۵+ زبان با RTL/LTR
+
+Geo-blocking دقیق: دقت ۹۹.۸٪ با MaxMind
+
+AI Translation: کاهش هزینه ترجمه تا ۹۰٪
+
+امنیت CDN: Signed URLs با TTL و Private Key
+
+Cache هوشمند: Redis برای allowedCountries (کاهش Load)
+
+Creator Control: AI فقط پیشنهاد، تأیید نهایی با Creator
+
+Compliance: رعایت کپی‌رایت و قراردادهای منطقه‌ای
+
+منفی:
+هزینه MaxMind: ~$0.001 به ازای هر Query
+
+VPN Detection ناقص: MaxMind فقط ~۷۰٪ VPNها را می‌گیرد
+
+AI Translation نادقیق: نیاز به بازبینی Creator
+
+پیچیدگی Signed URLs: مدیریت Private Key و Rotation
+
+افزایش Latency: هر درخواست Stream → Geo Check + Sign
+
+نیاز به Cache Invalidation: هنگام تغییر allowedCountries

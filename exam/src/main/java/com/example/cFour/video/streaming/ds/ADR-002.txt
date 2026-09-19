@@ -1,0 +1,68 @@
+ADR-02: Consistency in View Count (۵/۱۰)
+✅ نقاط قوت:
+
+Async processing را درست انتخاب کردی
+
+Kafka را آوردی
+
+❌ نقاط ضعف:
+
+۱. Redis HyperLogLog نداری! برای شمارش تقریبی بازدید یکتا:
+
+java
+// به جای UPDATE برای هر بازدید
+redis.pfadd("video:" + videoId + ":unique_views", userId);
+// تخمین با خطای ۰.۸۱٪ - بسیار سریع!
+۲. Idempotency نداری! اگر کاربر صفحه را Refresh کند، دوبار شمرده می‌شود:
+
+text
+Idempotency Key = (userId + videoId + timeWindow)
+ذخیره در Redis با TTL=۳۰ دقیقه
+۳. Batch Update نداری! نباید برای هر بازدید یک UPDATE بزنی:
+
+text
+Kafka → Consumer → جمع‌آوری در حافظه → هر ۵ ثانیه → Batch UPDATE
+
+### ADR-002: View Count با HyperLogLog + Batch Update
+
+Context:
+یک ویدیو وایرال می‌شود → ۱M بازدید در ۱ دقیقه.
+Naive Counter با UPDATE برای هر بازدید، دیتابیس را Lock می‌کند.
+
+Decision:
+
+۱. Real-time Unique View (Redis HyperLogLog):
+   - `PFADD video:{id}:unique_hll user_id`
+   - تخمین با خطای ۰.۸۱٪، حجم ۱۲KB برای هر کلید
+   - TTL = ۲۴ ساعت
+
+۲. Idempotency:
+   - کلید: `{userId}:{videoId}:{hourBucket}`
+   - ذخیره در Redis با `SETNX` TTL=۱h
+   - اگر تکراری → نادیده بگیر
+
+۳. Batch Update (Kafka + Consumer):
+   - Producer: هر بازدید → Kafka topic `video-views`
+   - Consumer: جمع‌آوری در حافظه (Buffer ۱۰۰۰ تایی)
+   - هر ۵ ثانیه → Batch UPDATE در PostgreSQL
+   - `UPDATE video SET view_count = view_count + :batch`
+
+۴. Like Count:
+   - مشابه View Count، ولی Exactly-Once (چون مالی است)
+   - Kafka + Idempotent Consumer + Optimistic Locking
+
+۵. تخمین غیر دقیق (Trade-off):
+   - نمایش به کاربر: "۱.۲M بازدید" (نه "۱,۲۳۴,۵۶۷")
+   - عدد دقیق فقط در Dashboard Creator
+
+Alternatives Considered:
+- *Naive Counter (UPDATE per view)*: رد شد چون در مقیاس، DB Lock می‌شود.
+- *Aggregation at Read Time*: رد شد چون Query سنگین است.
+- *Cassandra Counter*: رد شد چون Write Amplification دارد.
+
+Consequences:
+- مثبت: صفر Lock، مقیاس‌پذیری خطی
+- منفی: نمایش تقریبی (Eventual Consistency)
+- ریسک: اگر Kafka down باشد → Buffer در Redis
+
+Related C4 Level: Component (ViewCounterService + Kafka + Redis)

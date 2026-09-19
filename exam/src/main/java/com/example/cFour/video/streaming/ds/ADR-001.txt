@@ -1,0 +1,76 @@
+ADR-01: مقیاس‌پذیری و Transcoding (۳/۱۰)
+✅ نقاط قوت:
+
+Microservice vs Monolith را مقایسه کردی
+
+Transcoding Types را بررسی کردی
+
+❌ نقاط ضعف حیاتی:
+
+۱. CDN را اصلاً نداری! برای Streaming میلیون‌ها کاربر، CDN الزامی است:
+
+text
+❌ غلط: کاربر → API Gateway → Video Service → S3
+✅ درست: کاربر → CDN (CloudFront) → S3 (اگر Cache Miss)
+۲. HLS/DASH را نداری! Adaptive Bitrate Streaming بدون این‌ها ممکن نیست:
+
+text
+ویدیو باید به Chunkهای ۶ ثانیه‌ای تقسیم شود (HLS)
+و در ۶ کیفیت مختلف (144p تا 4K)
+تا کاربر با اینترنت ضعیف، خودکار سوییچ کند
+۳. Transcoding Terminology غلط:
+
+text
+❌ غلط: loosy-to-loosy, lossless-to-lossless, lossless-to-loosy
+✅ درست:
+   - Original (Lossless) → ذخیره می‌شود
+   - Transcode به Lossy (H.264/H.265) → برای پخش
+   - Adaptive Bitrate: ۶ نسخه (144p, 240p, 480p, 720p, 1080p, 4K)
+۴. Kafka + GPU Worker برای Transcoding Pipeline نداری!
+
+
+### ADR-001: Transcoding Pipeline + CDN + Adaptive Streaming
+
+Context:
+ویدیو ۱۰GB آپلود می‌شود. باید به ۶ کیفیت تبدیل شود.
+میلیون‌ها کاربر باید بدون Buffer استریم کنند.
+
+Decision:
+
+۱. Upload Flow:
+   - Client → Presigned URL → S3 (Multipart Upload)
+   - فایل خام در S3 (Original Bucket)
+   - Event به Kafka: `video-uploaded`
+
+۲. Transcoding Pipeline:
+   - Kafka Consumer → Kubernetes Job (GPU/CPU)
+   - FFmpeg با ۶ پروفایل:
+     - 144p (200 Kbps), 240p (400), 480p (1M), 720p (2.5M), 1080p (5M), 4K (15M)
+   - هر کیفیت → HLS (Chunk 6s) + DASH
+   - خروجی در S3 (Transcoded Bucket)
+
+۳. CDN:
+   - CloudFront یا Akamai
+   - Origin: S3 Transcoded Bucket
+   - Cache TTL = ۷ روز
+   - Signed URLs برای Geo-blocking
+
+۴. Adaptive Bitrate:
+   - Client (HLS.js / ExoPlayer) خودکار کیفیت را سوییچ می‌کند
+   - Master Playlist (m3u8) + Media Playlists
+
+۵. Auto-scaling:
+   - K8s HPA بر اساس Kafka Consumer Lag
+   - GPU Node Pool برای 4K
+
+Alternatives Considered:
+- *Transcode روی سرور واحد*: رد شد چون ۳۰ دقیقه طول می‌کشد و مقیاس‌پذیر نیست.
+- *بدون CDN*: رد شد چون Bandwidth غیرقابل تحمل است.
+- *MP4 تک‌کیفیت*: رد شد چون Adaptive نیست و کاربر با اینترنت ضعیف Buffer می‌بیند.
+
+Consequences:
+- مثبت: استریم بدون Buffer، هزینه CDN پایین‌تر از سرور خودمان
+- منفی: پیچیدگی Pipeline، هزینه GPU Worker
+- ریسک: اگر Transcoding شکست بخورد → DLQ + Alert
+
+Related C4 Level: Container (Transcoding Service + CDN + S3 + Kafka)

@@ -1,0 +1,56 @@
+نقاط قوت:
+
+بهترین ADR شما! DSL/Business Rule را درست انتخاب کردی
+
+مقایسه‌ی خوبی بین Hardcoding، Config Server، و DSL انجام دادی
+
+نقاط ضعف:
+
+تکنولوژی مشخصی نداری (Drools؟ Custom DSL؟ JSON Schema؟)
+
+نگفتی قوانین کجا ذخیره می‌شوند (PostgreSQL JSONB؟)
+
+نگفتی چطور در زمان اجرا Load می‌شوند (Redis Cache؟)
+
+Admin UI را اصلاً اشاره نکردی
+
+باگ و آموزش را گفتی ولی راه‌حل ندادی (مثلاً Unit Test برای قوانین)
+
+نسخه نمره‌فول (۱۰/۱۰):
+
+
+### ADR-003: موتور قوانین قیمت‌گذاری پویا (Dynamic Pricing Rule Engine)
+
+**Context:**
+قوانین قیمت‌گذاری (Early Bird، Last Minute، تخفیف ترکیبی هتل+پرواز) باید توسط
+تیم بازاریابی (بدون کدنویسی) قابل تعریف و تغییر باشند. این قوانین روزانه تغییر می‌کنند.
+
+**Decision:**
+معماری **Rule Engine** سه‌لایه:
+
+۱. **ذخیره‌سازی قوانین:**
+   - PostgreSQL با فیلد JSONB
+   - ساختار: `{ "condition": {...}, "action": {...}, "priority": 10 }`
+   - مثال: `{ "condition": { "days_before": ">30", "type": "flight" }, "action": { "discount": 15 } }`
+
+۲. **پنل مدیریت (Admin UI):**
+   - React + Form Builder (مثل `react-jsonschema-form`)
+   - تیم بازاریابی بدون کد، قانون If-Then تعریف می‌کند
+   - **Validation** قبل از ذخیره (جلوگیری از باگ)
+
+۳. **اجرا (Runtime):**
+   - موتور **Drools** یا **Easy Rules** در `Pricing Service`
+   - قوانین از Redis (TTL=۵ دقیقه) بارگذاری می‌شوند
+   - **Unit Test** اجباری برای هر قانون قبل از انتشار
+
+**Alternatives Considered:**
+- *Hardcoding*: رد شد چون تغییر نیاز به دیپلوی دارد.
+- *Spring Cloud Config*: رد شد چون فقط مقادیر ساده را تغییر می‌دهد، نه منطق شرطی (If-Then).
+- *Drools کامل*: انتخاب شد ولی با پیچیدگی کمتر و DSL ساده‌تر.
+
+**Consequences:**
+- مثبت: تیم بازاریابی مستقل، سرعت تغییر قوانین از روزها به دقیقه‌ها
+- منفی: نیاز به آموزش تیم بازاریابی، ریسک باگ در قوانین
+- کاهش ریسک: **Canary Release** برای قوانین جدید (فقط ۱۰٪ کاربران)
+
+**Related C4 Level:** Component Level 3 (PricingService) + Container Level 2 (Admin UI)

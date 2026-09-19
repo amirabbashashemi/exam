@@ -1,0 +1,65 @@
+ADR-005: Data Lifecycle + GDPR + E2EE Backup + Media Archive
+عنوان: مدیریت چرخه حیات داده‌ها (پیام‌های حذف‌شده، Media بایگانی، GDPR، E2EE Backup)
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله
+۱۰B پیام در روز → حجم عظیم داده.
+Media روزانه ۵۰۰TB.
+GDPR حق فراموشی را الزامی کرده.
+E2EE Backup باید قابل بازیابی باشد (کاربر PIN دارد).
+پیام‌های حذف‌شده باید پس از مدتی کاملاً پاک شوند.
+
+تصمیم
+۱. چرخه حیات پیام‌ها
+بازه	ذخیره‌سازی
+Hot (۳ ماه)	Cassandra
+Warm (۳ ماه – ۲ سال)	S3 Infrequent Access
+Cold (> ۲ سال)	S3 Glacier
+GDPR (> ۷ سال)	حذف کامل + Anonymize
+
+
+۲. پیام‌های حذف‌شده
+Soft Delete (is_deleted = true) فوری.
+پس از ۳۰ روز → Hard Delete از Cassandra.
+Media مربوطه نیز حذف می‌شود.
+
+
+۳. GDPR
+Soft Delete فوری.
+Anonymize Metadata پس از ۳۰ روز.
+Key Deletion (مهم برای E2EE): کلیدهای رمزنگاری کاربر حذف می‌شوند تا داده‌های باقی‌مانده قابل رمزگشایی نباشند.
+
+
+۴. E2EE Backup
+کاربر با PIN (Argon2 hash) پشتیبان می‌گیرد.
+Backup Encrypted در S3.
+Restore فقط با PIN کاربر.
+
+
+۵. Media Archive
+بازه	ذخیره‌سازی
+Hot (۱ ماه)	S3 Standard
+Warm (۱ ماه – ۱ سال)	S3 Infrequent Access
+Cold (> ۱ سال)	S3 Glacier
+
+
+۶. Restore Workflow
+درخواست → Kafka → Job.
+بازیابی از Glacier (۳-۵ ساعت).
+اطلاع‌رسانی به کاربر.
+
+
+Alternatives
+گزینه	دلیل رد
+حذف فیزیکی فوری	Foreign Key می‌شکند، GDPR کامل نیست
+بدون E2EE Backup	کاربر با تعویض دستگاه داده را از دست می‌دهد
+ذخیره همه در S3 Standard	هزینه نجومی
+Consequences
+مثبت: Compliance با GDPR، کاهش هزینه Storage، E2EE Backup قابل بازیابی.
+منفی: تأخیر در Restore از Glacier، پیچیدگی Key Deletion.
+
+
+ریسک‌ها:
+Job Archive خطا کند → Monitoring + Alert.
+PIN فراموش شود → Backup غیرقابل بازیابی.

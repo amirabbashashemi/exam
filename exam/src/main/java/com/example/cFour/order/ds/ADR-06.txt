@@ -1,0 +1,36 @@
+### ADR-006: UX سه‌گانه برای مشتری، راننده، رستوران
+
+**Context:**
+سه نقش کاربری مختلف با نیازهای کاملاً متفاوت داریم. یک UX مشترک کار نمی‌کند.
+
+**Decision:**
+
+۱. **اپلیکیشن مشتری (Mobile):**
+   - **Onboarding Wizard**: انتخاب آدرس، علاقه‌مندی‌ها
+   - **Progressive Disclosure**: فیلترهای اصلی در صفحه اول
+   - **Real-time Tracking**: نقشه زنده با ETA دقیق
+   - **Smart Defaults**: پیشنهاد غذا بر اساس تاریخچه
+   - **Push Notification**: برای تخفیف‌ها
+
+۲. **اپلیکیشن راننده (Mobile + Offline-First):**
+   - **Offline Mode**: با SQLite محلی (قطعی اینترنت)
+   - **Battery-Friendly**: موقعیت هر ۳ ثانیه (نه هر ۱۰۰ms)
+   - **One-Tap Accept/Reject**: بدون فرم پیچیده
+   - **Navigation Intent**: ادغام با Google Maps / Waze
+
+۳. **پنل رستوران‌دار (Tablet/Web):**
+   - **Simple Menu Editor**: Drag & Drop
+   - **Order Queue**: نمایش سفارش‌های جدید با صدا
+   - **Working Hours**: تقویم هفتگی ساده
+   - **Real-time Stats**: تعداد سفارش، درآمد امروز
+
+۴. **مشترک بین هر سه:**
+   - **RTL/LTR Support**
+   - **Accessibility**: ARIA Labels، کنتراست بالا
+   - **Multi-language**: i18next
+
+**Consequences:**
+- مثبت: هر نقش UX اختصاصی دارد → نرخ تبدیل بالا
+- منفی: سه کدبیس جدا، هزینه توسعه بیشتر
+
+**Related C4 Level:** Component (Customer App + Courier App + Restaurant Panel)

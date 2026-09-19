@@ -1,0 +1,62 @@
+ADR-01: مقیاس‌پذیری + Real-time Tracking (۴/۱۰)
+✅ نقاط قوت:
+
+Kafka برای بافر کردن سفارش ✓
+
+CQRS برای جداسازی جستجو/ثبت ✓
+
+ELK به عنوان Single Point of Failure را دیدی ✓
+
+❌ نقاط ضعف حیاتی:
+
+سوال اصلی این بود: «Real-time Tracking راننده» — چطور پیاده می‌کنی؟
+
+تو اصلاً به این نپرداختی! باید می‌گفتی:
+
+WebSocket Gateway (نه REST) برای اتصال پایدار
+
+Redis Pub/Sub برای انتشار موقعیت راننده
+
+Geohashing برای جستجوی مکانی رستوران‌ها
+
+نسخه نمره‌فول (۱۰/۱۰) — فقط بخش Real-time:
+
+### ADR-001: معماری Real-time Tracking و مقیاس‌پذیری اوج بار
+
+**Context:**
+در ساعت ناهار/شام، ترافیک ۱۰ برابر می‌شود. کاربران باید موقعیت راننده را
+روی نقشه به صورت زنده ببینند. همچنین جستجوی رستوران در شعاع ۵ کیلومتری
+باید در < ۲۰۰ms انجام شود.
+
+**Decision:**
+
+۱. **Real-time Tracking (WebSocket):**
+   - **WebSocket Gateway** جداگانه (Netty/Spring WebFlux)
+   - راننده هر ۳ ثانیه موقعیت خود را به **Redis Pub/Sub** منتشر می‌کند
+   - کانال: `courier:location:{courierId}`
+   - کاربر Subscribe می‌کند و از طریق WebSocket دریافت می‌کند
+   - ساختار داده: **Redis GEO** (`GEOADD couriers lng lat courierId`)
+   - جستجوی نزدیک‌ترین راننده: `GEORADIUS couriers lng lat 5km`
+
+۲. **Geohashing برای رستوران:**
+   - هر رستوران با **Geohash** (سطح ۹ = دقت ~۵m) ذخیره می‌شود
+   - جستجو: `GEOSEARCH restaurants FROMMEMBER user 5km`
+   - ایندکس در **Elasticsearch** با `geo_point`
+
+۳. **Kafka برای Order Buffer:**
+   - سفارش به `order-queue` می‌رود
+   - Consumer با HPA بر اساس **Lag** اسکیل می‌شود
+
+۴. **CQRS:**
+   - Write: PostgreSQL (سفارش نهایی)
+   - Read: Elasticsearch + Redis (جستجو + Tracking)
+
+**Alternatives Considered:**
+- *REST Polling برای Tracking*: رد شد چون ۱۰۰ هزار کاربر × هر ۳ ثانیه = ۳۳ هزار درخواست در ثانیه (غیرقابل تحمل).
+- *بدون Geohashing*: رد شد چون جستجوی مکانی با `BETWEEN` روی lat/lng بسیار کند است.
+
+**Consequences:**
+- مثبت: Tracking زنده با latency < ۵۰۰ms، جستجوی مکانی < ۱۰۰ms
+- منفی: پیچیدگی WebSocket Gateway، نیاز به monitoring بر روی Redis GEO
+
+**Related C4 Level:** Container (WebSocket Gateway + Redis GEO + Matching Engine)

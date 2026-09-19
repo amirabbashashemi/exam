@@ -1,0 +1,90 @@
+StructuredTaskScope
+
+چه موقع استفاده کنیم:
+
+وقتی چند task مرتبط داریم (fan-out / fan-in) و باید هم‌زمان اجرا شوند.
+
+وقتی می‌خواهیم lifecycle taskها محدود به یک scope مشخص باشد.
+
+وقتی می‌خواهیم خطاها را به‌صورت atomic مدیریت کنیم: اگر یکی fail شد، بقیه cancel شوند.
+
+وقتی می‌خواهیم latency کاهش پیدا کند و parallel I/O واقعی داشته باشیم.
+
+وقتی از Virtual Threads یا Loom استفاده می‌کنیم.
+
+مثال:
+
+try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+    var user = scope.fork(() -> loadUser());
+    var address = scope.fork(() -> loadAddress());
+    var orders = scope.fork(() -> loadOrders());
+
+    scope.join();
+    scope.throwIfFailed();
+
+    return new UserDto(user.get(), address.get(), orders.get());
+}
+
+
+مزیت: parallel واقعی، مدیریت ساده خطا، readable
+
+مناسب Java 21+
+
+2️⃣ new ThreadPoolExecutor
+
+چه موقع استفاده کنیم:
+
+وقتی کار CPU-intensive یا کار I/O blocking بدون Virtual Thread داریم.
+
+وقتی نیاز به کنترل دقیق تعداد threadها، queue size، rejection policy داریم.
+
+وقتی سیستم legacy است و نمی‌توانیم Virtual Thread استفاده کنیم.
+
+وقتی taskها long-running هستند و نمی‌خواهیم میلیون‌ها thread بسازیم.
+
+مثال:
+
+ExecutorService executor = new ThreadPoolExecutor(
+        5,
+        20,
+        60,
+        TimeUnit.SECONDS,
+        new LinkedBlockingQueue<>()
+);
+executor.submit(() -> doCpuHeavyWork());
+
+
+مزیت: fine-grained control
+
+عیب: boilerplate، احتمال thread starvation، مدیریت خطا سخت‌تر
+
+3️⃣ Virtual Threads (Executors.newVirtualThreadPerTaskExecutor)
+
+چه موقع استفاده کنیم:
+
+وقتی taskها block می‌شوند (I/O) ولی تعداد زیادی task داریم.
+
+وقتی می‌خواهیم thousands/millions of tasks بدون مصرف زیاد حافظه اجرا شوند.
+
+وقتی می‌خواهیم کد async را ساده و synchronous-like بنویسیم.
+
+مثال:
+
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    executor.submit(() -> readRemoteService());
+}
+
+
+مزیت: lightweight, scalable, simple code
+
+عیب: هنوز CPU-bound taskهای خیلی سنگین را بهتر نیست روی virtual thread اجرا کرد (بهتر روی fixed thread pool)
+
+📌 جمع‌بندی سریع (Decision Table)
+Task Type	انتخاب بهتر	چرا؟
+Parallel remote calls / I/O	StructuredTaskScope + Virtual Thread	Parallel واقعی، مدیریت خطا، lifecycle محدود
+CPU-intensive heavy tasks	ThreadPoolExecutor	کنترل تعداد thread و queue، prevent starvation
+هزاران task I/O-blocking	Virtual Threads	Lightweight, scalable, simple
+Legacy / older Java	ThreadPoolExecutor	API قدیمی، virtual thread نداریم
+
+💡 نکته امتحانی:
+اگر بتوانی این سه گزینه را با یک مثال عملی و short code توضیح بده، نمره کامل می‌گیری.

@@ -1,0 +1,30 @@
+package com.example.codeChallenge.chatgpt.bArchitectureQualityAttributes.modifiability.strategy;
+
+import codeChallenge.chatgpt.eCommon.Notification;
+import codeChallenge.chatgpt.eCommon.NotificationType;
+
+public class SMSNotificationSender implements NotificationSender {
+    @Override
+    public NotificationType getType() {
+        return NotificationType.SMS;
+    }
+
+    @Override
+    public void connect() {
+
+    }
+
+    @Override
+    public void send(Notification notification) {
+        try {
+            // send sms
+        } catch (Exception exception) {
+            throw new RuntimeException("Error in method send in class SMSNotificationSender", exception);
+        }
+    }
+
+    @Override
+    public void disconnect() {
+
+    }
+}

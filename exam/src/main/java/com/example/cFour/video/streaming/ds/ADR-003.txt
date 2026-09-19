@@ -1,0 +1,39 @@
+### ADR-003: Creator Studio + Monetization Rule Engine
+
+Context:
+تولیدکنندگان محتوا باید بتوانند بدون کدنویسی:
+- Monetization را فعال/غیرفعال کنند (Ads, Subscription, Donation)
+- Privacy را تنظیم کنند (Public, Unlisted, Private)
+- Subtitles را آپلود و مدیریت کنند
+- Thumbnail و Metadata را ویرایش کنند
+
+Decision:
+
+۱. Creator Studio (Web SPA):
+   - پنل اختصاصی با React
+   - داشبورد تحلیلی (Views, Revenue, Subscribers)
+
+۲. Monetization Rule Engine (Drools):
+   - قوانین در PostgreSQL (JSONB)
+   - مثال: «اگر Views > ۱۰K، Ads فعال شود»
+   - Cache در Redis با TTL=۵min
+
+۳. Configuration API:
+   - REST API برای تنظیمات
+   - Event Publishing به Kafka (برای اطلاع‌رسانی به Video Service)
+
+۴. Subtitle Manager:
+   - آپلود WebVTT/SRT
+   - تبدیل خودکار به فرمت‌های مختلف
+   - ذخیره در S3 با Signed URL
+
+Alternatives Considered:
+- *Config Server*: رد شد چون برای Business User نیست
+- *Hardcoding*: رد شد چون نیاز به Deploy دارد
+- *Feature Toggle*: رد شد چون فقط Boolean است، نه Rule
+
+Consequences:
+- مثبت: استقلال کامل Creator، صفر شدن نسخه‌گذاری
+- منفی: پیچیدگی Rule Engine، نیاز به آموزش
+
+Related C4 Level: Component (CreatorStudio + MonetizationRuleEngine)

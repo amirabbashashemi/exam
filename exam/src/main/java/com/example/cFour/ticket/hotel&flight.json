@@ -1,0 +1,556 @@
+{
+  "version": "31.3.2",
+  "pages": [
+    {
+      "id": "A5UqMkC4-Nw5h0kYjlBa",
+      "name": "Context",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "BGV2L4p8yEUiNn0OROxT-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Person name",
+            "c4Type": "Person",
+            "c4Description": "Description of person."
+          }
+        },
+        {
+          "id": "BGV2L4p8yEUiNn0OROxT-2",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Trip",
+            "c4Type": "Software System",
+            "c4Description": "Booking hotel and flight tickets"
+          }
+        },
+        {
+          "id": "BGV2L4p8yEUiNn0OROxT-3",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Amadeus/Sabre",
+            "c4Type": "Software System",
+            "c4Description": "fly ticket"
+          }
+        },
+        {
+          "id": "BGV2L4p8yEUiNn0OROxT-4",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "OTAs ",
+            "c4Type": "Software System",
+            "c4Description": "hotel booking"
+          }
+        },
+        {
+          "id": "BGV2L4p8yEUiNn0OROxT-5",
+          "type": "edge",
+          "parent": "1",
+          "source": "BGV2L4p8yEUiNn0OROxT-2",
+          "target": "BGV2L4p8yEUiNn0OROxT-4",
+          "label": "%c4Description%\n[%c4Technology%]",
+          "html": "<div style=\"text-align: left\"><div style=\"text-align: center\"><b>%c4Description%</b></div><div style=\"text-align: center\">[%c4Technology%]</div></div>",
+          "metadata": {
+            "c4Type": "Relationship",
+            "c4Technology": "e.g. JSON/HTTP",
+            "c4Description": "e.g. Makes API calls"
+          }
+        },
+        {
+          "id": "BGV2L4p8yEUiNn0OROxT-6",
+          "type": "edge",
+          "parent": "1",
+          "source": "BGV2L4p8yEUiNn0OROxT-2",
+          "target": "BGV2L4p8yEUiNn0OROxT-3",
+          "label": "%c4Description%\n[%c4Technology%]",
+          "html": "<div style=\"text-align: left\"><div style=\"text-align: center\"><b>%c4Description%</b></div><div style=\"text-align: center\">[%c4Technology%]</div></div>",
+          "metadata": {
+            "c4Type": "Relationship",
+            "c4Technology": "e.g. JSON/HTTP",
+            "c4Description": "e.g. Makes API calls"
+          }
+        },
+        {
+          "id": "BGV2L4p8yEUiNn0OROxT-7",
+          "type": "edge",
+          "parent": "1",
+          "source": "BGV2L4p8yEUiNn0OROxT-1",
+          "target": "BGV2L4p8yEUiNn0OROxT-2",
+          "label": "%c4Description%",
+          "html": "<div style=\"text-align: left\"><div style=\"text-align: center\"><b>%c4Description%</b></div>",
+          "metadata": {
+            "c4Type": "Relationship",
+            "c4Description": "e.g. Visits pages"
+          }
+        }
+      ]
+    },
+    {
+      "id": "dN4vUNvf8jXP_210zvMN",
+      "name": "Container",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "6l8iN4xQndC8cxCUF1Gc-6",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#cccccc\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "SAGA",
+            "c4Type": "Software System",
+            "c4Description": "orchestration"
+          }
+        },
+        {
+          "id": "6l8iN4xQndC8cxCUF1Gc-7",
+          "type": "edge",
+          "parent": "1",
+          "source": "6l8iN4xQndC8cxCUF1Gc-6",
+          "target": "3mqhv6Ik92P4X9aBvRbV-4",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "6l8iN4xQndC8cxCUF1Gc-8",
+          "type": "edge",
+          "parent": "1",
+          "source": "6l8iN4xQndC8cxCUF1Gc-6",
+          "target": "3mqhv6Ik92P4X9aBvRbV-5",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "3mqhv6Ik92P4X9aBvRbV-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Container name",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Oracle Database 12",
+            "c4Description": "Description of storage type container role/responsibility."
+          }
+        },
+        {
+          "id": "3mqhv6Ik92P4X9aBvRbV-2",
+          "type": "edge",
+          "parent": "1",
+          "source": "3mqhv6Ik92P4X9aBvRbV-4",
+          "target": "3mqhv6Ik92P4X9aBvRbV-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "3mqhv6Ik92P4X9aBvRbV-3",
+          "type": "edge",
+          "parent": "1",
+          "source": "3mqhv6Ik92P4X9aBvRbV-5",
+          "target": "3mqhv6Ik92P4X9aBvRbV-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "3mqhv6Ik92P4X9aBvRbV-4",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Buying flight tickets",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Buying flight tickets"
+          }
+        },
+        {
+          "id": "3mqhv6Ik92P4X9aBvRbV-5",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Booking room\n",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Micronaut, etc.",
+            "c4Description": "Hotel reservation"
+          }
+        },
+        {
+          "id": "3mqhv6Ik92P4X9aBvRbV-7",
+          "type": "edge",
+          "parent": "1",
+          "source": "3mqhv6Ik92P4X9aBvRbV-4",
+          "target": "3mqhv6Ik92P4X9aBvRbV-8",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "3mqhv6Ik92P4X9aBvRbV-8",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ELK",
+            "c4Type": "Container",
+            "c4Technology": "DB",
+            "c4Description": "Elastick search "
+          }
+        },
+        {
+          "id": "3mqhv6Ik92P4X9aBvRbV-9",
+          "type": "edge",
+          "parent": "1",
+          "source": "3mqhv6Ik92P4X9aBvRbV-5",
+          "target": "3mqhv6Ik92P4X9aBvRbV-8",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        }
+      ]
+    },
+    {
+      "id": "YREq2qPuZireXL4Pkezg",
+      "name": "Component",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "kYQeMLqjzpkwO4pUVddg-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Hotel management",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Hotel Component"
+          }
+        },
+        {
+          "id": "kYQeMLqjzpkwO4pUVddg-2",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Flight management",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "Flight Component"
+          }
+        },
+        {
+          "id": "kYQeMLqjzpkwO4pUVddg-3",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%: %c4Technology%]</div><br><div><font style=\"font-size: 11px\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "SAGA",
+            "c4Type": "Component",
+            "c4Technology": "e.g. Spring Service",
+            "c4Description": "orchestrator"
+          }
+        },
+        {
+          "id": "-AC9UQE2Fi_ToL0OHF65-1",
+          "type": "edge",
+          "parent": "1",
+          "source": "kYQeMLqjzpkwO4pUVddg-3",
+          "target": "kYQeMLqjzpkwO4pUVddg-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "-AC9UQE2Fi_ToL0OHF65-2",
+          "type": "edge",
+          "parent": "1",
+          "source": "kYQeMLqjzpkwO4pUVddg-3",
+          "target": "kYQeMLqjzpkwO4pUVddg-2",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "WqQfbeTSc9r88_1CGcbd-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "ELK",
+            "c4Type": "Container",
+            "c4Technology": "DB",
+            "c4Description": "Elastick search "
+          }
+        },
+        {
+          "id": "WqQfbeTSc9r88_1CGcbd-2",
+          "type": "edge",
+          "parent": "1",
+          "source": "kYQeMLqjzpkwO4pUVddg-1",
+          "target": "WqQfbeTSc9r88_1CGcbd-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "WqQfbeTSc9r88_1CGcbd-3",
+          "type": "edge",
+          "parent": "1",
+          "source": "kYQeMLqjzpkwO4pUVddg-2",
+          "target": "WqQfbeTSc9r88_1CGcbd-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "Z3KPTM4kUE0RKUPzqZwg-1",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "Container name",
+            "c4Type": "Container",
+            "c4Technology": "e.g. Oracle Database 12",
+            "c4Description": "Description of storage type container role/responsibility."
+          }
+        },
+        {
+          "id": "Z3KPTM4kUE0RKUPzqZwg-2",
+          "type": "edge",
+          "parent": "1",
+          "source": "kYQeMLqjzpkwO4pUVddg-1",
+          "target": "Z3KPTM4kUE0RKUPzqZwg-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "Z3KPTM4kUE0RKUPzqZwg-3",
+          "type": "edge",
+          "parent": "1",
+          "source": "kYQeMLqjzpkwO4pUVddg-2",
+          "target": "Z3KPTM4kUE0RKUPzqZwg-1",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "Z3KPTM4kUE0RKUPzqZwg-5",
+          "type": "node",
+          "parent": "1",
+          "label": "%c4Name%\n[%c4Type%: %c4Technology%]\n%c4Description%",
+          "html": "<font style=\"font-size: 16px\"><b>%c4Name%</b></font><div>[%c4Type%:&nbsp;%c4Technology%]</div><br><div><font style=\"font-size: 11px\"><font color=\"#E6E6E6\">%c4Description%</font></div>",
+          "metadata": {
+            "c4Name": "DB",
+            "c4Type": "Container",
+            "c4Technology": "CASANDRA",
+            "c4Description": "Casandra DB for saving hotel images"
+          }
+        },
+        {
+          "id": "Z3KPTM4kUE0RKUPzqZwg-6",
+          "type": "edge",
+          "parent": "1",
+          "source": "kYQeMLqjzpkwO4pUVddg-1",
+          "target": "Z3KPTM4kUE0RKUPzqZwg-5",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ky8j-q_FFuE0Tv1DL0C2",
+      "name": "Code",
+      "cells": [
+        {
+          "id": "1",
+          "type": "layer"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-5",
+          "type": "node",
+          "parent": "1",
+          "label": "HotelController\n- HotelService: hotelService\n+ searchHotel(place, beginDate, endDate, option): HotelDto \n+ addRoom(RoomDto roomDto): void \n+ editRoom(RoomDto roomDto): void \n+ deleteRoom(RoomDto roomDto): void \n+ setPrice(RoomDto roomDto, double price): void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\">HotelController</p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">-&nbsp;<span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">H</span><span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">otelService: h</span><span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">otelService</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ searchHotel(place, beginDate, endDate, option):&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">HotelDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\">+ addRoom(RoomDto roomDto):&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span>editRoom(RoomDto roomDto):&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span>deleteRoom(RoomDto roomDto):&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span>setPrice(RoomDto roomDto, double price):&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p>"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-6",
+          "type": "node",
+          "parent": "1",
+          "label": "HotelService\n- HotelService: hotelRepository\n+ searchHotel(place, beginDate, endDate, option): HotelDto \n+ addRoom(RoomDto roomDto): void \n+ editRoom(RoomDto roomDto): void \n+ deleteRoom(RoomDto roomDto): void \n+ setPrice(RoomDto roomDto, double price): void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\">HotelService</p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">-&nbsp;<span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">H</span><span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">otelService: h</span><span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">otelRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ searchHotel(place, beginDate, endDate, option):&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">HotelDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\">+ addRoom(RoomDto roomDto):&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span>editRoom(RoomDto roomDto)<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">: </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span>deleteRoom(RoomDto roomDto)<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">: </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span>setPrice(RoomDto roomDto, double price)<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">: </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p>"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-7",
+          "type": "edge",
+          "parent": "1",
+          "source": "HOcWGO6UUsD238M-MesZ-5",
+          "target": "HOcWGO6UUsD238M-MesZ-6",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-8",
+          "type": "node",
+          "parent": "1",
+          "label": "HotelRepository\n\n+ searchHotel(place, beginDate, endDate, option):HotelDto \n+ addRoom(RoomDto roomDto): void \n+ editRoom(RoomDto roomDto): void \n+ deleteRoom(RoomDto roomDto): void \n+ setPrice(RoomDto roomDto, double price): void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\">HotelRepository</p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"></p><p style=\"margin:0px;margin-left:4px;\">+ searchHotel(place, beginDate, endDate, option):<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">HotelDto</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\">+ addRoom(RoomDto roomDto)<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">: </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span>editRoom(RoomDto roomDto)<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">: </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span>deleteRoom(RoomDto roomDto)<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">: </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">+</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\"> </span>setPrice(RoomDto roomDto, double price)<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">: </span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">&nbsp;</span></p>"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-9",
+          "type": "edge",
+          "parent": "1",
+          "source": "HOcWGO6UUsD238M-MesZ-8",
+          "target": "HOcWGO6UUsD238M-MesZ-10"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-10",
+          "type": "node",
+          "parent": "1",
+          "label": "JPARepository"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-12",
+          "type": "edge",
+          "parent": "1",
+          "source": "HOcWGO6UUsD238M-MesZ-6",
+          "target": "HOcWGO6UUsD238M-MesZ-8",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-31",
+          "type": "node",
+          "parent": "1",
+          "label": "FlightController\n- FlightService: flightService+ searchFlightTicket(departureDate, returnDate, class, airlineName): FlightDto\n\n+ getPriceFromExternalServer(departureDate, returnDate, class, airlineName): amount\n\n+ setFlightPrice(String srcPlace, String desPlace, String class, double price): void\n\nnotifyPriceAndDelay(CustomerDto customerDto): void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><span style=\"font-weight: 700;\">FlightController</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">- FlightService: flightService</span></p><hr size=\"1\" style=\"border-style:solid;\">+ searchFlightTicket(departureDate, returnDate, class, airlineName): FlightDto<p style=\"margin:0px;margin-left:4px;\"><br></p><p style=\"margin:0px;margin-left:4px;\">+ getPriceFromExternalServer(departureDate, returnDate, class, airlineName): amount</p><p style=\"margin:0px;margin-left:4px;\"><br></p><p style=\"margin:0px;margin-left:4px;\">+ setFlightPrice(String srcPlace, String desPlace, String class, double price):&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span></p><p style=\"margin:0px;margin-left:4px;\"><br></p><p style=\"margin:0px;margin-left:4px;\">notifyPriceAndDelay(CustomerDto customerDto): void</p>"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-32",
+          "type": "node",
+          "parent": "1",
+          "label": "FlightService\n- FlightRepository: flightRepository+ searchFlightTicket(departureDate, returnDate, class, airlineName): FlightDto\n\n+ getPriceFromExternalServer(departureDate, returnDate, class, airlineName): amount\n\n+ setFlightPrice(String srcPlace, String desPlace, String class, double price): void\n\nnotifyPriceAndDelay(CustomerDto customerDto): void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><span style=\"font-weight: 700;\">FlightService</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">- FlightRepository: f</span><span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">lightRepository</span></p><hr size=\"1\" style=\"border-style:solid;\">+ searchFlightTicket(departureDate, returnDate, class, airlineName): FlightDto<p style=\"margin:0px;margin-left:4px;\"><br></p><p style=\"margin:0px;margin-left:4px;\">+ getPriceFromExternalServer(departureDate, returnDate, class, airlineName): amount</p><p style=\"margin:0px;margin-left:4px;\"><br></p><p style=\"margin:0px;margin-left:4px;\">+ setFlightPrice(String srcPlace, String desPlace, String class, double price):&nbsp;<span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span></p><p style=\"margin:0px;margin-left:4px;\"><br></p><p style=\"margin:0px;margin-left:4px;\">notifyPriceAndDelay(CustomerDto customerDto): void</p>"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-34",
+          "type": "node",
+          "parent": "1",
+          "label": "FlightRepository\n\n+ searchFlightTicket(departureDate, returnDate, class, airlineName): FlightDto\n\n+ getPriceFromExternalServer(departureDate, returnDate, class, airlineName): amount\n\n+ setFlightPrice(String srcPlace, String desPlace, String class, double price): void\n\nnotifyPriceAndDelay(CustomerDto customerDto): void",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\"><span style=\"font-weight: 700;\">FlightRepository</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\"></p><p style=\"margin:0px;margin-left:4px;\">+ searchFlightTicket(departureDate, returnDate, class, airlineName): FlightDto</p><p style=\"margin: 0px 0px 0px 4px;\"><br></p><p style=\"margin: 0px 0px 0px 4px;\">+ getPriceFromExternalServer(departureDate, returnDate, class, airlineName): amount</p><p style=\"margin: 0px 0px 0px 4px;\"><br></p><p style=\"margin: 0px 0px 0px 4px;\">+ setFlightPrice(String srcPlace, String desPlace, String class, double price): <span style=\"background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">void</span></p><p style=\"margin: 0px 0px 0px 4px;\"><br></p><p style=\"margin: 0px 0px 0px 4px;\">notifyPriceAndDelay(CustomerDto customerDto): void</p>"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-35",
+          "type": "edge",
+          "parent": "1",
+          "source": "HOcWGO6UUsD238M-MesZ-34",
+          "target": "HOcWGO6UUsD238M-MesZ-10"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-36",
+          "type": "edge",
+          "parent": "1",
+          "source": "HOcWGO6UUsD238M-MesZ-31",
+          "target": "HOcWGO6UUsD238M-MesZ-32",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-37",
+          "type": "edge",
+          "parent": "1",
+          "source": "HOcWGO6UUsD238M-MesZ-32",
+          "target": "HOcWGO6UUsD238M-MesZ-34",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-38",
+          "type": "node",
+          "parent": "1",
+          "label": "OrchestrationController\n- OrchestrationService: orchestrationService\n+ saveCustomer(CustomerDto customerDto): CustomerDto\n+ editCustomer(CustomerDto customerDto): CustomerDto\n+ removeLogical(CustomerDto customerDto): CustomerDto\n+ updateCustomerInformationAfetRemoveLogicaly(CustomerDto customerDto): CustomerDto\n+ buyPackage(): PackageDto\n+ buyFlight(Long id): FlightDto\n+ reserveHotel(Hotel hotelId, Long roomId, Date from, Date to): HotelDto\n+ reverseFlight(Long id): String\n+ reverseHotel(Hotel hotelId, Long roomId, Date from, Date to): String",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\">OrchestrationController</p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">-&nbsp;<span style=\"text-align: center;\">Orchestration</span><span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service:&nbsp;</span><span style=\"text-align: center;\">orchestration</span><span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service</span></p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ saveCustomer(CustomerDto customerDto): CustomerDto</p><p style=\"margin:0px;margin-left:4px;\">+ editCustomer(CustomerDto customerDto): CustomerDto</p><p style=\"margin:0px;margin-left:4px;\">+ removeLogical(CustomerDto customerDto): CustomerDto</p><p style=\"margin:0px;margin-left:4px;\">+ updateCustomerInformationAfetRemoveLogicaly(CustomerDto customerDto): CustomerDto</p><p style=\"margin:0px;margin-left:4px;\">+ buyPackage(): PackageDto</p><p style=\"margin:0px;margin-left:4px;\">+ buyFlight(Long id): FlightDto</p><p style=\"margin:0px;margin-left:4px;\">+ reserveHotel(Hotel hotelId, Long roomId, Date from, Date to): HotelDto</p><p style=\"margin:0px;margin-left:4px;\">+ reverseFlight(Long id): String</p><p style=\"margin:0px;margin-left:4px;\">+ reverseHotel(Hotel hotelId, Long roomId, Date from, Date to): String</p><div><br></div>"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-39",
+          "type": "node",
+          "parent": "1",
+          "label": "OrchestrationController\n- FlightService: flightService\n- HotelService: hotelService\n+ saveCustomer(CustomerDto customerDto): CustomerDto\n+ editCustomer(CustomerDto customerDto): CustomerDto\n+ removeLogical(CustomerDto customerDto): CustomerDto\n+ updateCustomerInformationAfetRemoveLogicaly(CustomerDto customerDto): CustomerDto\n+ buyPackage(): PackageDto\n+ buyFlight(Long id): FlightDto\n+ reserveHotel(Hotel hotelId, Long roomId, Date from, Date to): HotelDto\n+ reverseFlight(Long id): String\n+ reverseHotel(Hotel hotelId, Long roomId, Date from, Date to): String",
+          "html": "<p style=\"margin:0px;margin-top:4px;text-align:center;\">OrchestrationController</p><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin: 0px 0px 0px 4px;\">- <span style=\"text-align: center;\">Flight</span><span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service: </span><span style=\"text-align: center;\">flight</span><span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service</span></p><div><p style=\"margin: 0px 0px 0px 4px;\">- <span style=\"text-align: center;\">Hotel</span><span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service: </span><span style=\"text-align: center;\">hotel</span><span style=\"text-align: center; background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));\">Service</span></p></div><hr size=\"1\" style=\"border-style:solid;\"><p style=\"margin:0px;margin-left:4px;\">+ saveCustomer(CustomerDto customerDto): CustomerDto</p><p style=\"margin:0px;margin-left:4px;\">+ editCustomer(CustomerDto customerDto): CustomerDto</p><p style=\"margin:0px;margin-left:4px;\">+ removeLogical(CustomerDto customerDto): CustomerDto</p><p style=\"margin:0px;margin-left:4px;\">+ updateCustomerInformationAfetRemoveLogicaly(CustomerDto customerDto): CustomerDto</p><p style=\"margin:0px;margin-left:4px;\">+ buyPackage(): PackageDto</p><p style=\"margin:0px;margin-left:4px;\">+ buyFlight(Long id): FlightDto</p><p style=\"margin:0px;margin-left:4px;\">+ reserveHotel(Hotel hotelId, Long roomId, Date from, Date to): HotelDto</p><p style=\"margin:0px;margin-left:4px;\">+ reverseFlight(Long id): String</p><p style=\"margin:0px;margin-left:4px;\">+ reverseHotel(Hotel hotelId, Long roomId, Date from, Date to): String</p><div><br></div>"
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-40",
+          "type": "edge",
+          "parent": "1",
+          "source": "HOcWGO6UUsD238M-MesZ-38",
+          "target": "HOcWGO6UUsD238M-MesZ-39",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-42",
+          "type": "edge",
+          "parent": "1",
+          "source": "HOcWGO6UUsD238M-MesZ-39",
+          "target": "HOcWGO6UUsD238M-MesZ-31",
+          "label": "%c4Description%\n[%c4Technology%]",
+          "html": "<div style=\"text-align: left\"><div style=\"text-align: center\"><b>%c4Description%</b></div><div style=\"text-align: center\">[%c4Technology%]</div></div>",
+          "metadata": {
+            "c4Type": "Relationship",
+            "c4Technology": "e.g. JSON/HTTP",
+            "c4Description": "e.g. Makes API calls"
+          }
+        },
+        {
+          "id": "HOcWGO6UUsD238M-MesZ-43",
+          "type": "edge",
+          "parent": "1",
+          "source": "HOcWGO6UUsD238M-MesZ-39",
+          "target": "HOcWGO6UUsD238M-MesZ-5",
+          "metadata": {
+            "c4Type": "Relationship"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+نقاط قوت:
+
+Soft Delete + Anonymization را درست انتخاب کردی
+
+مشکل Foreign Key را درست تشخیص دادی
+
+نقاط ضعف:
+
+Tiered Storage (Hot/Warm/Cold) را نداری
+
+S3 Glacier برای بایگانی را نداری
+
+Audit Log برای داده‌های مالی را نداری
+
+PNR را گفتی ولی توضیح ندادی چطور ذخیره می‌شود
+
+Job را گفتی ولی زمان‌بندی (Scheduling) و خطاپذیری آن را توضیح ندادی
+
+نسخه نمره‌فول (۱۰/۱۰):
+### ADR-005: چرخه حیات داده و بایگانی (Data Lifecycle Management)
+
+**Context:**
+قوانین PNR (Passenger Name Record) نگهداری ۵-۷ سال را الزامی می‌کند.
+پس از آن باید اطلاعات حذف شود بدون ایجاد مشکل در Foreign Keyها.
+
+**Decision:**
+
+۱. **Soft Delete + Anonymization:**
+   - فیلد `is_deleted` + `deleted_at` به جدول `customer` اضافه می‌شود
+   - بعد از ۳۰ روز: یک Job شبانه اطلاعات شخصی (نام، ایمیل، کد ملی) را با
+     **داده ساختگی (Anonymize)** پر می‌کند: `"USER_DELETED_12345"`
+   - Foreign Keyها دست‌نخورده می‌مانند (به `customer_id` اشاره می‌کنند)
+
+۲. **Tiered Storage:**
+   - **Hot** (۶ ماه اخیر): PostgreSQL
+   - **Warm** (۶ ماه تا ۲ سال): Elasticsearch + ClickHouse (برای گزارش‌گیری)
+   - **Cold** (>۲ سال): S3 Glacier با فرمت **Parquet** (فشرده)
+
+۳. **Audit Log (برای داده‌های مالی):**
+   - تمام تغییرات قیمت، تخفیف، و وضعیت پرداخت در **Kafka** با Retention=۷ سال
+   - غیرقابل حذف (Immutable)
+   - برای Compliance و مالیات
+
+۴. **Job خطاپذیر:**
+   - با **Quartz** یا **Spring Batch** زمان‌بندی می‌شود
+   - **Retry** با Exponential Backoff (۳ بار)
+   - **Dead Letter Queue** برای خطاهای دائمی
+   - **Alert** در صورت شکست Job
+
+**Alternatives Considered:**
+- *حذف فیزیکی*: رد شد چون Foreign Keyها می‌شکنند و تاریخچه مالی از بین می‌رود.
+- *بدون Anonymization*: رد شد چون GDPR نقض می‌شود.
+
+**Consequences:**
+- مثبت: Compliance با GDPR و قوانین مالیاتی، کاهش هزینه ذخیره‌سازی
+- منفی: پیچیدگی Job، نیاز به تست دوره‌ای Restore
+- ریسک: اگر Job خطا کند، داده‌های حساس باقی می‌مانند → **Monitoring** اجباری
+
+**Related C4 Level:** Container Level 2 (Data Archival Service + S3 Glacier)

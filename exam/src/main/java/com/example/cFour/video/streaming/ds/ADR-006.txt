@@ -1,0 +1,48 @@
+
+
+Context:
+سه نقش کاربری با نیازهای کاملاً متفاوت.
+یک UX مشترک کار نمی‌کند.
+
+Decision:
+
+۱. Viewer App (Mobile + Web):
+   - Home Feed: پیشنهاد بر اساس تاریخچه
+   - Watch Page: Player با Adaptive Bitrate
+   - Playlists + Watch Later
+   - Subscribe + Notifications
+   - Progressive Disclosure: فیلترهای پیشرفته در تنظیمات
+
+۲. Creator Studio (Web):
+   - Dashboard: Analytics (Views, Revenue, Subscribers)
+   - Upload Wizard: ۳ مرحله (فایل → Metadata → Privacy)
+   - Monetization Panel: Rule Builder
+   - Comment Moderation: Bulk Actions
+   - Live Streaming Setup: RTMP URL + Stream Key
+
+۳. Admin Panel (Web):
+   - Moderation Queue: ویدیوهای Flagged
+   - User Management: Ban/Unban
+   - Content Reports: بررسی شکایات
+   - System Health: Dashboard مانیتورینگ
+
+۴. مشترک:
+   - RTL/LTR Support (CSS `dir`)
+   - Accessibility (ARIA Labels، کنتراست)
+   - Multi-language (i18next)
+   - Dark Mode
+
+۵. Role-Based Routing:
+   - RBAC برای Authorization (نه UX)
+   - JWT با Claim `role: viewer|creator|admin`
+   - API Gateway → Route به Microfrontend مناسب
+
+Alternatives Considered:
+- *Single UI*: رد شد چون UX سه نقش متفاوت است.
+- *Mobile-only*: رد شد چون Creator نیاز به Desktop دارد.
+
+Consequences:
+- مثبت: هر نقش UX اختصاصی، Conversion بالا
+- منفی: سه کدبیس، هزینه توسعه بیشتر
+
+Related C4 Level: Component (Viewer App + Creator Studio + Admin Panel)
