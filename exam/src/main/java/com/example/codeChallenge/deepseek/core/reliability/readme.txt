@@ -10,15 +10,15 @@
 ۸	ConcurrentHashMap و BlockingQueue	✅
 ۹	Shutdown کامل همه Executorها	✅
 ۱۰	استفاده از SLF4J برای لاگ	✅
+
+
 🎯 Trade-offهای در نظر گرفته شده
 تصمیم	مزیت	عیب
 WAL با Append	حفظ تاریخچه کامل	حجم فایل زیاد (با Checkpoint حل شده)
 Deduplication با Set	جلوگیری از پردازش تکراری	مصرف حافظه اضافی
 Retry هر ۱۰ ثانیه	کاهش فشار روی سیستم	تاخیر در پردازش مجدد
 Checkpoint هر ۱۰ ثانیه	کاهش حجم Log	I/O اضافی
-نمره نهایی: ۱۰ از ۱۰ 🚀
 
-آماده‌اید برای آزمون اصلی؟ 🎯
 
 نکات طلایی رو هم بگو برای reliability
 📝 نکات طلایی Reliability از تمرین‌ها
@@ -50,17 +50,11 @@ Checkpoint هر ۱۰ ثانیه	کاهش حجم Log	I/O اضافی
 ۸	جلوگیری از پردازش تکراری	قبل از queue.offer در Recovery، successfulMap را چک کن
 🔥 مهم‌ترین نکات:
 WAL = APPEND + قبل از تغییر (نه بعد از تغییر)
-
 Recovery = Set<String> + حذف فایل بعد از خواندن
-
 Idempotency = successfulMap دائمی (هرگز پاک نشود)
-
 Retry = failedMap را به صف برگردان و پاک کن (نه تکثیر)
-
 Checkpointing = هر چند وقت یکبار Snapshot بگیر (برای کاهش حجم Log)
-
 Shutdown = فلش نهایی + awaitTermination
-
 در Recovery، successfulMap را اول بازیابی کن (برای Dedup)
 
 🧪 چک‌لیست نهایی (قبل از تحویل)
