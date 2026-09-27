@@ -31,14 +31,9 @@
 ۸	Fallback هوشمند	پاسخ پیش‌فرض, وضعیت PENDING_MANUAL, یا ذخیره در DLQ
 🔥 مهم‌ترین نکات:
 Retry = فقط برای خطاهای موقت (شبکه, Timeout, 5xx)
-
 DLQ = برای خطاهای دائمی (Validation, 4xx, داده‌های نامعتبر)
-
 Exponential Backoff = تاخیر افزایشی (۱s, ۲s, ۴s, ...)
-
 InterruptedException = همیشه interrupt() کن
-
 همیشه poll(timeout) به جای poll()
-
 همیشه get(timeout) به جای get()
 
