@@ -1,0 +1,133 @@
+ADR-004: i18n + RTL/LTR + Attachment Storage
+عنوان: پشتیبانی از چندزبانگی، RTL/LTR، و فایل‌های ضمیمه
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله (Context)
+سیستم باید:
+
+از چند زبان (fa, en, ar, tr) پشتیبانی کند.
+
+RTL/LTR را بر اساس زبان اعمال کند.
+
+فایل ضمیمه (تصویر، ویدیو، PDF، DOCX) را در سند Embed کند.
+
+Virus Scan قبل از Accept.
+
+Storage Quota برای هر Plan.
+
+چالش‌ها:
+
+ضمیمه تا ۵۰MB → API Gateway نمی‌تواند تحمل کند.
+
+Preview برای انواع فایل.
+
+Virus Scan بدون تأخیر.
+
+تصمیم (Decision)
+معماری i18next + RTL/LTR + S3 Presigned URL + CDN + Virus Scan.
+
+۱. i18n با i18next
+فایلهای JSON: public/locales/{lang}/translation.json.
+
+تشخیص خودکار زبان از مرورگر + انتخاب دستی.
+
+اعداد محلی: fa (۱۲۳۴), en (1234).
+
+تاریخ محلی: shamsi برای fa، میلادی برای en.
+
+۲. RTL/LTR
+CSS dir="rtl" برای fa, ar, he.
+
+CSS dir="ltr" برای en, tr, de.
+
+Mirroring: Icons, Cursor, Keyboard Shortcuts.
+
+Bidi Text: پشتیبانی از متن مختلط (فارسی + انگلیسی).
+
+۳. Attachment Storage
+Presigned URL → Client مستقیماً به S3 آپلود می‌کند.
+
+Multipart Upload برای فایلهای > ۵MB.
+
+Virus Scan با ClamAV در Lambda (Async).
+
+CDN برای توزیع (CloudFront).
+
+۴. Attachment Types
+نوع	فرمت	Preview
+تصویر	JPEG, PNG, WebP	Resize با FFmpeg
+ویدیو	MP4, WebM	HLS Transcode
+PDF	PDF	PDF.js
+فایل	DOCX, XLSX	LibreOffice Server
+فشرده	ZIP, RAR	لیست محتوا
+۵. Embedded Objects
+جدول: Yjs Array of Rows (CRDT).
+
+نمودار: Mermaid.js (Live Render).
+
+فرمول: KaTeX (Live Render).
+
+Checklist: Yjs Array of Items.
+
+۶. Storage Quota
+Plan	Quota
+Free	۱GB
+Pro	۱۰۰GB
+Team	۱TB
+Enterprise	نامحدود
+۷. Optimization
+Image Resize: ۳ سایز (Thumbnail, Preview, Original).
+
+Video Transcode: ۴ کیفیت (144p, 480p, 720p, 1080p).
+
+Compression: Opus برای صدا، H.265 برای ویدیو.
+
+گزینه‌های بررسی‌شده (Alternatives Considered)
+Alternative 1: ذخیره ضمیمه در PostgreSQL
+مزایا: سادگی، ACID
+معایب: DB منفجر می‌شود، Query کند
+دلیل رد: S3 برای Object Storage طراحی شده.
+
+Alternative 2: مترجم آنلاین
+مزایا: سادگی
+معایب: وابستگی، حریم خصوصی، هزینه
+دلیل رد: Enterprise نمی‌پذیرد.
+
+Alternative 3: بدون Virus Scan
+مزایا: سادگی
+معایب: امنیت پایین، Malware
+دلیل رد: امنیت حیاتی است.
+
+Alternative 4: بدون CDN
+مزایا: سادگی
+معایب: Bandwidth نجومی
+دلیل رد: هزینه.
+
+Alternative 5: Hardcoded i18n
+مزایا: سادگی
+معایب: نیاز به Deploy برای هر زبان
+دلیل رد: غیرقابل نگهداری.
+
+پیامدها (Consequences)
+مثبت:
+پشتیبانی کامل چندزبانه.
+
+RTL/LTR خودکار.
+
+ضمیمه تا ۵۰MB مستقیم به S3.
+
+Virus Scan خودکار.
+
+Preview برای انواع فایل.
+
+CDN برای توزیع سریع.
+
+منفی:
+هزینه S3 + CDN.
+
+پیچیدگی Virus Scan Pipeline.
+
+Memory برای Image Resize.
+
+Latency برای Transcode.

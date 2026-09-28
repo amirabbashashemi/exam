@@ -1,0 +1,136 @@
+ADR-003: Permission Model + Sharing Service + Plugin API
+عنوان: پیکربندی آسان برای کاربر (Permission، Sharing، Templates، Plugin)
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله (Context)
+سیستم باید به کاربر اجازه دهد:
+
+سطوح دسترسی تعریف کند: Viewer, Commenter, Editor, Owner, Admin.
+
+Sharing با لینک (با TTL و Password).
+
+از Templates آماده استفاده کند.
+
+Plugin اضافه کند (نمودار، فرمول، ترجمه).
+
+چالش‌ها:
+
+Permission باید Element-level باشد (نه فقط Document-level).
+
+Sharing لینک باید Revocable باشد.
+
+Plugin باید Sandbox باشد (بدون دسترسی به داده‌های حساس).
+
+تصمیم (Decision)
+معماری RBAC + Sharing Service + Template Engine + Plugin Sandbox + Rule Engine.
+
+۱. RBAC + Element-level Permission
+Roles: Viewer, Commenter, Editor, Owner, Admin.
+
+جدول document_permissions:
+
+sql
+(docId, userId, role, grantedBy, grantedAt, expiresAt)
+Element-level: فیلدهای JSONB برای دسترسی به بخش‌های خاص.
+
+Cache در Redis (TTL=۵min).
+
+۲. Sharing Service
+تولید Share Token (UUID v4).
+
+TTL: ۱h, ۱d, ۷d, Forever.
+
+Password Protection (اختیاری، bcrypt).
+
+Revoke فوری → Cache Invalidate.
+
+Share Link Analytics: تعداد بازدید، IP، Country.
+
+۳. Template Engine
+Templates در S3 (JSON + Markdown + Yjs Snapshot).
+
+Template Gallery در UI.
+
+Custom Templates برای Enterprise.
+
+Category: Meeting Notes, Project Plan, Resume, Invoice.
+
+۴. Plugin API
+Sandbox (Web Workers / V8 Isolates).
+
+REST API برای Pluginها.
+
+Permission-based Access (Plugin فقط به داده‌های مجاز دسترسی دارد).
+
+Marketplace برای Pluginهای Third-party.
+
+Manifest: {name, version, permissions, entryPoint}.
+
+۵. Rule Engine (Drools)
+قوانین در PostgreSQL (JSONB):
+
+json
+{
+  "condition": { "country": "IR", "time": ">22:00" },
+  "action": { "role": "VIEWER" }
+}
+مثال: "اگر کاربر از IP ناشناس، فقط Viewer".
+
+Cache در Redis (TTL=۵min).
+
+۶. Audit Log برای Permission Changes
+هر تغییر Permission → Kafka Event.
+
+ذخیره در Elasticsearch (۷ سال).
+
+Dashboard برای Admin.
+
+گزینه‌های بررسی‌شده (Alternatives Considered)
+Alternative 1: فقط RBAC ساده
+مزایا: سادگی
+معایب: بدون Element-level، بدون Rule Engine
+دلیل رد: Enterprise نیاز به کنترل دقیق دارد.
+
+Alternative 2: ABAC (Attribute-Based)
+مزایا: انعطاف بالا
+معایب: پیچیدگی زیاد، Performance پایین
+دلیل رد: RBAC + Rule Engine کافی است.
+
+Alternative 3: Templates آنلاین
+مزایا: سادگی، تنوع
+معایب: وابستگی به خارج، حریم خصوصی، هزینه
+دلیل رد: Enterprise نمی‌پذیرد.
+
+Alternative 4: بدون Plugin Sandbox
+مزایا: سادگی
+معایب: Plugin می‌تواند داده‌ها را بدزدد
+دلیل رد: امنیت حیاتی است.
+
+Alternative 5: بدون Rule Engine
+مزایا: سادگی
+معایب: قوانین شرطی سخت کد می‌شوند
+دلیل رد: Enterprise نیاز به قوانین پویا دارد.
+
+پیامدها (Consequences)
+مثبت:
+کنترل دقیق Permission (Element-level).
+
+Sharing امن با TTL و Password.
+
+Templates متنوع.
+
+Plugin Sandbox امن.
+
+Rule Engine برای قوانین پویا.
+
+Audit Log کامل.
+
+منفی:
+پیچیدگی Rule Engine (Drools).
+
+Plugin Sandbox Performance Overhead.
+
+Memory برای Permission Cache.
+
+آموزش کاربر برای Rule Builder.

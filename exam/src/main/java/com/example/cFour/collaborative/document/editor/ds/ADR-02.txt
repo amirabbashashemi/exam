@@ -1,0 +1,128 @@
+ADR-002: CRDT (Yjs) برای Conflict Resolution
+عنوان: سازگاری (Consistency) در حل تعارض (Conflict Resolution) و ترتیب عملیات
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله (Context)
+چند کاربر همزمان یک سند را ویرایش می‌کنند. اگر دو کاربر همزمان یک کلمه را تغییر دهند:
+
+کاربر A: "سلام دنیا" → "سلام جهان"
+
+کاربر B: "سلام دنیا" → "درود دنیا"
+
+سیستم باید:
+
+Conflict را خودکار حل کند (بدون دخالت کاربر).
+
+ترتیب عملیات را حفظ کند.
+
+Offline Edits را با تغییرات آنلاین Merge کند.
+
+Causality را تشخیص دهد (کدام تغییر قبل از کدام بود).
+
+تصمیم (Decision)
+استفاده از CRDT (Yjs) برای Conflict Resolution + Vector Clock برای Causality.
+
+۱. CRDT انتخاب (Yjs)
+هر کاراکتر یک ID یکتا دارد: (clientId, clock).
+
+عملیات: Insert, Delete, Format.
+
+Convergent: همه Replicaها بعد از Merge یکسان می‌شوند.
+
+Commutative: ترتیب اعمال مهم نیست.
+
+Idempotent: اعمال دوباره تأثیر ندارد.
+
+۲. ساختار Y.Doc
+text
+Y.Doc
+├── Y.Text (محتوای سند)
+├── Y.Array (جداول، لیستها)
+├── Y.Map (متادیتا، Comments)
+└── Awareness (Live Cursor, Selection, Typing)
+۳. Vector Clock برای Causality
+هر Client یک clientId یکتا (UUID).
+
+هر تغییر یک (clientId, clock) دارد.
+
+Detect Out-of-Order: اگر تغییر جدیدتر رسید، صبر می‌کند.
+
+Causal Ordering: اگر A → B، آنگاه A قبل از B اعمال می‌شود.
+
+۴. Delta Sync
+Client فقط Delta (Update Objects) می‌فرستد.
+
+Server Delta را به Kafka می‌فرستد.
+
+سایر Clients Delta را اعمال می‌کنند.
+
+State Vector برای Sync کامل در Reconnection.
+
+۵. Offline Mode
+Client تغییرات را در IndexedDB ذخیره می‌کند.
+
+هنگام اتصال مجدد:
+
+Client StateVector خود را می‌فرستد.
+Server Deltaهای بعد از آن StateVector را می‌فرستد.
+CRDT خودکار Merge می‌کند.
+بدون تداخل، حتی اگر کاربر ۱۰۰۰ تغییر آفلاین داده باشد.
+
+۶. Awareness Protocol
+Live Cursor هر کاربر (رنگ متفاوت).
+
+Selection Range.
+
+Typing Indicator.
+
+Presence (Online/Offline).
+
+Awareness Data موقت است (در Redis، TTL=۳۰s).
+
+گزینه‌های بررسی‌شده (Alternatives Considered)
+Alternative 1: Versioning + Manual Merge
+مزایا: سادگی، کنترل کامل
+معایب: Conflict دستی، UX فاجعه، کاربر باید Merge کند
+دلیل رد: Google Docs هرگز این کار را نمی‌کند.
+
+Alternative 2: Locking (Pessimistic)
+مزایا: بدون Conflict، سادگی
+معایب: فقط یک کاربر همزمان، Lock Timeout
+دلیل رد: غیرقابل قبول برای Collaboration.
+
+Alternative 3: Operational Transformation (OT)
+مزایا: استاندارد، استفاده در Google Docs
+معایب: نیاز به Central Server، پیچیدگی O(n²)، Backward Transform
+دلیل رد: CRDT ساده‌تر و Peer-to-Peer است.
+
+Alternative 4: Last-Write-Wins (LWW)
+مزایا: سادگی
+معایب: از دست رفتن تغییرات، غیرقابل قبول برای متن
+دلیل رد: نمی‌تواند ترتیب کاراکترها را حفظ کند.
+
+Alternative 5: بدون Vector Clock
+مزایا: سادگی
+معایب: Out-of-Order Updates اعمال می‌شوند، Causality از دست می‌رود
+دلیل رد: Causality برای CRDT حیاتی است.
+
+پیامدها (Consequences)
+مثبت:
+Merge خودکار بدون Conflict.
+
+ترتیب دقیق با Vector Clock.
+
+Offline Support کامل.
+
+Awareness بلادرنگ.
+
+کاهش Load سرور (بدون Conflict Resolution مرکزی).
+
+منفی:
+Memory Overhead (~۱۰٪ حجم سند).
+
+CRDT Document Size رشد می‌کند (نیاز به Snapshot).
+
+پیچیدگی Yjs Library.
+
+Debugging سخت‌تر از OT.

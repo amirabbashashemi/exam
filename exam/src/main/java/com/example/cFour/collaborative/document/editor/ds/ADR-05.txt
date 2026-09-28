@@ -1,0 +1,160 @@
+ADR-005: Op Log + Snapshot + Trash + GDPR
+عنوان: مدیریت چرخه حیات داده‌ها (Version History، GDPR، Trash، Audit Log)
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله (Context)
+سیستم باید:
+
+Version History با قابلیت Restore به هر نسخه.
+
+Trash (Soft Delete) با امکان Restore در ۳۰ روز.
+
+GDPR: حق فراموشی.
+
+Audit Log برای همه تغییرات.
+
+Tiered Storage برای کاهش هزینه.
+
+چالش‌ها:
+
+۱۰۰M سند × ۱۰۰۰ نسخه = حجم عظیم.
+
+Version History نباید کند باشد.
+
+GDPR نیاز به Anonymization دارد.
+
+تصمیم (Decision)
+معماری Op Log + Snapshot + Trash + GDPR + Tiered Storage.
+
+۱. Version History
+Op Log در Cassandra:
+
+text
+(docId, seq) → update
+هر تغییر یک ردیف.
+
+Ordered by seq.
+
+Retention: ۳۰ روز.
+
+Snapshot در S3:
+
+هر ۱۰۰۰ تغییر → Snapshot (Yjs encoded).
+
+Retention: Forever (Tiered).
+
+Format: Yjs Binary + Metadata.
+
+Restore:
+
+از Snapshot + Replay Op Log تا نسخه هدف.
+
+Async Job (Kafka).
+
+اطلاع‌رسانی به کاربر.
+
+۲. Trash
+Soft Delete: is_deleted = true.
+
+۳۰ روز در Trash.
+
+Restore: یک کلیک.
+
+Hard Delete بعد از ۳۰ روز (Job شبانه).
+
+۳. GDPR
+Anonymize بعد از ۳۰ روز:
+
+نام، ایمیل → USER_DELETED_{id}.
+
+Metadata → پاک.
+
+Content → حذف کامل.
+
+Export User Data: JSON با همه اسناد و متادیتا.
+
+Right to Erasure: Kafka Event → همه سرویس‌ها پاک کنند.
+
+۴. Audit Log
+Kafka Topic: audit-events.
+
+Elasticsearch برای جستجو.
+
+Immutable (WORM Storage).
+
+Retention: ۷ سال.
+
+Events: Login, Edit, Share, Delete, Permission Change.
+
+۵. Tiered Storage
+Tier	بازه	Storage
+Hot	۰-۳ ماه	Cassandra + S3 Standard
+Warm	۳ ماه-۲ سال	S3 Infrequent Access
+Cold	> ۲ سال	S3 Glacier
+۶. Trash Lifecycle
+text
+User Delete → Soft Delete (is_deleted=true, deleted_at=now)
+             ↓
+30 days later → Job شبانه
+             ↓
+             Hard Delete از Cassandra
+             ↓
+             Media حذف از S3
+۷. Restore Workflow
+کاربر درخواست Restore.
+
+Kafka Event → Job.
+
+Job از S3 Glacier بازیابی (۳-۵ ساعت).
+
+اطلاع‌رسانی با Email.
+
+گزینه‌های بررسی‌شده (Alternatives Considered)
+Alternative 1: حذف فیزیکی فوری
+مزایا: سادگی
+معایب: Foreign Key می‌شکند، بدون Trash
+دلیل رد: UX بد + GDPR ناقص.
+
+Alternative 2: Version Field فقط
+مزایا: سادگی
+معایب: فقط آخرین نسخه، بدون تاریخچه
+دلیل رد: Google Docs به تاریخچه کامل نیاز دارد.
+
+Alternative 3: بدون Snapshot
+مزایا: سادگی
+معایب: Restore کند (Replay همه Opها)
+دلیل رد: Performance.
+
+Alternative 4: بدون Tiered Storage
+مزایا: سادگی
+معایب: هزینه نجومی S3 Standard
+دلیل رد: هزینه.
+
+Alternative 5: بدون Audit Log
+مزایا: سادگی
+معایب: عدم Compliance
+دلیل رد: Enterprise نیاز دارد.
+
+پیامدها (Consequences)
+مثبت:
+Version History کامل.
+
+Trash با Restore آسان.
+
+GDPR Compliance.
+
+Audit Log کامل.
+
+کاهش هزینه با Tiered Storage.
+
+Performance بالا (Snapshot).
+
+منفی:
+پیچیدگی Op Log + Snapshot.
+
+تأخیر Restore از Glacier.
+
+Memory برای Op Log.
+
+Job شبانه نیاز به Monitoring.

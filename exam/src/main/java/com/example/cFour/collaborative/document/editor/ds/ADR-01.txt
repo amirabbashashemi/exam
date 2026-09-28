@@ -1,0 +1,120 @@
+ه (Context)
+سیستم باید امکان ویرایش همزمان ۱ میلیون کاربر روی ۱۰۰ میلیون سند را با تأخیر کمتر از ۱۰۰ میلی‌ثانیه فراهم کند. چالش‌ها:
+
+REST Stateless نمی‌تواند Push کند → نیاز به Polling (تأخیر > ۱s).
+
+۱۰۰M سند روی یک Kafka Partition قابل مدیریت نیست.
+
+Merge تغییرات همزمان بدون Conflict Resolution غیرممکن است.
+
+هر سند باید به یک سرور مشخص Map شود تا Locality حفظ شود.
+
+تصمیم (Decision)
+معماری ترکیبی WebSocket Gateway + CRDT (Yjs) + Sharding + Kafka انتخاب می‌شود.
+
+۱. WebSocket Gateway (Netty)
+اتصال Persistent بین Client و Server (WSS).
+
+هر Server: ۱M Connection با Netty (Non-blocking).
+
+سرور می‌تواند Push کند (تأخیر < ۵۰ms).
+
+Awareness Protocol برای Live Cursor و Presence.
+
+۲. CRDT Engine (Yjs)
+هر سند یک Y.Doc (CRDT) با ساختار:
+
+text
+Y.Doc
+├── Y.Text (محتوای سند)
+├── Y.Array (لیستها، جداول)
+├── Y.Map (متادیتا)
+└── Awareness (Live Cursor, Selection)
+تغییرات به صورت Update Objects (Delta) منتقل می‌شوند.
+
+Merge خودکار بدون Conflict (Convergent).
+
+کتابخانه: Yjs (JavaScript/Python/Java Bindings).
+
+۳. Sharding بر اساس documentId
+هر سند به یک سرور مشخص Map می‌شود:
+
+text
+serverId = hash(documentId) % N
+Consistent Hashing برای Rebalancing.
+
+Load Balancer با Sticky Sessions بر اساس documentId.
+
+مزیت: همه تغییرات یک سند در یک سرور → Locality.
+
+۴. Kafka برای Broadcast
+Topic: doc-updates
+
+Partition بر اساس documentId (تضمین ترتیب).
+
+Producer: WebSocket Gateway
+
+Consumer: سایر WebSocket Gatewayها
+
+پیام: Delta (نه کل سند).
+
+۵. Document Snapshot
+هر ۱۰۰۰ تغییر → Snapshot در S3 (Yjs encoded).
+
+Op Log در Cassandra: (docId, seq) → update.
+
+Lazy Load: فقط Snapshot + Deltaهای بعد از آن.
+
+۶. Auto-scaling
+K8s HPA بر اساس Connection Count.
+
+Threshold: ۸۰٪ ظرفیت → Scale Up.
+
+Graceful Shutdown: انتقال Connectionها قبل از خاموشی.
+
+گزینه‌های بررسی‌شده (Alternatives Considered)
+Alternative 1: REST Polling
+مزایا: سادگی، Stateless
+معایب: تأخیر > ۱s، ۱M Request/s، Battery Drain
+دلیل رد: عدم تحقق تأخیر < ۱۰۰ms.
+
+Alternative 2: فقط Kafka بدون WebSocket
+مزایا: مقیاس‌پذیری خطی، جداسازی Producer/Consumer
+معایب: Client نمی‌تواند Push دریافت کند، نیاز به Polling
+دلیل رد: Kafka به تنهایی لایه‌ی تحویل به Client نیست.
+
+Alternative 3: Server-Sent Events (SSE)
+مزایا: ساده‌تر از WebSocket، بر پایه HTTP
+معایب: یک‌طرفه، Connection Limit ۶ در HTTP/1.1
+دلیل رد: ویرایش نیاز به ارتباط دوطرفه دارد.
+
+Alternative 4: Locking (قفل سند)
+مزایا: Consistency بالا، سادگی
+معایب: عدم ویرایش همزمان، Lock ممکن است گیر کند
+دلیل رد: UX غیرقابل قبول (Google Docs از Locking استفاده نمی‌کند).
+
+Alternative 5: بدون Sharding
+مزایا: سادگی
+معایب: ۱۰۰M سند روی یک Kafka Partition، Hotspot
+دلیل رد: غیرقابل مقیاس.
+
+پیامدها (Consequences)
+مثبت:
+تأخیر < ۵۰ms برای تحویل تغییرات.
+
+مقیاس‌پذیری خطی: افزودن سرور → ۱M Connection بیشتر.
+
+Merge خودکار بدون Conflict (CRDT).
+
+Reconnection سریع با Delta Sync.
+
+Awareness Protocol برای Live Cursor.
+
+منفی:
+پیچیدگی Connection Registry (Redis).
+
+Sticky Sessions در Load Balancer.
+
+CRDT Memory Overhead (~۱۰٪ حجم سند).
+
+Auto-scaling در K8s پیچیده‌تر.

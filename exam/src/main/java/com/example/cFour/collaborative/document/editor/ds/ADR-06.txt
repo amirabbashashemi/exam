@@ -1,0 +1,135 @@
+ADR-006: UX سه‌گانه (User, Team, Enterprise)
+عنوان: کاربردپذیری (UX) برای کاربر عادی، تیم، و Enterprise
+
+وضعیت: پذیرفته شده
+
+زمینه و مسئله (Context)
+سه نقش کاربری با نیازهای کاملاً متفاوت:
+
+کاربر عادی: سند شخصی، Templates ساده، Sharing لینک.
+
+تیم: Dashboard، Comments، Role Management، Analytics.
+
+Enterprise: SSO، SCIM، Audit، DLP، Compliance.
+
+یک UI واحد نمی‌تواند هر سه را بهینه پوشش دهد.
+
+تصمیم (Decision)
+سه رابط کاربری مجزا + Design System مشترک.
+
+۱. User App (Personal)
+Onboarding Wizard: ۳ مرحله (ایمیل → نام → اولین سند).
+
+Personal Templates: Meeting Notes, To-Do, Journal.
+
+Simple Sharing: لینک با TTL.
+
+Plans: Free, Pro.
+
+Offline Mode با IndexedDB.
+
+۲. Team Panel
+Team Dashboard: اسناد تیم، اعضا، فعالیت.
+
+Shared Templates: Templates سازمانی.
+
+Role Management: Admin, Member, Guest.
+
+Comments & Suggestions: Thread-based.
+
+Team Analytics: اسناد فعال، کاربران فعال.
+
+Slack/Teams Integration.
+
+۳. Enterprise Admin
+SSO: SAML 2.0, OIDC.
+
+SCIM Provisioning: User/Group Sync خودکار.
+
+Audit Dashboard: همه تغییرات.
+
+DLP (Data Loss Prevention): Scan محتوا.
+
+Compliance: SOC 2, HIPAA, GDPR.
+
+Custom Branding: Logo, Color, Domain.
+
+SLA 99.99% + Dedicated Support.
+
+On-premise Option برای برخی مشتریان.
+
+۴. مشترک بین هر سه
+RTL/LTR با CSS dir.
+
+Accessibility: ARIA Labels، Keyboard Navigation، Screen Reader.
+
+Dark Mode.
+
+Keyboard Shortcuts: Ctrl+B, Ctrl+I, etc.
+
+Progressive Disclosure: فیلترهای پیشرفته در Accordion.
+
+۵. Design System مشترک
+Component Library (React).
+
+Design Tokens: Color, Typography, Spacing.
+
+Storybook برای Documentation.
+
+Figma برای Design.
+
+۶. Role-based Routing
+RBAC برای Authorization.
+
+JWT با Claim role: user|team|enterprise.
+
+API Gateway → Route به Microfrontend مناسب.
+
+Module Federation (Webpack 5).
+
+گزینه‌های بررسی‌شده (Alternatives Considered)
+Alternative 1: Single UI
+مزایا: سادگی، یک کدبیس
+معایب: UX هر نقش خراب می‌شود
+دلیل رد: نیازهای متفاوت.
+
+Alternative 2: فقط Mobile
+مزایا: سادگی
+معایب: Enterprise نیاز به Desktop دارد
+دلیل رد: Table/Charts در Mobile سخت.
+
+Alternative 3: بدون Enterprise Features
+مزایا: سادگی
+معایب: Enterprise نمی‌خرد
+دلیل رد: درآمد Enterprise حیاتی است.
+
+Alternative 4: بدون Design System
+مزایا: سرعت اولیه
+معایب: ناهماهنگی، تکرار
+دلیل رد: نگهداری سخت می‌شود.
+
+Alternative 5: بدون Module Federation
+مزایا: سادگی
+معایب: یک Bundle غول‌پیکر
+دلیل رد: Performance.
+
+پیامدها (Consequences)
+مثبت:
+UX بهینه برای هر نقش.
+
+Design System یکپارچه.
+
+Module Federation برای Lazy Load.
+
+Enterprise Features کامل.
+
+Accessibility کامل.
+
+منفی:
+هزینه توسعه سه UI.
+
+نگهداری پیچیده‌تر.
+
+Sync بین UIها.
+
+Module Federation پیچیده.
