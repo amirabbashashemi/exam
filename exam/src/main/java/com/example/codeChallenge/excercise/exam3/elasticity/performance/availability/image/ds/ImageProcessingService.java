@@ -1,4 +1,4 @@
-package com.example.codeChallenge.excercise.exam4.elasticity.performance.availability.image.ds;
+package com.example.codeChallenge.excercise.exam3.elasticity.performance.availability.image.ds;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;

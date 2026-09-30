@@ -1,4 +1,4 @@
-package com.example.codeChallenge.excercise.exam4.elasticity.performance.availability.order;
+package com.example.codeChallenge.excercise.exam3.elasticity.performance.availability.order;
 /*
 یک سرویس OcrService داریم که روزانه ۱۰ کاربر از آن استفاده می‌کنند و هر درخواست ۲ ثانیه طول می‌کشد.
  پیش‌بینی می‌شود تعداد کاربران به ۵۰۰۰ برسد. با کد فعلی، اگر تعداد کاربران زیاد شود، سرور کرش می‌کند و هیچ درخواستی پاسخ داده نمی‌شود.

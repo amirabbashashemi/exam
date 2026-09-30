@@ -1,0 +1,1431 @@
+{
+  "version": "31.3.2",
+  "pages": [
+    {
+      "id": "v0qubGjVoCkS9j5dkIKj",
+      "name": "Context",
+      "cells": [
+        {
+          "id": "ctx-1",
+          "type": "layer"
+        },
+        {
+          "id": "ctx-title",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "Video Streaming Platform — System Context (C4 Level 1)"
+        },
+        {
+          "id": "ctx-viewer",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "Viewer\n[Person]\n\nWatches videos, likes,\ncomments, subscribes"
+        },
+        {
+          "id": "ctx-creator",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "Creator / Streamer\n[Person]\n\nUploads videos, live streams,\nmanages monetization"
+        },
+        {
+          "id": "ctx-admin",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "Admin / Manager\n[Person]\n\nModeration, user management,\nplatform operations"
+        },
+        {
+          "id": "ctx-platform",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "Video Streaming Platform\n[Software System]\n\nUpload, transcode, stream videos\nto millions of users"
+        },
+        {
+          "id": "ctx-cdn",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "CDN\n[External System]\n\nCloudFront / Akamai\nVideo delivery to users"
+        },
+        {
+          "id": "ctx-s3",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "Object Storage (S3)\n[External System]\n\nAWS S3 / MinIO\nVideo files (original + transcoded)"
+        },
+        {
+          "id": "ctx-payment",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "Payment Gateway\n[External System]\n\nStripe / PayPal\nMonetization & payouts"
+        },
+        {
+          "id": "ctx-moderation",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "AI Moderation API\n[External System]\n\nAWS Rekognition / Google Vision\nContent moderation"
+        },
+        {
+          "id": "ctx-sms",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "SMS / Push Provider\n[External System]\n\nFirebase / Kavenegar\nNotifications"
+        },
+        {
+          "id": "ctx-maxmind",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "MaxMind GeoIP\n[External System]\n\nGeo-blocking by IP"
+        },
+        {
+          "id": "ctx-live",
+          "type": "node",
+          "parent": "ctx-1",
+          "label": "Live Streaming CDN\n[External System]\n\nMux / Wowza\nRTMP → HLS for live"
+        },
+        {
+          "id": "ctx-r1",
+          "type": "edge",
+          "parent": "ctx-1",
+          "source": "ctx-viewer",
+          "target": "ctx-platform",
+          "label": "Watches videos, likes, comments\n[HTTPS + WebSocket]"
+        },
+        {
+          "id": "ctx-r2",
+          "type": "edge",
+          "parent": "ctx-1",
+          "source": "ctx-creator",
+          "target": "ctx-platform",
+          "label": "Uploads videos, live streams\n[HTTPS + RTMP]"
+        },
+        {
+          "id": "ctx-r3",
+          "type": "edge",
+          "parent": "ctx-1",
+          "source": "ctx-admin",
+          "target": "ctx-platform",
+          "label": "Moderates content\n[HTTPS]"
+        },
+        {
+          "id": "ctx-r4",
+          "type": "edge",
+          "parent": "ctx-1",
+          "source": "ctx-platform",
+          "target": "ctx-cdn",
+          "label": "Serves video chunks\n[HTTPS/HLS]"
+        },
+        {
+          "id": "ctx-r5",
+          "type": "edge",
+          "parent": "ctx-1",
+          "source": "ctx-platform",
+          "target": "ctx-s3",
+          "label": "Stores & retrieves files\n[AWS SDK]"
+        },
+        {
+          "id": "ctx-r6",
+          "type": "edge",
+          "parent": "ctx-1",
+          "source": "ctx-platform",
+          "target": "ctx-payment",
+          "label": "Charges & pays out\n[HTTPS/REST]"
+        },
+        {
+          "id": "ctx-r7",
+          "type": "edge",
+          "parent": "ctx-1",
+          "source": "ctx-platform",
+          "target": "ctx-moderation",
+          "label": "Moderates content\n[HTTPS/REST]"
+        },
+        {
+          "id": "ctx-r8",
+          "type": "edge",
+          "parent": "ctx-1",
+          "source": "ctx-platform",
+          "target": "ctx-sms",
+          "label": "Sends notifications\n[HTTPS/REST]"
+        },
+        {
+          "id": "ctx-r9",
+          "type": "edge",
+          "parent": "ctx-1",
+          "source": "ctx-platform",
+          "target": "ctx-maxmind",
+          "label": "Resolves IP location\n[REST]"
+        },
+        {
+          "id": "ctx-r10",
+          "type": "edge",
+          "parent": "ctx-1",
+          "source": "ctx-platform",
+          "target": "ctx-live",
+          "label": "Pushes live stream\n[RTMP]"
+        }
+      ]
+    },
+    {
+      "id": "fXq184QT90pZ7jGtyock",
+      "name": "Container",
+      "cells": [
+        {
+          "id": "cont-1",
+          "type": "layer"
+        },
+        {
+          "id": "cont-title",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Video Streaming Platform — Container Diagram (C4 Level 2)"
+        },
+        {
+          "id": "cont-viewer-app",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Viewer App\n[Container: React Native + Web]\n\nWatch videos\nAdaptive Bitrate Player"
+        },
+        {
+          "id": "cont-creator-studio",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Creator Studio\n[Container: React Web]\n\nUpload, Analytics\nMonetization Panel"
+        },
+        {
+          "id": "cont-admin-panel",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Admin Panel\n[Container: React Web]\n\nModeration Queue\nUser Management"
+        },
+        {
+          "id": "cont-api-gw",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "API Gateway\n[Container: Kong]\nPort: 8000\n\nRouting, Auth, Rate Limiting"
+        },
+        {
+          "id": "cont-ws-gw",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "WebSocket Gateway\n[Container: Netty]\nPort: 8080\n\nLive Chat, Notifications\n100K+ connections"
+        },
+        {
+          "id": "cont-cdn",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "CDN\n[Container: CloudFront]\n\nVideo Distribution\nEdge Caching\nSigned URLs"
+        },
+        {
+          "id": "cont-video-svc",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Video Service\n[Container: Spring Boot]\nPort: 8081\n\nMetadata, Playlists\nView Count"
+        },
+        {
+          "id": "cont-upload-svc",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Upload Service\n[Container: Spring Boot]\nPort: 8082\n\nPresigned URL\nMultipart Upload"
+        },
+        {
+          "id": "cont-transcode",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Transcoding Service\n[Container: Spring Boot + FFmpeg + GPU]\nPort: 8083\n\nHLS/DASH Renditions\nK8s Worker Pool"
+        },
+        {
+          "id": "cont-live-svc",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Live Streaming Service\n[Container: Wowza / Mux]\nPort: 1935 (RTMP)\n\nLive → HLS\nLow Latency"
+        },
+        {
+          "id": "cont-recommend",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Recommendation Service\n[Container: Python + ML]\nPort: 8084\n\nUser-based CF\nTensorFlow Serving"
+        },
+        {
+          "id": "cont-user-svc",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "User Service\n[Container: Spring Boot]\nPort: 8085\n\nAuth (JWT)\nProfile, Subscriptions"
+        },
+        {
+          "id": "cont-moderation",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Moderation Service\n[Container: Spring Boot + AI]\nPort: 8086\n\nAI + Human Queue\nCopyright Detection"
+        },
+        {
+          "id": "cont-monetization",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Monetization Service\n[Container: Spring Boot]\nPort: 8087\n\nAds, Subscriptions\nCreator Payouts"
+        },
+        {
+          "id": "cont-notif",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Notification Service\n[Container: Spring Boot]\nPort: 8088\n\nPush, Email, SMS"
+        },
+        {
+          "id": "cont-archive",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Archive Service\n[Container: Spring Boot]\nPort: 8089\n\nTiered Storage\nGDPR Anonymization"
+        },
+        {
+          "id": "cont-pg",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "PostgreSQL\n[Container: Postgres 16]\nPort: 5432\n\nUsers, Metadata\nMonetization"
+        },
+        {
+          "id": "cont-cassandra",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Cassandra\n[Container: Cassandra 4]\nPort: 9042\n\nVideo Data\nComments, Likes"
+        },
+        {
+          "id": "cont-redis",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Redis Cluster\n[Container: Redis 7]\nPort: 6379\n\nCache, Session\nHyperLogLog (View Count)"
+        },
+        {
+          "id": "cont-es",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Elasticsearch\n[Container: ES 8]\nPort: 9200\n\nVideo Search\nMulti-language Analyzers"
+        },
+        {
+          "id": "cont-s3",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "S3 / Object Storage\n[Container: S3]\n\nOriginal + Transcoded\nHLS Chunks\nSubtitles (VTT)"
+        },
+        {
+          "id": "cont-kafka",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Apache Kafka\n[Container: Kafka]\nPort: 9092\n\nvideo-events, view-events\nsaga-events"
+        },
+        {
+          "id": "cont-discovery",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Service Discovery\n[Container: Eureka]\n\nService Registry\nHealth Checks"
+        },
+        {
+          "id": "cont-config",
+          "type": "node",
+          "parent": "cont-1",
+          "label": "Config Server\n[Container: Spring Cloud Config]\n\nCentralized Configuration\nGit Backend"
+        },
+        {
+          "id": "ce1",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-viewer-app",
+          "target": "cont-api-gw",
+          "label": "HTTPS/REST"
+        },
+        {
+          "id": "ce2",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-viewer-app",
+          "target": "cont-ws-gw",
+          "label": "WSS (Live Chat)"
+        },
+        {
+          "id": "ce3",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-viewer-app",
+          "target": "cont-cdn",
+          "label": "HLS/DASH"
+        },
+        {
+          "id": "ce4",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-creator-studio",
+          "target": "cont-api-gw",
+          "label": "HTTPS/REST"
+        },
+        {
+          "id": "ce5",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-creator-studio",
+          "target": "cont-live-svc",
+          "label": "RTMP (Live)"
+        },
+        {
+          "id": "ce6",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-admin-panel",
+          "target": "cont-api-gw",
+          "label": "HTTPS/REST"
+        },
+        {
+          "id": "ce7",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-api-gw",
+          "target": "cont-video-svc",
+          "label": "Routes"
+        },
+        {
+          "id": "ce8",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-api-gw",
+          "target": "cont-upload-svc",
+          "label": "Routes"
+        },
+        {
+          "id": "ce9",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-api-gw",
+          "target": "cont-user-svc",
+          "label": "Routes"
+        },
+        {
+          "id": "ce10",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-api-gw",
+          "target": "cont-recommend",
+          "label": "Routes"
+        },
+        {
+          "id": "ce11",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-api-gw",
+          "target": "cont-monetization",
+          "label": "Routes"
+        },
+        {
+          "id": "ce12",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-upload-svc",
+          "target": "cont-kafka",
+          "label": "Publishes"
+        },
+        {
+          "id": "ce13",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-transcode",
+          "target": "cont-kafka",
+          "label": "Consumes"
+        },
+        {
+          "id": "ce14",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-transcode",
+          "target": "cont-s3",
+          "label": "Reads/Writes"
+        },
+        {
+          "id": "ce15",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-cdn",
+          "target": "cont-s3",
+          "label": "Reads"
+        },
+        {
+          "id": "ce16",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-video-svc",
+          "target": "cont-cassandra",
+          "label": "JDBC"
+        },
+        {
+          "id": "ce17",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-user-svc",
+          "target": "cont-pg",
+          "label": "JDBC"
+        },
+        {
+          "id": "ce18",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-video-svc",
+          "target": "cont-redis",
+          "label": "Cache + HLL"
+        },
+        {
+          "id": "ce19",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-video-svc",
+          "target": "cont-es",
+          "label": "Index"
+        },
+        {
+          "id": "ce20",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-notif",
+          "target": "cont-kafka",
+          "label": "Events"
+        },
+        {
+          "id": "ce21",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-archive",
+          "target": "cont-s3",
+          "label": "Read old"
+        },
+        {
+          "id": "ce22",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-moderation",
+          "target": "cont-kafka",
+          "label": "AI check"
+        },
+        {
+          "id": "ce23",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-video-svc",
+          "target": "cont-discovery",
+          "label": "Registers"
+        },
+        {
+          "id": "ce24",
+          "type": "edge",
+          "parent": "cont-1",
+          "source": "cont-video-svc",
+          "target": "cont-config",
+          "label": "Config"
+        }
+      ]
+    },
+    {
+      "id": "xurHUA6VPxptKNRr2lMh",
+      "name": "Component",
+      "cells": [
+        {
+          "id": "cf-1",
+          "type": "layer"
+        },
+        {
+          "id": "cf-title",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "Video Streaming Platform — All Services Components (C4 Level 3)"
+        },
+        {
+          "id": "g-video",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "Video Service [Container: Spring Boot]"
+        },
+        {
+          "id": "v-ctrl",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "VideoController\n[Spring REST]\n\n+ getVideo(id)\n+ searchVideos(query)\n+ likeVideo(id)\n+ commentVideo(id, msg)"
+        },
+        {
+          "id": "v-svc",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "VideoService\n[Spring Service]\n\n+ getMetadata()\n+ incrementView()\n+ publishEvent()"
+        },
+        {
+          "id": "v-repo",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "VideoRepository\n[Spring Data JPA]\n\n+ findById()\n+ save()\n+ search()"
+        },
+        {
+          "id": "v-viewcounter",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "ViewCounterService\n[Spring Component]\n\n+ recordView(userId, videoId)\n+ getUniqueViews(videoId)\nuses Redis HyperLogLog"
+        },
+        {
+          "id": "v-comment",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "CommentService\n[Spring Service]\n\n+ addComment()\n+ getComments()\n+ deleteComment()"
+        },
+        {
+          "id": "v-like",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "LikeService\n[Spring Component]\n\n+ like(userId, videoId)\n+ unlike(userId, videoId)\n+ getCount(videoId)"
+        },
+        {
+          "id": "e-v1",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "v-ctrl",
+          "target": "v-svc"
+        },
+        {
+          "id": "e-v2",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "v-svc",
+          "target": "v-repo"
+        },
+        {
+          "id": "e-v3",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "v-svc",
+          "target": "v-viewcounter"
+        },
+        {
+          "id": "e-v4",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "v-ctrl",
+          "target": "v-comment"
+        },
+        {
+          "id": "e-v5",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "v-svc",
+          "target": "v-like"
+        },
+        {
+          "id": "g-upload",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "Upload Service [Container: Spring Boot]"
+        },
+        {
+          "id": "u-ctrl",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "UploadController\n[Spring REST]\n\n+ initiateUpload(metadata)\n+ completeUpload(uploadId)\n+ cancelUpload(uploadId)"
+        },
+        {
+          "id": "u-svc",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "UploadService\n[Spring Service]\n\n+ validateFile()\n+ generateUploadId()\n+ publishUploadEvent()"
+        },
+        {
+          "id": "u-presigned",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "PresignedUrlGenerator\n[Spring Component]\n\n+ generateS3Url()\n+ generateMultipartUrls()"
+        },
+        {
+          "id": "u-multipart",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "MultipartUploadHandler\n[Spring Component]\n\n+ completeMultipart()\n+ abortMultipart()"
+        },
+        {
+          "id": "e-u1",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "u-ctrl",
+          "target": "u-svc"
+        },
+        {
+          "id": "e-u2",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "u-svc",
+          "target": "u-presigned"
+        },
+        {
+          "id": "e-u3",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "u-svc",
+          "target": "u-multipart"
+        },
+        {
+          "id": "g-trans",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "Transcoding Service [Container: Spring Boot + FFmpeg + GPU]"
+        },
+        {
+          "id": "t-ctrl",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "TranscodingController\n[Spring REST]\n\n+ startJob(videoId)\n+ getStatus(jobId)\n+ cancelJob(jobId)"
+        },
+        {
+          "id": "t-orch",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "TranscodingOrchestrator\n[Kafka Consumer]\n\n+ onVideoUploaded()\n+ spawnWorkerPods()\n+ processRendition()\n+ buildHlsPlaylist()\n+ updateStatus()"
+        },
+        {
+          "id": "t-jobrepo",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "TranscodingJobRepository\n[Spring Data JPA]\n\n+ save(job)\n+ findById()\n+ findByStatus()"
+        },
+        {
+          "id": "t-spliter",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "VideoSpliter\n[FFmpeg]\n\n+ split(input)\n+ generateChunks()"
+        },
+        {
+          "id": "t-encoder",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "EncoderComponent\n[FFmpeg]\n\n+ encode144p()\n+ encode480p()\n+ encode1080p()\n+ encode4K()"
+        },
+        {
+          "id": "t-hls",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "HLSPlaylistBuilder\n[FFmpeg]\n\n+ buildMaster()\n+ buildMediaPlaylist()"
+        },
+        {
+          "id": "t-dash",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "DASHBuilder\n[FFmpeg]\n\n+ buildMpd()\n+ buildSegments()"
+        },
+        {
+          "id": "e-t1",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "t-ctrl",
+          "target": "t-orch"
+        },
+        {
+          "id": "e-t2",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "t-orch",
+          "target": "t-jobrepo"
+        },
+        {
+          "id": "e-t3",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "t-orch",
+          "target": "t-spliter"
+        },
+        {
+          "id": "e-t4",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "t-spliter",
+          "target": "t-encoder"
+        },
+        {
+          "id": "e-t5",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "t-encoder",
+          "target": "t-hls"
+        },
+        {
+          "id": "e-t6",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "t-encoder",
+          "target": "t-dash"
+        },
+        {
+          "id": "g-live",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "Live Streaming Service [Container: Wowza / Mux]"
+        },
+        {
+          "id": "l-ctrl",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "LiveController\n[Spring REST]\n\n+ startStream()\n+ stopStream()\n+ getStreamKey()"
+        },
+        {
+          "id": "l-svc",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "LiveStreamService\n[Spring Service]\n\n+ createStream()\n+ generateRtmpUrl()\n+ getLiveViewers()"
+        },
+        {
+          "id": "l-rtmp",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "RtmpIngestHandler\n[Netty]\n\n+ onPublish()\n+ onDisconnect()"
+        },
+        {
+          "id": "l-hls",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "LiveHlsPackager\n[FFmpeg]\n\n+ packageSegment()\n+ updatePlaylist()"
+        },
+        {
+          "id": "e-l1",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "l-ctrl",
+          "target": "l-svc"
+        },
+        {
+          "id": "e-l2",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "l-svc",
+          "target": "l-rtmp"
+        },
+        {
+          "id": "e-l3",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "l-rtmp",
+          "target": "l-hls"
+        },
+        {
+          "id": "g-rec",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "Recommendation Service [Container: Python + ML]"
+        },
+        {
+          "id": "r-ctrl",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "RecommendationController\n[FastAPI]\n\n+ getRecommendations(userId)\n+ getTrending()\n+ getSimilar(videoId)"
+        },
+        {
+          "id": "r-engine",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "RecommendationEngine\n[Python Service]\n\n+ collaborativeFiltering()\n+ contentBased()\n+ hybridRank()"
+        },
+        {
+          "id": "r-vector",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "UserProfileVectorizer\n[Python Component]\n\n+ embed(userId)\n+ updateVector()"
+        },
+        {
+          "id": "r-ml",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "MlModelClient\n[TensorFlow Serving]\n\n+ predict(features)\n+ reloadModel()"
+        },
+        {
+          "id": "e-r1",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "r-ctrl",
+          "target": "r-engine"
+        },
+        {
+          "id": "e-r2",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "r-engine",
+          "target": "r-vector"
+        },
+        {
+          "id": "e-r3",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "r-engine",
+          "target": "r-ml"
+        },
+        {
+          "id": "g-user",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "User Service [Container: Spring Boot]"
+        },
+        {
+          "id": "us-ctrl",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "UserController\n[Spring REST]\n\n+ register()\n+ login()\n+ getProfile()\n+ updateProfile()"
+        },
+        {
+          "id": "us-svc",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "UserService\n[Spring Service]\n\n+ createUser()\n+ updateUser()\n+ deactivate()"
+        },
+        {
+          "id": "us-auth",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "AuthService\n[JWT + OAuth2]\n\n+ authenticate()\n+ issueJwt()\n+ refreshToken()"
+        },
+        {
+          "id": "us-repo",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "UserRepository\n[Spring Data JPA]\n\n+ findByEmail()\n+ save()"
+        },
+        {
+          "id": "us-sub",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "SubscriptionService\n[Spring Component]\n\n+ subscribe(channelId)\n+ unsubscribe()\n+ getSubscribers()"
+        },
+        {
+          "id": "us-watch",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "WatchHistoryService\n[Spring Component]\n\n+ recordWatch()\n+ getHistory()"
+        },
+        {
+          "id": "e-us1",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "us-ctrl",
+          "target": "us-svc"
+        },
+        {
+          "id": "e-us2",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "us-svc",
+          "target": "us-auth"
+        },
+        {
+          "id": "e-us3",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "us-svc",
+          "target": "us-repo"
+        },
+        {
+          "id": "e-us4",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "us-ctrl",
+          "target": "us-sub"
+        },
+        {
+          "id": "e-us5",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "us-ctrl",
+          "target": "us-watch"
+        },
+        {
+          "id": "g-mod",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "Moderation Service [Container: Spring Boot + AI]"
+        },
+        {
+          "id": "m-ctrl",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "ModerationController\n[Spring REST]\n\n+ reportVideo(id)\n+ approveVideo(id)\n+ rejectVideo(id, reason)"
+        },
+        {
+          "id": "m-svc",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "ModerationService\n[Spring Service]\n\n+ moderate()\n+ autoFlag()\n+ publishResult()"
+        },
+        {
+          "id": "m-repo",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "ModerationRepository\n[Spring Data JPA]\n\n+ save()\n+ findByStatus()"
+        },
+        {
+          "id": "m-ai",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "AiModerationClient\n[Spring Component]\n\n+ checkNsfw()\n+ checkViolence()\n+ checkHateSpeech()"
+        },
+        {
+          "id": "m-copy",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "CopyrightDetector\n[Audio Fingerprint]\n\n+ fingerprint()\n+ matchAgainstDb()"
+        },
+        {
+          "id": "m-queue",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "HumanReviewQueue\n[Spring Component]\n\n+ enqueue()\n+ getNext()\n+ decide()"
+        },
+        {
+          "id": "e-m1",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "m-ctrl",
+          "target": "m-svc"
+        },
+        {
+          "id": "e-m2",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "m-svc",
+          "target": "m-repo"
+        },
+        {
+          "id": "e-m3",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "m-svc",
+          "target": "m-ai"
+        },
+        {
+          "id": "e-m4",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "m-svc",
+          "target": "m-copy"
+        },
+        {
+          "id": "e-m5",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "m-svc",
+          "target": "m-queue"
+        },
+        {
+          "id": "g-mon",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "Monetization Service [Container: Spring Boot]"
+        },
+        {
+          "id": "mo-ctrl",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "MonetizationController\n[Spring REST]\n\n+ enableAds()\n+ setupSubscription()\n+ requestPayout()"
+        },
+        {
+          "id": "mo-svc",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "MonetizationService\n[Spring Service]\n\n+ calculateRevenue()\n+ processPayout()\n+ applyRule()"
+        },
+        {
+          "id": "mo-rule",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "MonetizationRuleEngine\n[Drools]\n\n+ applyRules()\n+ calculateCut()"
+        },
+        {
+          "id": "mo-ads",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "AdsService\n[Spring Component]\n\n+ selectAd()\n+ trackImpression()"
+        },
+        {
+          "id": "e-mo1",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "mo-ctrl",
+          "target": "mo-svc"
+        },
+        {
+          "id": "e-mo2",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "mo-svc",
+          "target": "mo-rule"
+        },
+        {
+          "id": "e-mo3",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "mo-svc",
+          "target": "mo-ads"
+        },
+        {
+          "id": "g-not",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "Notification Service [Container: Spring Boot]"
+        },
+        {
+          "id": "n-ctrl",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "NotificationController\n[Spring REST]\n\n+ send()\n+ getPreferences()"
+        },
+        {
+          "id": "n-svc",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "NotificationService\n[Spring Service]\n\n+ dispatch()\n+ consumeEvents()"
+        },
+        {
+          "id": "n-push",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "PushSender\n[FCM]\n\n+ sendPush()"
+        },
+        {
+          "id": "n-email",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "EmailSender\n[SendGrid]\n\n+ sendEmail()"
+        },
+        {
+          "id": "n-sms",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "SmsSender\n[Kavenegar]\n\n+ sendSms()"
+        },
+        {
+          "id": "e-n1",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "n-ctrl",
+          "target": "n-svc"
+        },
+        {
+          "id": "e-n2",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "n-svc",
+          "target": "n-push"
+        },
+        {
+          "id": "e-n3",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "n-svc",
+          "target": "n-email"
+        },
+        {
+          "id": "e-n4",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "n-svc",
+          "target": "n-sms"
+        },
+        {
+          "id": "g-arc",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "Archive Service [Container: Spring Boot]"
+        },
+        {
+          "id": "a-ctrl",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "ArchiveController\n[Spring REST]\n\n+ requestRestore(videoId)\n+ getArchiveStatus()"
+        },
+        {
+          "id": "a-svc",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "ArchiveService\n[Spring Service]\n\n+ archive()\n+ restore()\n+ scheduleArchive()"
+        },
+        {
+          "id": "a-repo",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "ArchiveRepository\n[Spring Data JPA]\n\n+ save()\n+ findArchived()"
+        },
+        {
+          "id": "a-tiered",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "TieredStorageManager\n[Spring Component]\n\n+ moveToWarm()\n+ moveToCold()"
+        },
+        {
+          "id": "a-gdpr",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "GdprAnonymizer\n[Spring Component]\n\n+ anonymize(userId)\n+ exportUserData()"
+        },
+        {
+          "id": "a-restore",
+          "type": "node",
+          "parent": "cf-1",
+          "label": "RestoreJob\n[Spring @Scheduled]\n\n+ processRestoreQueue()\n+ notifyUser()"
+        },
+        {
+          "id": "e-a1",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "a-ctrl",
+          "target": "a-svc"
+        },
+        {
+          "id": "e-a2",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "a-svc",
+          "target": "a-repo"
+        },
+        {
+          "id": "e-a3",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "a-svc",
+          "target": "a-tiered"
+        },
+        {
+          "id": "e-a4",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "a-svc",
+          "target": "a-gdpr"
+        },
+        {
+          "id": "e-a5",
+          "type": "edge",
+          "parent": "cf-1",
+          "source": "a-restore",
+          "target": "a-svc"
+        }
+      ]
+    },
+    {
+      "id": "RuBwu2yjuULWsVDiBsKY",
+      "name": "Code",
+      "cells": [
+        {
+          "id": "kf-1",
+          "type": "layer"
+        },
+        {
+          "id": "kf-title",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "Code Diagram — Key Classes across Services (C4 Level 4)"
+        },
+        {
+          "id": "kf-group1",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "Transcoding Pipeline"
+        },
+        {
+          "id": "kf-tctrl",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "TranscodingController\n- orchestrator: TranscodingOrchestrator\n- storageClient: S3Client\n+ startJob(videoId): JobId\n+ getStatus(jobId): JobStatus\n+ cancelJob(jobId): void",
+          "html": "<div style='background:#dae8fc;padding:5px;font-weight:bold;border-bottom:1px solid #6c8ebf'>TranscodingController</div><div style='text-align:left;padding:5px;font-size:11px'>- orchestrator: TranscodingOrchestrator<br>- storageClient: S3Client</div><div style='border-top:1px solid #6c8ebf;text-align:left;padding:5px;font-size:11px'>+ startJob(videoId): JobId<br>+ getStatus(jobId): JobStatus<br>+ cancelJob(jobId): void</div>"
+        },
+        {
+          "id": "kf-torch",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "TranscodingOrchestrator\n- jobRepo: TranscodingJobRepository\n- kafkaTemplate: KafkaTemplate\n- ffmpegService: FfmpegService\n- s3Client: S3Client\n+ onVideoUploaded(event): void\n+ spawnWorkerPods(job): void\n+ processRendition(job, quality): void\n+ buildHlsPlaylist(job): void\n+ buildDashManifest(job): void\n+ updateStatus(job, status): void",
+          "html": "<div style='background:#d5e8d4;padding:5px;font-weight:bold;border-bottom:1px solid #82b366'>TranscodingOrchestrator</div><div style='text-align:left;padding:5px;font-size:11px'>- jobRepo: TranscodingJobRepository<br>- kafkaTemplate: KafkaTemplate<br>- ffmpegService: FfmpegService<br>- s3Client: S3Client</div><div style='border-top:1px solid #82b366;text-align:left;padding:5px;font-size:11px'>+ onVideoUploaded(event): void<br>+ spawnWorkerPods(job): void<br>+ processRendition(job, quality): void<br>+ buildHlsPlaylist(job): void<br>+ buildDashManifest(job): void<br>+ updateStatus(job, status): void</div>"
+        },
+        {
+          "id": "kf-tjob",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "TranscodingJob\n- id: UUID\n- videoId: UUID\n- status: JobStatus\n- renditions: List<Rendition>\n- sourceFile: S3Key\n- outputPrefix: S3Key\n- createdAt: Instant\n- completedAt: Instant\n+ markRenditionDone(q): void\n+ allRenditionsDone(): boolean\n+ fail(reason): void",
+          "html": "<div style='background:#ffe6cc;padding:5px;font-weight:bold;border-bottom:1px solid #d79b00'>TranscodingJob</div><div style='text-align:left;padding:5px;font-size:11px'>- id: UUID<br>- videoId: UUID<br>- status: JobStatus<br>- renditions: List&lt;Rendition&gt;<br>- sourceFile: S3Key<br>- outputPrefix: S3Key<br>- createdAt: Instant<br>- completedAt: Instant</div><div style='border-top:1px solid #d79b00;text-align:left;padding:5px;font-size:11px'>+ markRenditionDone(q): void<br>+ allRenditionsDone(): boolean<br>+ fail(reason): void</div>"
+        },
+        {
+          "id": "kf-rend",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "<<enum>> Rendition\nP144  (200 Kbps)\nP240  (400 Kbps)\nP480  (1 Mbps)\nP720  (2.5 Mbps)\nP1080 (5 Mbps)\nP4K   (15 Mbps)",
+          "html": "<div style='background:#fff2cc;padding:5px;font-weight:bold;border-bottom:1px solid #d6b656'>&lt;&lt;enum&gt;&gt; Rendition</div><div style='text-align:left;padding:5px;font-size:11px'>P144  (200 Kbps)<br>P240  (400 Kbps)<br>P480  (1 Mbps)<br>P720  (2.5 Mbps)<br>P1080 (5 Mbps)<br>P4K   (15 Mbps)</div>"
+        },
+        {
+          "id": "kf-jstat",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "<<enum>> JobStatus\nQUEUED\nIN_PROGRESS\nCOMPLETED\nFAILED\nCANCELLED",
+          "html": "<div style='background:#e1d5e7;padding:5px;font-weight:bold;border-bottom:1px solid #9673a6'>&lt;&lt;enum&gt;&gt; JobStatus</div><div style='text-align:left;padding:5px;font-size:11px'>QUEUED<br>IN_PROGRESS<br>COMPLETED<br>FAILED<br>CANCELLED</div>"
+        },
+        {
+          "id": "kf-r1",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-tctrl",
+          "target": "kf-torch",
+          "label": "1"
+        },
+        {
+          "id": "kf-r2",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-torch",
+          "target": "kf-tjob",
+          "label": "1..*"
+        },
+        {
+          "id": "kf-r3",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-tjob",
+          "target": "kf-rend",
+          "label": "has"
+        },
+        {
+          "id": "kf-r4",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-tjob",
+          "target": "kf-jstat",
+          "label": "has"
+        },
+        {
+          "id": "kf-group2",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "View Count + Idempotency"
+        },
+        {
+          "id": "kf-vcount",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "ViewCounterService\n- redis: RedisTemplate<String,String>\n- kafka: KafkaTemplate\n- batchBuffer: ConcurrentLinkedQueue\n+ recordView(userId, videoId): void\n- isDuplicate(userId, videoId): boolean\n+ getUniqueViews(videoId): long\n+ flushBatchToDb(): void\n+ onScheduledFlush(): void",
+          "html": "<div style='background:#dae8fc;padding:5px;font-weight:bold;border-bottom:1px solid #6c8ebf'>ViewCounterService</div><div style='text-align:left;padding:5px;font-size:11px'>- redis: RedisTemplate&lt;String,String&gt;<br>- kafka: KafkaTemplate<br>- batchBuffer: ConcurrentLinkedQueue</div><div style='border-top:1px solid #6c8ebf;text-align:left;padding:5px;font-size:11px'>+ recordView(userId, videoId): void<br>- isDuplicate(userId, videoId): boolean<br>+ getUniqueViews(videoId): long<br>+ flushBatchToDb(): void<br>+ onScheduledFlush(): void</div>"
+        },
+        {
+          "id": "kf-hll",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "HyperLogLogClient\n- redis: RedisTemplate\n+ pfadd(key, value): void\n+ pfcount(key): long\n+ merge(keys): long",
+          "html": "<div style='background:#ffe6cc;padding:5px;font-weight:bold;border-bottom:1px solid #d79b00'>HyperLogLogClient</div><div style='text-align:left;padding:5px;font-size:11px'>- redis: RedisTemplate</div><div style='border-top:1px solid #d79b00;text-align:left;padding:5px;font-size:11px'>+ pfadd(key, value): void<br>+ pfcount(key): long<br>+ merge(keys): long</div>"
+        },
+        {
+          "id": "kf-idem",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "IdempotencyGuard\n- redis: RedisTemplate\n+ checkAndSet(key, ttl): boolean\n+ release(key): void",
+          "html": "<div style='background:#ffe6cc;padding:5px;font-weight:bold;border-bottom:1px solid #d79b00'>IdempotencyGuard</div><div style='text-align:left;padding:5px;font-size:11px'>- redis: RedisTemplate</div><div style='border-top:1px solid #d79b00;text-align:left;padding:5px;font-size:11px'>+ checkAndSet(key, ttl): boolean<br>+ release(key): void</div>"
+        },
+        {
+          "id": "kf-batchflush",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "BatchFlushJob\n- repo: VideoRepository\n- buffer: Queue\n+ run() @Scheduled(5s)\n+ flushBufferToDb(): void",
+          "html": "<div style='background:#d5e8d4;padding:5px;font-weight:bold;border-bottom:1px solid #82b366'>BatchFlushJob</div><div style='text-align:left;padding:5px;font-size:11px'>- repo: VideoRepository<br>- buffer: Queue</div><div style='border-top:1px solid #82b366;text-align:left;padding:5px;font-size:11px'>+ run() @Scheduled(5s)<br>+ flushBufferToDb(): void</div>"
+        },
+        {
+          "id": "kf-r5",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-vcount",
+          "target": "kf-hll"
+        },
+        {
+          "id": "kf-r6",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-vcount",
+          "target": "kf-idem"
+        },
+        {
+          "id": "kf-r7",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-batchflush",
+          "target": "kf-vcount"
+        },
+        {
+          "id": "kf-group3",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "Monetization Rule Engine"
+        },
+        {
+          "id": "kf-mctrl",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "MonetizationController\n- service: MonetizationService\n+ enableAds(videoId): void\n+ setupSubscription(): void\n+ requestPayout(): Payout",
+          "html": "<div style='background:#dae8fc;padding:5px;font-weight:bold;border-bottom:1px solid #6c8ebf'>MonetizationController</div><div style='text-align:left;padding:5px;font-size:11px'>- service: MonetizationService</div><div style='border-top:1px solid #6c8ebf;text-align:left;padding:5px;font-size:11px'>+ enableAds(videoId): void<br>+ setupSubscription(): void<br>+ requestPayout(): Payout</div>"
+        },
+        {
+          "id": "kf-msvc",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "MonetizationService\n- ruleEngine: MonetizationRuleEngine\n- payoutClient: PaymentClient\n- revenueRepo: RevenueRepository\n+ calculateRevenue(videoId, period): Money\n+ processPayout(creatorId): Payout\n+ applyRules(user): RevenueShare",
+          "html": "<div style='background:#d5e8d4;padding:5px;font-weight:bold;border-bottom:1px solid #82b366'>MonetizationService</div><div style='text-align:left;padding:5px;font-size:11px'>- ruleEngine: MonetizationRuleEngine<br>- payoutClient: PaymentClient<br>- revenueRepo: RevenueRepository</div><div style='border-top:1px solid #82b366;text-align:left;padding:5px;font-size:11px'>+ calculateRevenue(videoId, period): Money<br>+ processPayout(creatorId): Payout<br>+ applyRules(user): RevenueShare</div>"
+        },
+        {
+          "id": "kf-rule",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "MonetizationRuleEngine\n- kieContainer: KieContainer\n- ruleRepo: RuleRepository\n+ applyRules(facts): Result\n+ calculateCut(revenue): Money\n+ reloadRules(): void",
+          "html": "<div style='background:#fff2cc;padding:5px;font-weight:bold;border-bottom:1px solid #d6b656'>MonetizationRuleEngine</div><div style='text-align:left;padding:5px;font-size:11px'>- kieContainer: KieContainer<br>- ruleRepo: RuleRepository</div><div style='border-top:1px solid #d6b656;text-align:left;padding:5px;font-size:11px'>+ applyRules(facts): Result<br>+ calculateCut(revenue): Money<br>+ reloadRules(): void</div>"
+        },
+        {
+          "id": "kf-r8",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-mctrl",
+          "target": "kf-msvc",
+          "label": "1"
+        },
+        {
+          "id": "kf-r9",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-msvc",
+          "target": "kf-rule",
+          "label": "uses"
+        },
+        {
+          "id": "kf-group4",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "Content Moderation"
+        },
+        {
+          "id": "kf-modctrl",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "ModerationController\n- service: ModerationService\n+ reportVideo(id): void\n+ approveVideo(id): void\n+ rejectVideo(id, reason): void",
+          "html": "<div style='background:#dae8fc;padding:5px;font-weight:bold;border-bottom:1px solid #6c8ebf'>ModerationController</div><div style='text-align:left;padding:5px;font-size:11px'>- service: ModerationService</div><div style='border-top:1px solid #6c8ebf;text-align:left;padding:5px;font-size:11px'>+ reportVideo(id): void<br>+ approveVideo(id): void<br>+ rejectVideo(id, reason): void</div>"
+        },
+        {
+          "id": "kf-modsvc",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "ModerationService\n- aiClient: AiModerationClient\n- copyDetector: CopyrightDetector\n- reviewQueue: HumanReviewQueue\n- repo: ModerationRepository\n+ moderate(videoId): ModerationResult\n+ autoFlag(videoId): boolean\n+ publishResult(): void",
+          "html": "<div style='background:#f8cecc;padding:5px;font-weight:bold;border-bottom:1px solid #b85450'>ModerationService</div><div style='text-align:left;padding:5px;font-size:11px'>- aiClient: AiModerationClient<br>- copyDetector: CopyrightDetector<br>- reviewQueue: HumanReviewQueue<br>- repo: ModerationRepository</div><div style='border-top:1px solid #b85450;text-align:left;padding:5px;font-size:11px'>+ moderate(videoId): ModerationResult<br>+ autoFlag(videoId): boolean<br>+ publishResult(): void</div>"
+        },
+        {
+          "id": "kf-aiclient",
+          "type": "node",
+          "parent": "kf-1",
+          "label": "AiModerationClient\n- httpClient: WebClient\n- apiKey: String\n+ checkNsfw(frame): Score\n+ checkViolence(): Score\n+ checkHateSpeech(): Score",
+          "html": "<div style='background:#fff2cc;padding:5px;font-weight:bold;border-bottom:1px solid #d6b656'>AiModerationClient</div><div style='text-align:left;padding:5px;font-size:11px'>- httpClient: WebClient<br>- apiKey: String</div><div style='border-top:1px solid #d6b656;text-align:left;padding:5px;font-size:11px'>+ checkNsfw(frame): Score<br>+ checkViolence(): Score<br>+ checkHateSpeech(): Score</div>"
+        },
+        {
+          "id": "kf-r10",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-modctrl",
+          "target": "kf-modsvc",
+          "label": "1"
+        },
+        {
+          "id": "kf-r11",
+          "type": "edge",
+          "parent": "kf-1",
+          "source": "kf-modsvc",
+          "target": "kf-aiclient",
+          "label": "uses"
+        }
+      ]
+    }
+  ]
+}

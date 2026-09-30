@@ -1,0 +1,22 @@
+سوال: پلتفرم ویدیو کنفرانس (Video Conferencing Platform)
+طراحی یک پلتفرم ویدیو کنفرانس (مشابه Zoom / Google Meet / Microsoft Teams) که:
+کاربران بتوانند جلسات ویدیویی با کیفیت HD برگزار کنند (تا ۱۰۰۰ نفر در حالت Webinar).
+تأخیر کمتر از ۱۵۰ms برای مکالمه طبیعی.
+Screen Sharing با کیفیت 1080p و Virtual Background با AI.
+Recording خودکار جلسه با ذخیره در Cloud.
+Real-time Chat در کنار ویدیو.
+Breakout Rooms (اتاقهای فرعی) برای گروههای کوچک.
+Hand Raise, Reactions, Polls برای تعامل.
+Calendar Integration (Google Calendar, Outlook).
+End-to-End Encryption برای جلسات خصوصی.
+Multi-region برای کاربران در سراسر جهان.
+
+
+
+
+۱	مقیاسپذیری و عملکرد در پخش ویدیو بلادرنگ (۱M جلسه همزمان، تأخیر < ۱۵۰ms)
+۲	سازگاری (Consistency) در ترتیب رویدادها (Chat، Hand Raise، Mute) و Recording
+۳	پیکربندی آسان برای Host (Recording، Breakout Rooms، Waiting Room، Security)
+۴	پشتیبانی از چندزبانگی، Bandwidth تطبیقی، و E2EE
+۵	مدیریت چرخه حیات دادهها (Recording Archive، GDPR، Transcript، Audit)
+۶	کاربردپذیری (UX) برای Participant، Host، و Admin (سه نقش)

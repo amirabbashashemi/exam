@@ -1,4 +1,4 @@
-package com.example.codeChallenge.excercise.exam4.elasticity.performance.availability.image;
+package com.example.codeChallenge.excercise.exam3.elasticity.performance.availability.image;
 /*
 یک سرویس Image Processing Service داریم که تصاویر آپلودشده توسط کاربران را پردازش می‌کند.
 این سرویس باید در برابر بار سنگین مقاوم باشد، درخواست‌های طولانی را کنسل کند، و در صورت خرابی، در دسترس بماند.

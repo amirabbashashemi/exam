@@ -1,4 +1,4 @@
-package com.example.codeChallenge.excercise.exam4.elasticity.performance.availability.image.ny;
+package com.example.codeChallenge.excercise.exam3.elasticity.performance.availability.image.ny;
 
 /*
 یک استارتاپ ایرانی یک سرویس تبدیل عکس به متن (OCR) راه انداخته است. در حال حاضر روزانه ۱۰ کاربر از این سرویس استفاده می‌کنند

@@ -1,4 +1,4 @@
-package com.example.codeChallenge.excercise.exam4.elasticity.performance.availability.image.ny;
+package com.example.codeChallenge.excercise.exam3.elasticity.performance.availability.image.ny;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
