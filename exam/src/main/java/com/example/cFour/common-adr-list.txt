@@ -1,0 +1,50 @@
+پشتیبانی از چندزبانگی:
+Decision:
+۱. UI Translation (i18next)
+   - فایل‌های JSON: locales/{lang}/translation.json
+   - تشخیص خودکار از مرورگر
+   - انتخاب دستی
+
+چالش «سازگاری (Consistency)»
+Decision:
+۱. Ordering (ترتیب)
+   - Lamport Timestamp (برای رویدادهای Distributed)
+   - Sequence Number (برای پیام‌های یک Conversation)
+   - Vector Clock (برای Causality)
+
+۲. Conflict Resolution (حل تعارض)
+   - CRDT (برای متن/سند) → Yjs/Automerge
+   - OT (برای Editor مرکزی) → Google Docs
+   - Last-Write-Wins (برای تنظیمات ساده)
+   - Versioning + Manual (برای فایل)
+
+۳. Atomicity (اتمی بودن)
+   - Saga Pattern (برای Distributed Transaction)
+   - Two-Phase Commit (برای DBهای محدود)
+   - Idempotency Key (برای Retry)
+
+۴. Idempotency (جلوگیری از تکرار)
+   - Client Message ID (UUID)
+   - Redis SETNX با TTL=۲۴h
+
+۵. Eventual Consistency
+   - Kafka برای Event Propagation
+   - CDC (Debezium) برای DB → DB
+
+Alternatives:
+- Strong Consistency (2PC): رد شد چون Availability را کم می‌کند
+- Last-Write-Wins: رد شد چون تغییرات از دست می‌رود
+- Locking: رد شد چون UX بد
+
+Consequences:
+مثبت: مقیاس‌پذیری، Availability
+منفی: پیچیدگی، Eventual Consistency
+ریسک: Conflict → CRDT خودکار حل می‌کند
+
+سوال	Consistency در چه چیزی؟	Ordering	Conflict Resolution
+هتل+پرواز	رزرو همزمان	Saga	Compensating Transaction
+سفارش غذا	تخصیص راننده	Distributed Lock	Redlock
+ویدیو استریم	View Count	Batch Update	HyperLogLog
+چت	ترتیب پیام + Read Receipt + Fan-out	Lamport	CRDT برای Group
+سند	Conflict Resolution	Vector Clock	CRDT (Yjs)
+ویدیو کنفرانس	ترتیب رویدادها	Lamport	Event Log
