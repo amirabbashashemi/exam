@@ -1,17 +1,11 @@
 ✅ نقاط قوت:
-
 Hot/Warm/Cold را درست گفتی
-
 S3 Glacier را آوردی
 
 ❌ نقاط ضعف:
-
 GPS Trail اصلاً نداری! (در عنوان بود ولی در ADR نبود)
-
 GDPR / Right to Erasure نداری
-
 Soft Delete نداری
-
 Compression برای GPS Trail نداری (حجم بسیار زیاد!)
 
 نسخه اصلاحی (۱۰/۱۰):
@@ -23,7 +17,6 @@ GPS Trail روزانه ۵۰۰GB تولید می‌کند. GDPR حق فراموش
 حجم داده با رشد کاربران انفجاری می‌شود.
 
 Decision:
-
 ۱. Time-Series DB (TimescaleDB):
    - Hypertable با Partitioning روی `timestamp` (روزانه)
    - Index روی `(courier_id, timestamp)`
