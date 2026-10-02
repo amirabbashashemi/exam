@@ -1,68 +1,63 @@
-ADR-004: Signal Protocol (E2EE) + Media Storage + i18n
-عنوان: پشتیبانی از چندزبانگی، Media، و E2EE
-
+ADR-004: پشتیبانی از چندزبانگی، Media، و E2EE
 وضعیت: پذیرفته شده
 
 زمینه و مسئله
-چت خصوصی باید E2EE واقعی داشته باشد (سرور نتواند رمزگشایی کند).
-
-Media (عکس/ویدیو/فایل تا ۱۰۰MB) باید ذخیره و توزیع شود.
-چندزبانگی (fa, en, ar) + RTL/LTR.
-Multi-device Support (کاربر ۳ دستگاه دارد).
-Key Backup برای بازیابی هنگام تعویض دستگاه.
+چت خصوصی باید E2EE واقعی داشته باشه، یعنی سرور حتی نتونه محتوا رو بخونه. از اون طرف کاربرا باید بتونن عکس و ویدیو و فایل تا ۱۰۰ مگ بفرستن. رابط کاربری هم باید چند زبانه باشه (فارسی، انگلیسی، عربی) با پشتیبانی RTL و LTR. یه نکته‌ی مهم دیگه این که کاربر ممکنه همزمان با سه دستگاه (موبایل، تبلت، لپ‌تاپ) وارد بشه و همه‌شون باید هماهنگ باشن. اگه کاربر گوشیش رو عوض کرد، باید بتونه کلیدها و پیاماش رو بازیابی کنه.
 
 تصمیم
-۱. E2EE با Signal Protocol (نه AES!)
-X3DH برای Key Exchange اولیه.
-Double Ratchet برای Forward Secrecy (هر پیام Session Key جدید).
-سرور فقط Ciphertext می‌بیند.
+۱. رمزنگاری با Signal Protocol (نه AES)
+برای E2EE واقعی، AES کافی نیست چون یه کلید مشترکه و سرور هم می‌تونه رمزگشایی کنه. به جاش از Signal Protocol استفاده می‌کنیم:
+X3DH برای تبادل کلید اولیه
+Double Ratchet برای Forward Secrecy (هر پیام یه Session Key جدید داره)
+سرور فقط Ciphertext رو می‌بینه و هیچوقت کلید خصوصی رو نمی‌بینه
 
-
-۲. Key Management
-Identity Key (بلندمدت)
-Signed Pre-key (rotate هر هفته)
-One-time Pre-keys (۱۰۰ عدد)
-سرور فقط Public Keyها را ذخیره می‌کند (PostgreSQL).
+۲. مدیریت کلیدها
+Identity Key بلندمدت (یکی برای هر کاربر)
+Signed Pre-key که هفته‌ای یک بار Rotate می‌شه
+One-time Pre-keys (حدود ۱۰۰ عدد)
+سرور فقط کلیدهای عمومی رو تو PostgreSQL نگه می‌داره
 
 
 ۳. Multi-device
-هر Device یک Identity Key جداگانه.
-پیام به همه Deviceها Encrypt می‌شود.
-Sync از طریق سرور (Ciphertext).
+هر دستگاه یه Identity Key مستقل داره. وقتی پیامی فرستاده می‌شه، برای همه‌ی دستگاه‌های گیرنده به صورت جداگانه رمزنگاری می‌شه. Sync بین دستگاه‌ها هم از طریق سرور انجام می‌شه ولی محتوا همیشه Ciphertext باقی می‌مونه.
+
+۴. پشتیبان‌گیری از کلیدها
+کاربر با یه PIN (که با Argon2 هش می‌شه) از کلیدهاش Backup می‌گیره. فایل Backup به صورت رمزنگاری‌شده تو S3 ذخیره می‌شه. بازیابی فقط با همون PIN ممکنه.
+
+۵. ذخیره و توزیع Media
+فایل‌ها تو S3 با Encryption at Rest (SSE) ذخیره می‌شن
+برای هر فایل یه Media Key جداگانه داریم (نه Session Key پیام)
+توزیع از طریق CDN
+دسترسی با Presigned URL که TTL داره
+
+۶. چندزبانگی
+i18next با یه فایل JSON برای هر زبان
+RTL/LTR با dir attribute که بر اساس زبان تنظیم می‌شه
+رندر سمت Client انجام می‌شه
 
 
-۴. Key Backup
-کاربر با PIN (Argon2 hash) پشتیبان می‌گیرد.
-Backup Encrypted در S3.
-Restore فقط با PIN.
+۷. جستجو در پیام‌ها (چالش E2EE)
+چون سرور نمی‌تونه محتوا رو رمزگشایی کنه، جستجوی سمت سرور ممکن نیست. به جاش:
+Client-side Index روی خود دستگاه
+Encrypted Search Index تو S3 (اختیاری، برای کاربرای حرفه‌ای)
 
 
-۵. Media Storage
-S3 (Encrypted at Rest با SSE).
-Media Key جداگانه (نه Session Key).
-CDN برای توزیع.
-Presigned URL برای دسترسی.
+گزینه‌های بررسی‌شده
+گزینه	چرا رد شد
+AES فقط	E2EE نیست؛ سرور می‌تونه رمزگشایی کنه
+RSA فقط	کند هست و Forward Secrecy نداره
+Hardcode کردن زبان‌ها	برای هر تغییر زبانی نیاز به نسخه‌گذاری داره
+پیامدها
+مثبت:
+E2EE واقعی با Forward Secrecy
+پشتیبانی از چند دستگاه همزمان
+رابط کاربری چندزبانه با RTL/LTR
+منفی:
+پیاده‌سازی Signal Protocol پیچیده‌ست
+جستجوی سمت سرور غیرممکنه
+بازیابی کلید اگه PIN فراموش بشه سخته
 
-
-۶. i18n
-i18next + JSON files.
-RTL/LTR با dir attribute.
-Client-side rendering.
-
-
-۷. Server-side Search (چالش E2EE)
-چون سرور نمی‌تواند رمزگشایی کند:
-Client-side Index در Device.
-Encrypted Search Index در S3 (اختیاری).
-Alternatives
-گزینه	دلیل رد
-AES فقط	E2EE نیست، سرور می‌تواند رمزگشایی کند
-RSA فقط	کند، Forward Secrecy ندارد
-Hardcode i18n	نیاز به نسخه‌گذاری برای هر زبان
-Consequences
-مثبت: E2EE واقعی، Forward Secrecy، Multi-device، پشتیبانی چندزبانه.
-منفی: پیچیدگی Signal Protocol، Server-side Search غیرممکن، Key Recovery سخت.
 ریسک‌ها:
-Private Key لو برود → Key Rotation.
-کاربر PIN را فراموش کند → Backup از دست می‌رود.
+اگه Private Key لو بره → باید کلیدها Rotate بشن
+اگه کاربر PIN رو فراموش کنه → Backup از دست می‌ره
 

@@ -1,0 +1,47 @@
+ADR-02: سازگاری (Consistency) در موجودی (Inventory) و پرداخت همزمان
+
+زمینه و مسئله:
+سیستم باید قابلیت یکپارچگی موجودی وپرداخت همزمان بین همه کاربران و همه device ها را داشته باشد.
+
+وضعیت:
+پذیرفته شده
+
+گزینه‌های بررسی‌شده:
+صمیم ۱: Redis Atomic Decrement + Pre-reservation
+    توضیحات: موجودی هر محصول در Redis نگهداری می‌شه. DECR inventory:product:123 اتمیک هست. اگه نتیجه < ۰ شد → Rollback با INCR.
+    مزایا:
+    Atomic (بدون Race Condition)
+    سرعت < ۱ms
+    جلوگیری از Overselling
+    معایب:
+    نیاز به Redis Cluster
+    Sync با DB (Eventual Consistency)
+    اگه Redis Down بشه، فروش متوقف می‌شه
+
+تصمیم ۲: Optimistic Locking در PostgreSQL
+    توضیحات: فیلد version در جدول inventory. UPDATE با شرط version:
+
+    sql
+    UPDATE inventory SET qty = qty - 1, version = version + 1
+    WHERE product_id = 123 AND version = 5;
+    اگه ۰ ردیف آپدیت شد → Conflict → Retry.
+    مزایا:
+    Consistency بالا (ACID)
+    بدون Lock طولانی
+    مناسب برای تراکنش‌های کم
+    معایب:
+    Retry در ترافیک بالا
+    Performance کمتر از Redis
+    پیچیدگی در Client
+
+
+تصمیم ۳: Saga Orchestration برای Order
+    توضیحات: مراحل: Reserve Inventory → Charge Payment → Confirm Order. اگه Payment شکست خورد → Release Inventory.
+    مزایا:
+    Compensating Transaction خودکار
+    Audit Trail کامل
+    Idempotency Key
+    معایب:
+    پیچیدگی Orchestrator
+    Single Point of Failure
+    Debugging سخت

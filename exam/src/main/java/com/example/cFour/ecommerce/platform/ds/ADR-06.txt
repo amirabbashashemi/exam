@@ -1,0 +1,47 @@
+ADR-06: کاربردپذیری (UX) برای خریدار، فروشنده و ادمین (سه نقش)
+
+
+زمینه و مسئله:
+سیستم باید محیط UI کاربران خریدار، فروشنده و ادمین را بر اساس نقش آنها فراهم کند و کاربر پسند باشد
+
+وضعیت:
+پذیرفته شده
+
+گزینه‌های بررسی‌شده:
+
+صمیم ۱: Buyer App
+    توضیحات: Onboarding Wizard، جستجوی ساده، سبد خرید، Tracking زنده، Review.
+    مزایا:
+    UX بهینه برای خرید
+    Increase Conversion
+    Mobile-first
+    معایب:
+    هزینه توسعه
+    نگهداری جدا
+    Sync با بقیه پنل‌ها
+
+
+
+تصمیم ۲: Seller Portal
+    توضیحات: Dashboard، Add Product، Bulk Upload، Inventory، Order Management، Analytics.
+    مزایا:
+    استقلال فروشنده
+    Bulk Operations
+    Analytics
+    معایب:
+    آموزش لازم
+    پیچیدگی
+    پشتیبانی بیشتر
+
+
+
+تصمیم ۳: Admin Dashboard
+    توضیحات: User Management، Product Moderation، Order Dispute، Financial Reports، System Monitoring.
+    مزایا:
+    کنترل کامل
+    Audit Trail
+    Reports
+    معایب:
+    پیچیدگی
+    نیاز به آموزش
+    Security Concerns

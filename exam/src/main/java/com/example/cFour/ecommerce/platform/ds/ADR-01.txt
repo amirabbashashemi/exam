@@ -1,0 +1,42 @@
+ADR-01: مقیاس‌پذیری و عملکرد در جستجو، سبد خرید، و فروش فوق العاده
+
+زمینه و مسئله:
+سیستم باید بتواند عملکرد و کاراییقابل قبولی در  جستجو، سبد خرید و فروش فوق العاده داشته باشد
+
+وضعیت:
+پذیرفته شده
+
+
+صمیم ۱: Elasticsearch برای جستجو
+توضیحات: میلیون‌ها محصول در Elasticsearch Index می‌شن با Inverted Index. Auto-complete + Faceted Search (فیلتر چندگانه) + Typo Tolerance.
+    مزایا:
+    سرعت جستجو زیر ۱۰۰ms (حتی با ۱۰M محصول)
+    Faceted Search برای فیلترهای ترکیبی
+    Auto-complete با Completion Suggester
+    معایب:
+    هزینه سرور ELK (RAM زیاد)
+    نیاز به Sync با PostgreSQL (CDC با Debezium)
+    پیچیدگی نگهداری Cluster
+
+
+تصمیم ۲: Redis برای Flash Sale
+    توضیحات: قبل از Flash Sale، موجودی محصولات در Redis Pre-load می‌شه. کاربر روی "خرید" کلیک می‌کنه → Redis Atomic Decrement → اگه > ۰ بود → برو به مرحله پرداخت. اگه ۰ شد → "تمام شد".
+    مزایا:
+    جلوگیری از Overselling (Atomic Decrement)
+    سرعت بالا (In-Memory)
+    Queue با Kafka برای ترتیب
+    معایب:
+    نیاز به Redis Cluster با HA
+    Sync با DB (اگه Redis Down بشه)
+    پیچیدگی Reconciliation
+
+تصمیم ۳: Kafka برای Cart Events
+    توضیحات: هر تغییر در سبد خرید → Kafka Event. Consumer → PostgreSQL + Redis. Sync بین دستگاه‌ها.
+    مزایا:
+    مقیاس‌پذیری (Kafka Buffer)
+    Decoupling بین Frontend و Backend
+    Replay برای Recovery
+    معایب:
+    تأخیر در Sync (Eventual Consistency)
+    پیچیدگی Consumer
+    Single Point of Failure (اگه Kafka Down بشه)
