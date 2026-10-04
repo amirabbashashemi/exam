@@ -1,4 +1,4 @@
-package com.example.codeChallenge.excercise.exam3.security.me;
+package com.example.codeChallenge.deepseek.security.security.me;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

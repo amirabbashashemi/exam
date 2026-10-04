@@ -13,6 +13,12 @@ import java.util.Properties;
 هر بار که می‌خواهید محیط را عوض کنید، یک Deploy جدید و کامپایل مجدد نیاز است (هزینه‌ی بالا و ریسک بالا).
 هیچ راهی برای تغییر تنظیمات بدون تغییر کد وجود ندارد.
  */
+
+
+
+
+
+
 public class NotificationService {
     private final String defaultConfigUrl = "/smtp.config";
     private final Properties properties = new Properties();

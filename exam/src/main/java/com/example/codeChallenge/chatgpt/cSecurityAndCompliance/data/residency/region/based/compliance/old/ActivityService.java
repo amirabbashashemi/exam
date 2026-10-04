@@ -1,8 +1,8 @@
 package com.example.codeChallenge.chatgpt.cSecurityAndCompliance.data.residency.region.based.compliance.old;
 
-import codeChallenge.chatgpt.cSecurityAndCompliance.data.residency.region.based.compliance.neww.Region;
-import codeChallenge.chatgpt.cSecurityAndCompliance.data.residency.region.based.compliance.neww.UserActivity;
+import com.example.codeChallenge.chatgpt.eCommon.UserActivity;
 
+import javax.swing.plaf.synth.Region;
 import java.util.*;
 
 public class ActivityService {

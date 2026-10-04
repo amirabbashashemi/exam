@@ -12,6 +12,11 @@ Supportability
 (قابلیت پشتیبانی) توانایی یک سیستم در ارائه‌ی ابزارها، رابط‌ها و مکانیزم‌های داخلی به تیم‌های عملیاتی (Ops) و پشتیبانی (Support) است تا بتوانند:
  */
 
+
+
+
+
+
 public class SupportAgent {
     private final TransactionCounter counter;
     private final Path signalFile = Path.of("signal.status");

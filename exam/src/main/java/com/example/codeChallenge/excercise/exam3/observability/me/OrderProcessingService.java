@@ -2,12 +2,17 @@ package com.example.codeChallenge.excercise.exam3.observability.me;
 
 /*
 یک سرویس OrderProcessingService داریم که سفارش‌های مشتریان را پردازش می‌کند.
- در حال حاضر وقتی خطایی رخ می‌دهد، هیچ لاگ ساختاریافته‌ای ثبت نمی‌شود و توسعه‌دهنده نمی‌تواند بفهمد کدام درخواست مشکل داشته است.
+ در حال حاضر وقتی خطایی رخ می‌دهد،
+  هیچ لاگ ساختاریافته‌ای ثبت نمی‌شود و توسعه‌دهنده نمی‌تواند بفهمد کدام درخواست مشکل داشته است.
   همچنین هیچ متریکی از تعداد سفارش‌های موفق، ناموفق، یا زمان پردازش وجود ندارد.
    مدیرعامل می‌گوید: «می‌خواهم وقتی سیستم کند شد یا خطا داد، سریع بفهمیم کجای کار می‌لنگد.
     برای هر درخواست یک شناسه یکتا داشته باشیم تا بتوانیم مسیرش را دنبال کنیم.
      همچنین یک اندپوینت سلامت داشته باشیم که وضعیت سرویس را نشان دهد.»
  */
+
+
+
+
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,7 +40,10 @@ public class OrderProcessingService {
         running = true;
         this.refreshTimeSecond = refreshTimeSecond;
         this.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-        this.scheduledExecutorService.scheduleAtFixedRate(this::refreshTimerMap, 0, refreshTimeIntervalSecond, TimeUnit.SECONDS);
+        this.scheduledExecutorService.scheduleAtFixedRate(this::refreshTimerMap,
+                0,
+                refreshTimeIntervalSecond,
+                TimeUnit.SECONDS);
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
@@ -63,7 +71,8 @@ public class OrderProcessingService {
             LOGGER.info("end of processing order with traceId:{}", order.getTraceId());
         } catch (Exception e) {
             failedCount.incrementAndGet();
-            LOGGER.error("error in processing order with id:{} and traceId:{}", order.getId(), order.getTraceId(), e);
+            LOGGER.error("error in processing order with id:{} and traceId:{}",
+                    order.getId(), order.getTraceId(), e);
             throw new RuntimeException(e);
         } finally {
             order.setEndDate(new Date());
@@ -78,7 +87,8 @@ public class OrderProcessingService {
             order.setTraceId(randomUUID);
             order.setCreatedDate(new Date());
         } catch (Exception e) {
-            LOGGER.error("error in method initiate for order with id:{}. errorMessage:{}", order.getId(), e.getMessage());
+            LOGGER.error("error in method initiate for order with id:{}. errorMessage:{}",
+                    order.getId(), e.getMessage());
             throw e;
         }
     }

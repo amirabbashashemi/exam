@@ -12,6 +12,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+
+
 public class OrderService {
     private final ArchiveStorage archiveStorage;
     private final static int ARCHIVE_INTERVAL = 1;//day
@@ -20,7 +22,12 @@ public class OrderService {
     private List<Order> orders = new ArrayList<>();
 
     public OrderService(ArchiveStorage archiveStorage) {
-        scheduledExecutorService.scheduleAtFixedRate(this::archiveOldOrders, ARCHIVE_EXECUTOR_INTERVAL, 0, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(
+                this::archiveOldOrders,
+                ARCHIVE_EXECUTOR_INTERVAL,
+                0,
+                TimeUnit.SECONDS);
+
         this.archiveStorage = archiveStorage;
     }
 
@@ -49,7 +56,8 @@ public class OrderService {
 
             if (archivedIds != null && !archivedIds.isEmpty()) {
                 orders = orders.stream()
-                        .filter(order -> !"ARCHIVED".equals(order.getStatus()) && !archivedIds.contains(order.getId()))
+                        .filter(order -> !"ARCHIVED".equals(order.getStatus()) &&
+                                !archivedIds.contains(order.getId()))
                         .toList();
             }
         } finally {

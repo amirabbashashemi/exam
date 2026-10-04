@@ -1,9 +1,10 @@
-package com.example.codeChallenge.chatgpt.cSecurityAndCompliance.privacy.chatgpt;
+package com.example.codeChallenge.deepseek.security.privacy.chatgpt;
 
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+
 import java.io.IOException;
 import java.time.Instant;
 

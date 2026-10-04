@@ -7,11 +7,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
+
+
+
+
 public class AccessibleLogger {
     private LogLevel logLevel;
     private final Path logFilePath;
-    private static final String LOGGER_PATTERN = "[%s] # [message: %s] # [args:%s]";
-    private static final String REPORT_PATTERN = "[Total: %d] [SUCCESSFUL: %d] [UNSUCCESSFUL:%d] [SUCCESSFUL PERCENT:%f]";
+    private static final String LOGGER_PATTERN="[%s] # [message: %s] # [args:%s]";
+    private static final String REPORT_PATTERN="[Total: %d] [SUCCESSFUL: %d] [UNSUCCESSFUL:%d] [SUCCESSFUL PERCENT:%f]";
 
     public AccessibleLogger(String logFileUri, LogLevel initialLevel) {
         this.logFilePath = Path.of(logFileUri);

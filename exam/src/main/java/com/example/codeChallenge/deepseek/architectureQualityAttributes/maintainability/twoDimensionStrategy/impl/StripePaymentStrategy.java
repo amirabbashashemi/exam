@@ -1,5 +1,7 @@
-package com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy;
+package com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy.impl;
 
+
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy.PaymentMethodEnum;
 
 public class StripePaymentStrategy extends AbstractPaymentStrategyImpl {
 

@@ -1,5 +1,9 @@
-package com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy;
+package com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy.impl;
 
+
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy.PaymentActionEnum;
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy.PaymentMethodEnum;
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy.PaymentStrategy;
 
 public abstract class AbstractPaymentStrategyImpl implements PaymentStrategy {
 

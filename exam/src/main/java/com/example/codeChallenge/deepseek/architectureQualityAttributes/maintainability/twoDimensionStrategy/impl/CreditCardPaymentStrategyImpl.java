@@ -1,6 +1,6 @@
-package com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy;
+package com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy.impl;
 
-import excercise.exem3.architectureQualityAttributes.maintainability.strategy.PaymentMethodEnum;
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.maintainability.twoDimensionStrategy.PaymentMethodEnum;
 
 public class CreditCardPaymentStrategyImpl extends AbstractPaymentStrategyImpl {
 

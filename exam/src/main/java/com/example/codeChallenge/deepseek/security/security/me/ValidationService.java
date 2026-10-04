@@ -1,4 +1,4 @@
-package com.example.codeChallenge.excercise.exam3.security.me;
+package com.example.codeChallenge.deepseek.security.security.me;
 
 public class ValidationService {
     String pattern = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$";

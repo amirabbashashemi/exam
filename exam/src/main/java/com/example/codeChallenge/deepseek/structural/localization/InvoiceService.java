@@ -33,7 +33,7 @@ public class InvoiceService {
         resourceBundle = ResourceBundle.getBundle("Messages", locale);
     }
 
-    public String generateInvoice(String customerName, double amount, Date orderDate) {
+    public String generateInvoice(double amount, Date orderDate) {
         String title = resourceBundle.getString("title");
         String customer = resourceBundle.getString("customer");
         String tanks = resourceBundle.getString("tanks");
@@ -56,7 +56,7 @@ public class InvoiceService {
     static void main(String[] args) {
         InvoiceService frService = new InvoiceService(Locale.FRANCE);
 
-        System.out.println(frService.generateInvoice("Jean Dupont", 1250.5, new Date()));
+        System.out.println(frService.generateInvoice(1250.5, new Date()));
 
         System.out.println("---");
     }

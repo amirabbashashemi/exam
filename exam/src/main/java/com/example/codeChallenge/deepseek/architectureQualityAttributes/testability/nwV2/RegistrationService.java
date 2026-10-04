@@ -1,23 +1,20 @@
 package com.example.codeChallenge.deepseek.architectureQualityAttributes.testability.nwV2;
 
-import codeChallenge.deepseek.architectureQualityAttributes.testability.nwV2.es.EmailSender;
-import codeChallenge.deepseek.architectureQualityAttributes.testability.nwV2.es.StubEmailSender;
-import codeChallenge.deepseek.architectureQualityAttributes.testability.nwV2.re.StubUserRepository;
-import codeChallenge.deepseek.architectureQualityAttributes.testability.nwV2.re.UserRepository;
-
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.testability.nwV2.es.EmailSender;
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.testability.nwV2.es.StubEmailSender;
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.testability.nwV2.re.StubUserRepository;
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.testability.nwV2.re.UserRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 
-/*
-سناریوی زیر را در نظر بگیرید. شما یک سرویس ثبت‌نام کاربر (User Registration) دارید که کارهای زیر را انجام می‌دهد:
 
-یک کاربر جدید با username و email ذخیره می‌کند.
-یک ایمیل تایید (Welcome Email) برای کاربر می‌فرستد.
-تاریخ ثبت‌نام را بر اساس زمان فعلی سیستم ثبت می‌کند.
-کد فعلی (کاملاً غیرقابل تست - Legacy):
- */
-// ===== سرویس اصلی (غیرقابل تست) =====
+
+
+
+
+
+
 public class RegistrationService {
     private final Clock clock;
     private final EmailSender emailSender;
@@ -48,7 +45,6 @@ public class RegistrationService {
 
         RegistrationService service = new RegistrationService(clock, stubSender, stubRepo);
         service.register("alice", "alice@example.com");
-
         // خروجی قابل‌پیش‌بینی: زمان ثابت است.
         // تست را می‌توان به‌راحتی با assert بررسی کرد (اگر خروجی را String بگیرید).
     }

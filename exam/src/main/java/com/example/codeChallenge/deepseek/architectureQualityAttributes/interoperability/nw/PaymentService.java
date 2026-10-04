@@ -1,7 +1,7 @@
 package com.example.codeChallenge.deepseek.architectureQualityAttributes.interoperability.nw;
 
-import codeChallenge.deepseek.architectureQualityAttributes.interoperability.nw.strategy.PaymentFormatterService;
-import codeChallenge.deepseek.architectureQualityAttributes.interoperability.nw.strategy.PaymentMethodEnum;
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.interoperability.nw.strategy.PaymentFormatterService;
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.interoperability.nw.strategy.PaymentMethodEnum;
 
 /*
 Interoperability (قابلیت هم‌کاری) معیاری است برای سنجش سهولت تبادل داده و استفاده از خدمات بین دو یا چند سیستم نرم‌افزاری ناهمگن (با زبان‌های برنامه‌نویسی، فرمت‌های داده، یا پروتکل‌های ارتباطی متفاوت).

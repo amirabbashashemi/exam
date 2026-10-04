@@ -3,10 +3,10 @@ package com.example.codeChallenge.chatgpt.cSecurityAndCompliance.data.residency.
 import java.util.Map;
 import java.util.Objects;
 
-public class RegionSaverContext {
+public class RegionService {
     private final Map<Region, RegionSaver> regionRegionSaverMap;
 
-    public RegionSaverContext(Map<Region, RegionSaver> regionRegionSaverMap) {
+    public RegionService(Map<Region, RegionSaver> regionRegionSaverMap) {
         this.regionRegionSaverMap = regionRegionSaverMap;
     }
 

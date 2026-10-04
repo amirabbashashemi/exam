@@ -1,7 +1,8 @@
 package com.example.codeChallenge.deepseek.architectureQualityAttributes.interoperability.nw.strategy;
 
 
-import codeChallenge.deepseek.architectureQualityAttributes.interoperability.nw.PaymentTransaction;
+
+import com.example.codeChallenge.deepseek.architectureQualityAttributes.interoperability.nw.PaymentTransaction;
 
 import java.util.Map;
 import java.util.ServiceLoader;
