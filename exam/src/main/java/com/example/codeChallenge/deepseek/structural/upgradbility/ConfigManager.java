@@ -1,5 +1,10 @@
 package com.example.codeChallenge.deepseek.structural.upgradbility;
 
+
+
+
+
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -58,7 +63,7 @@ public class ConfigManager {
 
     private static void loadV2(String line, Map<String, String> config, BufferedReader reader) throws IOException {
         while (line != null) {
-            if (line.startsWith("#")) {
+            if (line.startsWith(VERSION_2)) {
                 line = reader.readLine();
                 continue;
             }

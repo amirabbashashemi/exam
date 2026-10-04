@@ -1,16 +1,21 @@
 package com.example.codeChallenge.deepseek.structural.localization;
 
+
+
+
+
+
+
 /*
  (بومی‌سازی) localization:
 به معنای قابلیت تطبیق برنامه با زبان، فرهنگ و قواعد منطقه‌ای خاص (Locale) بدون تغییر
-
-
 درخواست جدید محصول:
 فروشگاه به بازارهای فرانسه، آلمان و ژاپن وارد شده است. نیاز داریم:
 پیام‌های فاکتور به زبان کاربر (مثلاً فرانسوی، آلمانی، ژاپنی) نمایش داده شوند.
 تاریخ به‌صورت استاندارد آن کشور (مثلاً در فرانسه: 04/08/2026 و در آلمان: 04.08.2026) نمایش داده شود.
 مبلغ با ارز و فرمت آن کشور (مثلاً در فرانسه: 1 250,50 € و در آلمان: 1.250,50 €) نمایش داده شود.
-کد باید طوری نوشته شود که افزودن زبان/کشور جدید (مثلاً اسپانیایی) در آینده، فقط با اضافه کردن یک فایل Properties جدید امکان‌پذیر باشد و نیازی به تغییر کد جاوا نداشته باشد.
+کد باید طوری نوشته شود که افزودن زبان/کشور جدید (مثلاً اسپانیایی) در آینده،
+ فقط با اضافه کردن یک فایل Properties جدید امکان‌پذیر باشد و نیازی به تغییر کد جاوا نداشته باشد.
  */
 
 import java.text.DateFormat;
@@ -41,7 +46,11 @@ public class InvoiceService {
         NumberFormat numberFormat = NumberFormat.getCurrencyInstance(LOCALE);
         String numberFormatted = numberFormat.format(amount);
 
-        return title + "\n" + customer + "\n" + (date + dateFormatted) + "\n" + (totalAmount + numberFormatted) + "\n" + tanks + "\n";
+        return title + "\n" +
+                customer + "\n" +
+                (date + dateFormatted) + "\n" +
+                (totalAmount + numberFormatted) + "\n" +
+                tanks + "\n";
     }
 
     static void main(String[] args) {

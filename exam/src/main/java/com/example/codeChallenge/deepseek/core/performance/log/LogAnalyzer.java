@@ -1,5 +1,8 @@
 package com.example.codeChallenge.deepseek.core.performance.log;
 
+
+
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,8 +37,10 @@ public class LogAnalyzer {
     public void analyzeLog() throws IOException {
         List<CompletableFuture<LogEntry>> completableFutures = getCompletableFutures();
 
+        CompletableFuture[] array = completableFutures.toArray(new CompletableFuture[0]);
+
         CompletableFuture
-                .allOf(completableFutures.toArray(new CompletableFuture[0]))
+                .allOf(array)
                 .join();
 
         List<LogEntry> logEntries = new ArrayList<>();
@@ -78,7 +83,6 @@ public class LogAnalyzer {
 
         try (BufferedReader bufferedReader = Files.newBufferedReader(Paths.get(LOG_FILE))) {
 
-            // ۱. خواندن کل فایل
             bufferedReader.lines().forEach(line -> {
                 CompletableFuture<LogEntry> completableFuture = CompletableFuture.supplyAsync(() -> {
                     LogEntry entry = parseLine(line);

@@ -1,7 +1,11 @@
 package com.example.codeChallenge.deepseek.core.scalability;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -9,7 +13,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class UserCache {
-
     private volatile boolean RUNNING = true;
     private final ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
     private Map<String, User> CACHE_MAP = new ConcurrentHashMap<>();
@@ -64,15 +67,14 @@ public class UserCache {
 
     public void cleanup() {
         EXECUTOR_SERVICE.submit(() -> {
-
             while (RUNNING) {
                 // پاک کردن آیتم‌های منقضی شده
-                Iterator<Map.Entry<String, Instant>> iterator = EXPIRY_TIME_MAP.entrySet().iterator();
-                while (iterator.hasNext()) {
-                    Map.Entry<String, Instant> entry = iterator.next();
+                Iterator<Map.Entry<String, Instant>> map = EXPIRY_TIME_MAP.entrySet().iterator();
+                while (map.hasNext()) {
+                    Map.Entry<String, Instant> entry = map.next();
                     if (Instant.now().isAfter(entry.getValue())) {
                         CACHE_MAP.remove(entry.getKey());
-                        iterator.remove();
+                        map.remove();
                     }
                 }
 
@@ -102,5 +104,7 @@ public class UserCache {
             Thread.currentThread().interrupt();
             System.err.println("Shutdown interrupted: " + e.getMessage());
         }
+
+
     }
 }

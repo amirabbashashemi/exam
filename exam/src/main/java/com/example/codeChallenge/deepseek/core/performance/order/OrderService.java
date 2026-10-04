@@ -10,7 +10,7 @@ public class OrderService {
     private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
     public OrderService() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown()));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
     public void processOrders() {

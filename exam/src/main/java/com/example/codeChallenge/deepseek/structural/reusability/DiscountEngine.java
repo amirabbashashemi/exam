@@ -8,6 +8,7 @@ import java.util.Map;
 public class DiscountEngine {
     // وابستگی به کاتالوگ خاص فروشگاه (Hard-Coded)
     private static final Map<String, Double> PRODUCT_PRICES = new HashMap<>();
+
     static {
         PRODUCT_PRICES.put("LAPTOP_DELL", 1200.0);
         PRODUCT_PRICES.put("MOUSE_HP", 25.0);
@@ -27,7 +28,7 @@ public class DiscountEngine {
         double discountPercentage = 0.0;
 
         // قانون تخفیف خاص فروشگاه (مختلط و Hard-Coded)
-            if (VIP_CUSTOMERS.contains(customerId)) {
+        if (VIP_CUSTOMERS.contains(customerId)) {
             discountPercentage = 20.0; // 20% تخفیف ویژه
         } else if (price > 100) {
             discountPercentage = 10.0; // 10% تخفیف برای کالاهای گران‌قیمت

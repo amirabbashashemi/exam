@@ -1,9 +1,9 @@
 package com.example.codeChallenge.deepseek.structural.reusability.nw;
 
-import codeChallenge.deepseek.structural.reusability.nwv2.BaseDiscountStrategy;
-import codeChallenge.deepseek.structural.reusability.nwv2.DiscountStrategy;
-import codeChallenge.deepseek.structural.reusability.nwv2.ExpensiveProductDiscountStrategy;
-import codeChallenge.deepseek.structural.reusability.nwv2.VipDiscountStrategy;
+import com.example.codeChallenge.deepseek.structural.reusability.nw.discount.BaseDiscountStrategy;
+import com.example.codeChallenge.deepseek.structural.reusability.nw.discount.DiscountStrategy;
+import com.example.codeChallenge.deepseek.structural.reusability.nw.discount.ExpensiveProductDiscountStrategy;
+import com.example.codeChallenge.deepseek.structural.reusability.nw.discount.VipDiscountStrategy;
 
 import java.util.*;
 

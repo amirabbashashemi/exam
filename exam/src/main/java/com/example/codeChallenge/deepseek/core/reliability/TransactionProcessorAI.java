@@ -1,5 +1,10 @@
 package com.example.codeChallenge.deepseek.core.reliability;
 
+
+
+
+
+
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,15 +17,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.*;
 
-/**
- * TransactionProcessor با پشتیبانی کامل از Reliability:
- * - Write-Ahead Log (WAL) با Append
- * - Recovery با Deduplication
- * - Idempotency با successfulMap (دائمی)
- * - Retry خودکار برای تراکنش‌های failed
- * - Checkpointing و Log Rotation
- * - Graceful Shutdown
- */
 public class TransactionProcessorAI {
     private static final Logger log = LoggerFactory.getLogger(TransactionProcessorAI.class);
 

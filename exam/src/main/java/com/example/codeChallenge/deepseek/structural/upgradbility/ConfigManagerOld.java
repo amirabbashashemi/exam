@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ConfigManagerV1 {
+public class ConfigManagerOld {
 
     public void save(String filePath, Map<String, String> config) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(Path.of(filePath))) {

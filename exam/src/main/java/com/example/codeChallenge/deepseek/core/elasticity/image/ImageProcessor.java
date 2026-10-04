@@ -1,102 +1,153 @@
 package com.example.codeChallenge.deepseek.core.elasticity.image;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
-/*
-مشکلات فعلی:
-در زمان پیک (۱۰۰,۰۰۰ تصویر)، صف به سرعت پر می‌شود
-تعداد تردهای ثابت (۱۰ ترد) برای پردازش کافی نیست
-در زمان‌های عادی (۱۰۰۰ تصویر)، ۱۰ ترد بیکار هستند و منابع هدر می‌روند
-صف نامحدود (LinkedBlockingQueue) باعث می‌شود حافظه پر شود
-سیستم نمی‌تواند خود را با بار تطبیق دهد
- */
+
+
+
+
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ImageProcessor {
-    private final int batchSize = 100;
-    private final ExecutorService executor = new ThreadPoolExecutor(
-            5,
-            4 * Runtime.getRuntime().availableProcessors(),
-            10,
-            TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(100));
-    private final ScheduledExecutorService listeningExecutor = Executors.newScheduledThreadPool(1);
-    private final BlockingQueue<Image> queue = new ArrayBlockingQueue<>(120000);//بیست درصئ بیشتر از پیک
-    private final AtomicInteger processedCount = new AtomicInteger(0);
-    private volatile boolean running = true;
+    private final ThreadPoolExecutor executor;
+    private final ScheduledExecutorService autoScaler;
+    private final int minCorePoolSize;
+    private final int maxCorePoolSize;
+    private final int queueCapacity;
+    private final int scaleUpThreshold;
+    private final int scaleDownThreshold;
 
-    public ImageProcessor() {
-        start();
+    private final AtomicLong processedCount = new AtomicLong(0);
+    private final AtomicLong rejectedCount = new AtomicLong(0);
+    private final AtomicLong failedCount = new AtomicLong(0);
+
+    public ImageProcessor(int minCorePoolSize,
+                          int maxCorePoolSize,
+                          int queueCapacity,
+                          int scaleUpThreshold,
+                          int scaleDownThreshold) {
+        if (minCorePoolSize <= 0 || maxCorePoolSize < minCorePoolSize || queueCapacity <= 0) {
+            throw new IllegalArgumentException("Invalid configuration");
+        }
+        this.minCorePoolSize = minCorePoolSize;
+        this.maxCorePoolSize = maxCorePoolSize;
+        this.queueCapacity = queueCapacity;
+        this.scaleUpThreshold = scaleUpThreshold;
+        this.scaleDownThreshold = scaleDownThreshold;
+
+        // ۱. ThreadPoolExecutor با Bounded Queue و Rejection Policy
+        this.executor = new ThreadPoolExecutor(
+                minCorePoolSize,
+                maxCorePoolSize,
+                60, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(queueCapacity),
+                new ThreadPoolExecutor.CallerRunsPolicy()
+        );
+
+        // ۲. Auto-Scaler
+        this.autoScaler = Executors.newSingleThreadScheduledExecutor();
+        this.autoScaler.scheduleAtFixedRate(this::scale, 5, 5, TimeUnit.SECONDS);
+
+        // ۳. Graceful Shutdown
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
-    public void addImage(Image image) {
-        boolean offer = queue.offer(image);
+    // ------------------------------------------------------------
+    // Auto-Scaling
+    // ------------------------------------------------------------
+    private void scale() {
+        int queueSize = executor.getQueue().size();
+        int currentCore = executor.getCorePoolSize();
 
-        if (!offer) {
-            System.err.println("The queue is full.");
+        if (queueSize > scaleUpThreshold && currentCore < maxCorePoolSize) {
+            int newSize = Math.min(maxCorePoolSize, currentCore + 1);
+            executor.setCorePoolSize(newSize);
+            System.out.printf("⬆️ Scale UP: %d → %d (queue: %d)%n",
+                    currentCore, newSize, queueSize);
+        } else if (queueSize < scaleDownThreshold && currentCore > minCorePoolSize) {
+            int newSize = Math.max(minCorePoolSize, currentCore - 1);
+            executor.setCorePoolSize(newSize);
+            System.out.printf("⬇️ Scale DOWN: %d → %d (queue: %d)%n",
+                    currentCore, newSize, queueSize);
         }
     }
 
-    public void start() {
-        listeningExecutor.scheduleAtFixedRate(this::processBatch, 0, 10, TimeUnit.MILLISECONDS);
-    }
-
-    public void processBatch() {
-        List<Image> images = new ArrayList<>();
-        List<CompletableFuture<Void>> completableFutures = new ArrayList();
-
-        queue.drainTo(images, batchSize);
-
-        images.forEach(image -> {
-                    CompletableFuture<Void> voidCompletableFuture = CompletableFuture.runAsync(() -> {
-                                if (image != null) {
-                                    processImage(image);
-                                    processedCount.incrementAndGet();
-                                }
-                            }
-                            , executor);
-
-                    completableFutures.add(voidCompletableFuture);
-                }
-        );
-
-        CompletableFuture
-                .allOf(completableFutures.toArray(new CompletableFuture[0]))
-                .join();
-
-    }
-
-    //تغییر ندادم که صورت مسیله خراب نشه
-    private void processImage(Image image) {
-        // پردازش سنگین (۵۰۰ میلی‌ثانیه)
+    // ------------------------------------------------------------
+    // Public API
+    // ------------------------------------------------------------
+    public boolean addImage(Image image) {
+        if (image == null) {
+            throw new IllegalArgumentException("Image cannot be null");
+        }
         try {
-            Thread.sleep(500);
+            // هر تصویر یک تسک جداگانه در Executor
+            executor.submit(() -> {
+                try {
+                    processImage(image);
+                    processedCount.incrementAndGet();
+                } catch (Exception e) {
+                    failedCount.incrementAndGet();
+                    System.err.println("Error processing image: " + e.getMessage());
+                }
+            });
+            return true;
+        } catch (RejectedExecutionException e) {
+            // Fallback: CallerRunsPolicy نباید اینجا Exception بدهد،
+            // ولی اگر Executor shutdown باشد، این اتفاق می‌افتد
+            rejectedCount.incrementAndGet();
+            System.err.println("⚠️ Image rejected: executor is shutting down");
+            return false;
+        }
+    }
+
+    // ------------------------------------------------------------
+    // Processing
+    // ------------------------------------------------------------
+    private void processImage(Image image) {
+        try {
+            Thread.sleep(500); // شبیه‌سازی پردازش سنگین
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
         // تبدیل و ذخیره تصویر
     }
 
+    // ------------------------------------------------------------
+    // Graceful Shutdown
+    // ------------------------------------------------------------
     public void shutdown() {
-        try {
-            running = false;
+        System.out.println("🛑 Shutting down ImageProcessor...");
+        autoScaler.shutdown();
 
-            executor.shutdown();
-            boolean awaitedTermination = executor.awaitTermination(20, TimeUnit.SECONDS);
-            if (!awaitedTermination) {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
                 executor.shutdownNow();
             }
-
-            listeningExecutor.shutdown();
-            awaitedTermination = listeningExecutor.awaitTermination(20, TimeUnit.SECONDS);
-            if (!awaitedTermination) {
-                listeningExecutor.shutdownNow();
-            }
         } catch (InterruptedException e) {
-            System.err.println("Error in shutdown.");
+            executor.shutdownNow();
             Thread.currentThread().interrupt();
         }
+
+        System.out.printf("✅ Shutdown complete. Processed: %d, Rejected: %d, Failed: %d%n",
+                processedCount.get(), rejectedCount.get(), failedCount.get());
+    }
+
+    // ------------------------------------------------------------
+    // Health Check
+    // ------------------------------------------------------------
+    public String getHealthStatus() {
+        return String.format(
+                "ImageProcessor{corePool=%d, poolSize=%d, activeThreads=%d, " +
+                        "queueSize=%d/%d, completed=%d, rejected=%d, failed=%d}",
+                executor.getCorePoolSize(),
+                executor.getPoolSize(),
+                executor.getActiveCount(),
+                executor.getQueue().size(),
+                queueCapacity,
+                processedCount.get(),
+                rejectedCount.get(),
+                failedCount.get()
+        );
     }
 }

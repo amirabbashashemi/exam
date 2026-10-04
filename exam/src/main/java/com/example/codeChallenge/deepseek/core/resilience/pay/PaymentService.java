@@ -13,17 +13,28 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.*;
 
+
+
+
+
+
+
+
+
 public class PaymentService {
     private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
-
     // ==================== Config ====================
-    private static final int MAX_RETRIES = 3;
-    private static final long BASE_DELAY_MS = 1000;
-    private static final int MAX_CONCURRENT = 20;
+    private final int maxRetries;
+    private final long baseDelayMS;
+    private final String externalServiceURI;//"https://api.payment-gateway.com/verify/%s"
+    // ==================== Components ====================
+    private final HttpClient httpClient;
+    private final Map<String, Payment> payments;
+    private final Semaphore bulkhead;
+    private final ExecutorService executor;
 
     // ==================== Resilience4j Circuit Breaker ====================
-    private final CircuitBreaker circuitBreaker = CircuitBreaker.of(
-            "payment-gateway",
+    private final CircuitBreaker circuitBreaker = CircuitBreaker.of("payment-gateway",
             CircuitBreakerConfig.custom()
                     .failureRateThreshold(50)
                     .slowCallRateThreshold(50)
@@ -35,13 +46,15 @@ public class PaymentService {
                     .build()
     );
 
-    // ==================== Components ====================
-    private final HttpClient httpClient = HttpClient.newHttpClient();
-    private final Map<String, Payment> payments = new ConcurrentHashMap<>();
-    private final Semaphore bulkhead = new Semaphore(MAX_CONCURRENT);
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    public PaymentService(int maxRetries, long baseDelayMS, int maxConcurrent, String externalServiceURI) {
+        this.maxRetries = maxRetries;
+        this.baseDelayMS = baseDelayMS;
+        this.externalServiceURI = externalServiceURI;
+        this.httpClient = HttpClient.newHttpClient();
+        this.payments = new ConcurrentHashMap<>();
+        this.bulkhead = new Semaphore(maxConcurrent);
+        this.executor = Executors.newVirtualThreadPerTaskExecutor();
 
-    public PaymentService() {
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
@@ -52,7 +65,6 @@ public class PaymentService {
             return fallback(paymentId);
         }
 
-
         try {
             boolean acquired = bulkhead.tryAcquire();
             if (!acquired) {
@@ -60,20 +72,18 @@ public class PaymentService {
                 return fallback(paymentId);
             }
 
-
             // 2️⃣ Retry with Exponential Backoff + Circuit Breaker
             return callWithRetry(paymentId);
         } finally {
             bulkhead.release();
-            ;
         }
     }
 
     private Payment callWithRetry(String paymentId) {
         int attempt = 0;
-        long delay = BASE_DELAY_MS;
+        long delay = baseDelayMS;
 
-        while (attempt < MAX_RETRIES) {
+        while (attempt < maxRetries) {
             try {
                 // 3️⃣ Circuit Breaker Check
                 if (!circuitBreaker.tryAcquirePermission()) {
@@ -84,7 +94,7 @@ public class PaymentService {
                 try {
                     // 4️⃣ Call External Service
                     HttpRequest request = HttpRequest.newBuilder()
-                            .uri(URI.create(String.format("https://api.payment-gateway.com/verify/%s", paymentId)))
+                            .uri(URI.create(String.format(externalServiceURI, paymentId)))
                             .timeout(Duration.ofSeconds(5))
                             .GET()
                             .build();
@@ -135,11 +145,6 @@ public class PaymentService {
         payment.setStatus("PENDING_MANUAL");
         payments.put(paymentId, payment);
         return payment;
-    }
-
-    // ==================== Helper ====================
-    public void addPayment(Payment payment) {
-        payments.put(payment.getId(), payment);
     }
 
     // ==================== Shutdown ====================
