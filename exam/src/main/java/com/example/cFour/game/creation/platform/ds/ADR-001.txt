@@ -1,0 +1,62 @@
+ADR-001: مقیاس‌پذیری و عملکرد در اجرای همزمان بازی‌ها
+
+Context:
+۱M کاربر همزمان. ۱۰۰K بازی فعال. هر بازی یه محیط اجرایی جدا می‌خواد. ادیتور باید زیر ۱۰۰ms لود بشه.
+
+Decision:
+
+تصمیم ۱: WASM Runtime برای اجرای بازی‌ها
+توضیحات: هر بازی به WebAssembly کامپایل می‌شه و تو V8 Isolates اجرا می‌شه. یه سرور می‌تونه ۱۰۰ بازی رو همزمان اجرا کنه.
+مزایا:
+Cross-platform (Win/Linux/Mac/Web)
+ایزوله (V8 Isolates)
+راه‌اندازی سریع (< ۵۰ms)
+معایب:
+Performance کمتر از Native
+Debugging سخت
+بعضی کتابخانه‌ها WASM ندارن
+
+
+تصمیم ۲: Kubernetes + HPA برای Auto-scaling
+توضیحات: بازی‌ها تو Podهای K8s اجرا می‌شن. HPA بر اساس CPU و Player Count، تعداد Pod رو تنظیم می‌کنه.
+مزایا:
+مقیاس‌پذیری خودکار
+هزینه بهینه
+تحمل خطا
+معایب:
+پیچیدگی K8s
+زمان راه‌اندازی Pod (۳۰-۶۰s)
+نیاز به DevOps
+
+
+
+تصمیم ۳: Redis برای Matchmaking و Session
+توضیحات: تخصیص کاربر به سرور تو Redis انجام می‌شه (نه DB). Session کاربر با TTL نگهداری می‌شه.
+مزایا:
+سرعت < ۱ms
+Atomic Operations
+TTL خودکار
+معایب:
+Single Point of Failure
+حافظه محدود
+نیاز به Persistence
+
+
+Alternatives:
+الف) Docker per Game:
+مزایا: ایزوله کامل
+معایب: هزینه بالا، راه‌اندازی کند
+
+ب) Serverless (Lambda):
+مزایا: هزینه کم
+معایب: Cold Start، محدودیت زمان
+
+ج) سرور واحد:
+مزایا: سادگی
+معایب: مقیاس‌پذیری محدود
+
+
+
+Consequences:
+مثبت: مقیاس‌پذیری خطی، هزینه بهینه، Cross-platform
+منفی: پیچیدگی K8s، نیاز به DevOps، Debugging سخت
