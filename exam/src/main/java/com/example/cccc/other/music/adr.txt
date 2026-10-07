@@ -1,0 +1,1054 @@
+ADR-001: انتخاب معماری کلی سیستم
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم استریم موسیقی باید میلیون‌ها کاربر و میلیون‌ها آهنگ رو مدیریت کنه. هر بخش (استریم، Playlist، Royalty، Recommendation) داده و منطق خودش رو داره. تیم‌های مختلف باید مستقل کار کنن و خرابی یه بخش، کل سیستم رو از کار نندازه.
+
+تصمیم:
+معماری میکروسرویس با تفکیک بر اساس Bounded Context (DDD) و Database per Service.
+
+دلیل تصمیم:
+هر دامنه (کاتالوگ، Playlist، Royalty) داده و منطق خودش رو داره. میکروسرویس یعنی هر تیم مستقل Deploy می‌کنه. Database per Service یعنی هر سرویس دیتابیس مناسب خودش رو داره.
+
+مزایا:
+
+تیم‌ها مستقل کار می‌کنن
+
+هر سرویس با تکنولوژی مناسب
+
+خرابی یه بخش، بقیه رو از کار نمی‌ندازه
+
+مقیاس‌پذیری خطی
+
+معایب:
+
+پیچیدگی عملیاتی
+
+Debugging سخت‌تر
+
+نیاز به تیم Platform
+
+تست End-to-End سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Monolith:
+مزایا:
+
+سادگی Deploy
+
+Debugging راحت
+
+توسعه سریع اولیه
+معایب:
+
+تیم‌ها نمی‌تونن مستقل Deploy کنن
+
+وابستگی کد زیاد
+
+مقیاس‌پذیری محدود
+
+ب) Modular Monolith:
+مزایا:
+
+تعادل بین سادگی و ماژولاریتی
+
+Deploy یکپارچه
+معایب:
+
+همچنان وابستگی در Deploy
+
+مقیاس‌پذیری محدود
+
+ج) Serverless:
+مزایا:
+
+هزینه فقط به ازای مصرف
+
+مقیاس‌پذیری خودکار
+معایب:
+
+Cold Start
+
+Debugging سخت
+
+Vendor Lock-in
+
+پیامدها:
+
+مثبت: استقلال تیم‌ها، مقیاس‌پذیری، تحمل خطا
+
+منفی: پیچیدگی، نیاز به تیم Platform
+
+ریسک: مرز Domain اشتباه → Event Storming
+
+ADR-002: انتخاب مکانیزم Audio Streaming
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان آهنگ رو با کیفیت بالا و بدون Buffer گوش بدن. آهنگ‌ها حجم زیادی دارن. اگه از سرور خودمون توزیع کنیم، Bandwidth نجومی می‌شه. کاربر با اینترنت ضعیف هم نباید قطعی داشته باشه.
+
+تصمیم:
+از S3 برای ذخیره + CDN (CloudFront + Akamai) برای توزیع + HLS/DASH برای Adaptive Bitrate + Opus/AAC برای Codec استفاده می‌کنیم.
+
+دلیل تصمیم:
+S3 مقیاس‌پذیری نامحدود. CDN آهنگ رو از نزدیک‌ترین Edge Server می‌رسونه. HLS/DASH برای Adaptive Bitrate (سوییچ خودکار کیفیت). Opus/AAC برای Codec بهینه.
+
+مزایا:
+
+مقیاس‌پذیری نامحدود
+
+Latency پایین
+
+Adaptive Bitrate
+
+کاهش ۹۰٪ بار سرور اصلی
+
+معایب:
+
+هزینه CDN بالا
+
+پیچیدگی Multi-CDN
+
+نیاز به Cache Invalidation
+
+وابستگی به AWS
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط S3 بدون CDN:
+مزایا:
+
+سادگی
+
+هزینه کمتر
+معایب:
+
+Latency بالا
+
+Bandwidth نجومی
+
+تجربه ضعیف
+
+ب) فایل‌سیستم محلی:
+مزایا:
+
+سرعت بالا
+
+سادگی
+معایب:
+
+مقیاس‌پذیری محدود
+
+بدون CDN
+
+Backup سخت
+
+ج) فقط MP3 (بدون Adaptive):
+مزایا:
+
+سادگی
+
+سازگاری بالا
+معایب:
+
+Buffer در اینترنت ضعیف
+
+بدون Adaptive
+
+تجربه ضعیف
+
+پیامدها:
+
+مثبت: مقیاس‌پذیری، Latency پایین، Adaptive
+
+منفی: هزینه CDN، پیچیدگی
+
+ریسک: CDN Down → Multi-CDN + Fallback
+
+ADR-003: انتخاب مکانیزم Search آهنگ
+وضعیت: پذیرفته شده
+
+زمینه:
+میلیون‌ها آهنگ در پلتفرم. کاربرا می‌خوان بر اساس عنوان، هنرمند، آلبوم، ژانر، متن آهنگ جستجو کنن. Search باید سریع باشه و Faceted Search داشته باشه.
+
+تصمیم:
+از Elasticsearch + PostgreSQL (Metadata) + CDC (Debezium) + Kafka استفاده می‌کنیم.
+
+دلیل تصمیم:
+Elasticsearch برای Full-Text Search و Faceted Search. PostgreSQL برای Metadata (ACID). CDC تغییرات PostgreSQL رو به Elasticsearch Sync می‌کنه.
+
+مزایا:
+
+جستجوی سریع (زیر ۱۰۰ms)
+
+Full-Text Search (حتی متن آهنگ)
+
+Faceted Search
+
+Sync خودکار
+
+معایب:
+
+پیچیدگی CDC
+
+تأخیر Sync
+
+هزینه Elasticsearch
+
+مدیریت دو دیتابیس
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+سادگی
+
+ACID
+معایب:
+
+Full-Text Search ضعیف
+
+کندی با میلیون‌ها رکورد
+
+بدون Faceted Search
+
+ب) فقط Elasticsearch:
+مزایا:
+
+جستجوی سریع
+
+Faceted Search
+معایب:
+
+برای Transaction مناسب نیست
+
+داده‌ها ممکنه از دست برن
+
+بدون ACID
+
+ج) MongoDB Text Index:
+مزایا:
+
+سادگی
+
+یکپارچگی
+معایب:
+
+Full-Text Search ضعیف‌تر
+
+بدون Faceted Search
+
+پیامدها:
+
+مثبت: جستجوی سریع، Faceted Search
+
+منفی: پیچیدگی CDC، هزینه
+
+ریسک: CDC خطا → Retry + Alert
+
+ADR-004: انتخاب مکانیزم Recommendation
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان آهنگ‌های جدید کشف کنن. اگه فقط بر اساس Follow باشه، تنوع کم می‌شه. باید بر اساس رفتار کاربر (گوش دادن، Like، Skip) پیشنهاد بدیم.
+
+تصمیم:
+از Hybrid Recommendation (Collaborative Filtering + Content-Based) با Matrix Factorization + Feature Store (Feast) + Real-time Update (Online Learning) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Collaborative Filtering بر اساس رفتار کاربران مشابه. Content-Based بر اساس ویژگی‌های آهنگ (ژانر، تمپو). ترکیب این دو، هم دقت رو بالا می‌بره هم Cold Start رو حل می‌کنه.
+
+مزایا:
+
+دقت بالا
+
+کشف آهنگ‌های جدید
+
+شخصی‌سازی عمیق
+
+حل Cold Start
+
+معایب:
+
+پیچیدگی ML
+
+نیاز به Data Pipeline
+
+زمان آموزش
+
+نیاز به تیم Data Science
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Trending:
+مزایا:
+
+سادگی
+
+بدون ML
+معایب:
+
+شخصی‌سازی نداره
+
+برای همه یه چیز
+
+تجربه ضعیف
+
+ب) فقط Content-Based:
+مزایا:
+
+Cold Start خوب
+
+شفافیت
+معایب:
+
+محدود به ویژگی‌ها
+
+عدم کشف علایق جدید
+
+ج) فقط Collaborative:
+مزایا:
+
+دقت بالا
+
+کشف جدید
+معایب:
+
+Cold Start ضعیف
+
+نیاز به داده زیاد
+
+پیامدها:
+
+مثبت: دقت بالا، کشف جدید
+
+منفی: پیچیدگی، نیاز به ML
+
+ریسک: مدل قدیمی → Retraining دوره‌ای
+
+ADR-005: انتخاب مکانیزم Playlist و Like
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان Playlist بسازن و آهنگ Like کنن. این داده‌ها باید Real-time و ACID باشن. Playlist می‌تونه میلیون‌ها آهنگ داشته باشه.
+
+تصمیم:
+از PostgreSQL برای Playlist + Cassandra برای Like + Redis برای Cache + Kafka برای Event استفاده می‌کنیم.
+
+دلیل تصمیم:
+PostgreSQL برای Playlist (ACID). Cassandra برای Like (Write سنگین). Redis برای Cache Playlist پرطرفدار. Kafka برای انتشار رویداد (Like جدید).
+
+مزایا:
+
+ACID برای Playlist
+
+Write سریع برای Like
+
+Cache برای سرعت
+
+Real-time Notification
+
+معایب:
+
+پیچیدگی سه‌گانه
+
+Eventual Consistency برای Like
+
+نیاز به Cache Invalidation
+
+هزینه Redis
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+ACID
+
+یکپارچگی
+معایب:
+
+Write کند برای Like
+
+مقیاس‌پذیری محدود
+
+ب) فقط Cassandra:
+مزایا:
+
+Write سریع
+
+مقیاس‌پذیری
+معایب:
+
+Eventual Consistency
+
+برای Playlist مناسب نیست
+
+ج) فقط Redis:
+مزایا:
+
+سرعت بالا
+
+Real-time
+معایب:
+
+محدودیت حافظه
+
+بدون Persistence
+
+از دست رفتن داده
+
+پیامدها:
+
+مثبت: ACID، Write سریع
+
+منفی: پیچیدگی، Eventual Consistency
+
+ریسک: Cassandra Down → Multi-Node
+
+ADR-006: انتخاب مکانیزم Offline Mode
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان آهنگ رو بدون اینترنت گوش بدن (مثلاً تو مترو یا هواپیما). آهنگ باید دانلود بشه و به صورت Encrypted ذخیره بشه تا کپی نشه.
+
+تصمیم:
+از Encrypted Audio Download + DRM (Widevine/FairPlay) + Local Storage (SQLite) + TTL (۳۰ روز) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Encrypted Download یعنی آهنگ رمزنگاری‌شده ذخیره می‌شه. DRM یعنی فقط با اپ ما قابل پخش. Local Storage برای Metadata. TTL برای جلوگیری از نگه‌داری دائمی.
+
+مزایا:
+
+Offline Listening
+
+محافظت از Copyright (DRM)
+
+TTL برای مدیریت
+
+تجربه کاربری خوب
+
+معایب:
+
+پیچیدگی DRM
+
+هزینه License
+
+محدودیت در دستگاه‌ها
+
+نیاز به Sync
+
+موارد دیگر بررسی‌شده:
+
+الف) دانلود بدون DRM:
+مزایا:
+
+سادگی
+
+بدون هزینه License
+معایب:
+
+کپی غیرقانونی
+
+نقض Copyright
+
+خطر قانونی
+
+ب) Streaming فقط (بدون Offline):
+مزایا:
+
+سادگی
+
+محافظت از Copyright
+معایب:
+
+بدون اینترنت نمی‌شه گوش داد
+
+تجربه ضعیف
+
+نقض نیازمندی
+
+ج) Cache فقط:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+بدون کنترل TTL
+
+بدون DRM
+
+کپی راحت
+
+پیامدها:
+
+مثبت: Offline، محافظت از Copyright
+
+منفی: پیچیدگی DRM، هزینه
+
+ریسک: DRM خطا → Fallback به Streaming
+
+ADR-007: انتخاب مکانیزم Copyright و Royalty
+وضعیت: پذیرفته شده
+
+زمینه:
+آهنگ‌ها Copyright دارن. باید به هنرمند و ناشر Royalty پرداخت بشه. هر پخش باید ثبت بشه و بر اساس اون محاسبه بشه. باید از تقلب جلوگیری بشه.
+
+تصمیم:
+از Audio Fingerprinting (AcoustID) + Kafka (Event Stream) + Cassandra (Play Count) + Rule Engine (Drools) + Escrow + Blockchain (اختیاری) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Audio Fingerprinting برای تشخیص Copyright. Kafka برای Event Stream. Cassandra برای Play Count. Drools برای محاسبه Royalty. Escrow برای نگه‌داری. Blockchain برای شفافیت (اختیاری).
+
+مزایا:
+
+تشخیص Copyright
+
+محاسبه دقیق Royalty
+
+شفافیت (Blockchain)
+
+امنیت مالی (Escrow)
+
+معایب:
+
+پیچیدگی Blockchain
+
+هزینه AcoustID
+
+نیاز به Rule Engine
+
+زمان تسویه
+
+موارد دیگر بررسی‌شده:
+
+الف) بدون Audio Fingerprinting:
+مزایا:
+
+سادگی
+
+هزینه کمتر
+معایب:
+
+نقض Copyright
+
+خطر قانونی
+
+اعتماد هنرمند پایین
+
+ب) فقط Rule Engine:
+مزایا:
+
+سادگی
+
+شفافیت
+معایب:
+
+بدون تشخیص Copyright
+
+بدون شفافیت
+
+تقلب ممکنه
+
+ج) بدون Escrow:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+ریسک کلاهبرداری
+
+بدون محافظت
+
+نقض قوانین
+
+پیامدها:
+
+مثبت: تشخیص Copyright، Royalty دقیق
+
+منفی: پیچیدگی، هزینه
+
+ریسک: AcoustID خطا → Human Review
+
+ADR-008: انتخاب مکانیزم Multi-language و Multi-currency
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم تو کشورهای مختلف با زبان‌ها و ارزهای مختلف کار می‌کنه. کاربر باید رابط کاربری به زبان خودش ببینه و قیمت به ارز محلی. متن آهنگ هم باید قابل جستجو باشه.
+
+تصمیم:
+از i18next + Currency API (بانک مرکزی) + Redis Cache + RTL/LTR Support + Elasticsearch Analyzer مجزا استفاده می‌کنیم.
+
+دلیل تصمیم:
+i18next برای چندزبانگی. Currency API برای نرخ ارز لحظه‌ای. Redis Cache برای سرعت. RTL/LTR برای زبان‌های راست‌به‌چپ. Elasticsearch Analyzer مجزا برای جستجوی دقیق متن آهنگ.
+
+مزایا:
+
+پشتیبانی چندزبانه
+
+نرخ ارز لحظه‌ای
+
+RTL/LTR خودکار
+
+جستجوی دقیق
+
+معایب:
+
+وابستگی به API خارجی
+
+نیاز به بازبینی ترجمه
+
+کارمزد تبدیل ارز
+
+پیچیدگی RTL
+
+موارد دیگر بررسی‌شده:
+
+الف) Hardcode زبان‌ها:
+مزایا:
+
+سادگی
+
+Performance بالا
+معایب:
+
+نیاز به نسخه‌گذاری
+
+نگهداری فاجعه
+
+ب) مترجم آنلاین:
+مزایا:
+
+پوشش خودکار
+
+بدون فایل JSON
+معایب:
+
+وابستگی به خارج
+
+حریم خصوصی
+
+هزینه بالا
+
+ج) فقط انگلیسی:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+بازار محدود
+
+کاربرا ناراضی
+
+پیامدها:
+
+مثبت: پشتیبانی جهانی، نرخ لحظه‌ای
+
+منفی: وابستگی، هزینه
+
+ریسک: API ارز Down → Fallback به Cache
+
+ADR-009: انتخاب مکانیزم Notification
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا باید از آهنگ جدید هنرمند مورد علاقه، Playlist جدید، و رویدادها مطلع بشن. Notification باید Real-time و قابل تنظیم باشه.
+
+تصمیم:
+از Kafka + Firebase (Push) + SendGrid (Email) + WebSocket (In-app) + Redis (Dedup) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Kafka برای Event Stream. Firebase برای Push. SendGrid برای Email. WebSocket برای In-app. Redis برای جلوگیری از تکرار.
+
+مزایا:
+
+Real-time
+
+چند کانال
+
+Dedup (بدون تکرار)
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی Kafka
+
+هزینه Firebase
+
+نیاز به تنظیمات کاربر
+
+Redis SPOF
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Push:
+مزایا:
+
+سادگی
+
+Real-time
+معایب:
+
+نیاز به اپ موبایل
+
+بدون Web
+
+کاربرا وب رو ترجیح می‌دن
+
+ب) فقط Email:
+مزایا:
+
+قابل اعتماد
+
+بدون نیاز به اپ
+معایب:
+
+کندی
+
+بدون Real-time
+
+Spam
+
+ج) فقط In-app:
+مزایا:
+
+سادگی
+
+بدون هزینه خارجی
+معایب:
+
+نیاز به باز کردن اپ
+
+بدون Real-time
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: Real-time، چند کانال
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-010: انتخاب مکانیزم چرخه حیات داده و GDPR
+وضعیت: پذیرفته شده
+
+زمینه:
+داده‌های پخش، Like، Playlist باید برای Royalty نگه‌داری بشن (حداقل ۳ سال). ولی GDPR حق فراموشی رو الزامی کرده. باید تعادل برقرار بشه.
+
+تصمیم:
+از Tiered Storage + Soft Delete + Anonymization + Key Deletion + Audit Log استفاده می‌کنیم:
+
+Hot (۶ ماه): Cassandra
+
+Warm (۶ ماه تا ۳ سال): S3 Infrequent Access
+
+Cold (> ۳ سال): S3 Glacier
+
+GDPR: Soft Delete فوری + Anonymize بعد از ۳۰ روز
+
+دلیل تصمیم:
+هر داده تو دیتابیس مناسب سنش. Soft Delete Foreign Keyها رو سالم نگه می‌داره. Anonymize حریم خصوصی. Job شبانه انتقال‌ها رو انجام می‌ده.
+
+مزایا:
+
+Compliance با GDPR
+
+کاهش هزینه Storage
+
+Foreign Keyها سالم
+
+Audit Trail حفظ
+
+معایب:
+
+تأخیر Restore از Glacier
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring
+
+حجم دیتابیس بیشتر
+
+موارد دیگر بررسی‌شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص
+
+Audit از بین می‌ره
+
+ب) نگه‌داری همه در Cassandra:
+مزایا:
+
+سادگی
+
+Query یکپارچه
+معایب:
+
+هزینه نجومی
+
+کندی با حجم زیاد
+
+ج) فقط S3:
+مزایا:
+
+هزینه کم
+
+سادگی
+معایب:
+
+کوئری کند
+
+بدون Index
+
+پیامدها:
+
+مثبت: Compliance، هزینه کم
+
+منفی: تأخیر Restore، پیچیدگی
+
+ریسک: Job خطا → DLQ + Retry + Alert
+
+************************************************************************************************************************
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، نقش‌ها (شنونده، هنرمند، ادمین)
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش
+GET    /api/v1/users/{id}/roles       → نقش‌ها
+DELETE /api/v1/users/{id}             → حذف (GDPR)
+۲. Music Catalog Service
+مسئولیت: مدیریت آهنگ، آلبوم، هنرمند، Metadata
+APIها:
+
+text
+POST   /api/v1/music/tracks            → ثبت آهنگ (هنرمند)
+GET    /api/v1/music/tracks/{id}       → جزئیات
+PATCH  /api/v1/music/tracks/{id}       → ویرایش
+DELETE /api/v1/music/tracks/{id}       → حذف
+GET    /api/v1/music/albums/{id}       → آلبوم
+GET    /api/v1/music/artists/{id}      → هنرمند
+۳. Audio Streaming Service
+مسئولیت: پخش Audio، HLS/DASH، CDN
+APIها:
+
+text
+GET    /api/v1/stream/{trackId}/master.m3u8       → Master Playlist
+GET    /api/v1/stream/{trackId}/{quality}/index.m3u8 → Media Playlist
+GET    /api/v1/stream/{trackId}/{quality}/{segment}.ts → Segment
+GET    /api/v1/stream/{trackId}/signed-url        → Signed URL
+POST   /api/v1/stream/{trackId}/analytics         → آمار پخش
+۴. Playlist Service
+مسئولیت: مدیریت Playlist، اشتراک‌گذاری
+APIها:
+
+text
+POST   /api/v1/playlists               → ساخت Playlist
+GET    /api/v1/playlists/{id}          → جزئیات
+PATCH  /api/v1/playlists/{id}          → ویرایش
+DELETE /api/v1/playlists/{id}          → حذف
+POST   /api/v1/playlists/{id}/tracks   → افزودن آهنگ
+DELETE /api/v1/playlists/{id}/tracks/{trackId} → حذف آهنگ
+POST   /api/v1/playlists/{id}/share    → اشتراک
+۵. Recommendation Service
+مسئولیت: پیشنهاد آهنگ، Playlist
+APIها:
+
+text
+GET    /api/v1/recommendations/{userId}  → پیشنهادها
+GET    /api/v1/recommendations/similar/{trackId} → مشابه
+GET    /api/v1/recommendations/trending  → Trendها
+GET    /api/v1/recommendations/daily-mix → Daily Mix
+POST   /api/v1/recommendations/feedback  → بازخورد
+۶. Search Service
+مسئولیت: جستجوی آهنگ، آلبوم، هنرمند
+APIها:
+
+text
+GET    /api/v1/search/tracks           → جستجوی آهنگ
+GET    /api/v1/search/albums           → جستجوی آلبوم
+GET    /api/v1/search/artists          → جستجوی هنرمند
+GET    /api/v1/search/lyrics           → جستجوی متن
+GET    /api/v1/search/suggest          → Auto-complete
+POST   /api/v1/search/reindex          → Reindex (Admin)
+۷. Royalty Service
+مسئولیت: محاسبه Royalty، پرداخت به هنرمند
+APIها:
+
+text
+POST   /api/v1/royalty/calculate       → محاسبه Royalty
+GET    /api/v1/royalty/artist/{id}     → درآمد هنرمند
+POST   /api/v1/royalty/payout          → درخواست تسویه
+GET    /api/v1/royalty/payout/{id}     → وضعیت تسویه
+GET    /api/v1/royalty/rules           → قوانین
+۸. Copyright Service
+مسئولیت: تشخیص Copyright، مدیریت مجوز
+APIها:
+
+text
+POST   /api/v1/copyright/check         → بررسی Copyright
+POST   /api/v1/copyright/license       → ثبت مجوز
+GET    /api/v1/copyright/{trackId}     → وضعیت
+POST   /api/v1/copyright/report        → گزارش نقض
+۹. Offline Service
+مسئولیت: دانلود Encrypted، DRM، Sync
+APIها:
+
+text
+POST   /api/v1/offline/download/{trackId} → درخواست دانلود
+GET    /api/v1/offline/downloads       → لیست دانلودها
+DELETE /api/v1/offline/downloads/{id}  → حذف دانلود
+POST   /api/v1/offline/sync            → Sync
+GET    /api/v1/offline/license/{trackId} → لایسنس DRM
+۱۰. Notification Service
+مسئولیت: Push، Email، In-app
+APIها:
+
+text
+POST   /api/v1/notifications/send      → ارسال
+GET    /api/v1/notifications           → لیست
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings  → تنظیمات
+۱۱. Social Service
+مسئولیت: Follow هنرمند، Like، Share
+APIها:
+
+text
+POST   /api/v1/social/follow/{artistId} → Follow
+DELETE /api/v1/social/follow/{artistId} → Unfollow
+POST   /api/v1/social/like/{trackId}   → Like
+DELETE /api/v1/social/like/{trackId}   → Unlike
+POST   /api/v1/social/share            → Share
+GET    /api/v1/social/feed             → Feed
+۱۲. Currency Service
+مسئولیت: نرخ ارز، تبدیل ارز
+APIها:
+
+text
+GET    /api/v1/currency/rates          → نرخ‌های ارز
+GET    /api/v1/currency/convert        → تبدیل
+GET    /api/v1/currency/supported      → ارزهای پشتیبانی
+POST   /api/v1/currency/refresh        → بروزرسانی (Admin)
+۱۳. Archive Service
+مسئولیت: Tiered Storage، GDPR
+APIها:
+
+text
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/archive/restore         → بازیابی
+POST   /api/v1/gdpr/export             → خروجی
+DELETE /api/v1/gdpr/delete/{userId}    → حذف (GDPR)
+۱۴. Analytics Service
+مسئولیت: آمار پخش، درآمد، کاربر
+APIها:
+
+text
+GET    /api/v1/analytics/track/{id}    → آمار آهنگ
+GET    /api/v1/analytics/artist/{id}   → آمار هنرمند
+GET    /api/v1/analytics/revenue       → آمار درآمد
+POST   /api/v1/analytics/events        → ثبت رویداد
+🔧 لایه Component (نمونه برای ۴ سرویس)
+Music Catalog Service
+Component	نوع	مسئولیت
+TrackController	@RestController	مدیریت آهنگ
+AlbumController	@RestController	مدیریت آلبوم
+ArtistController	@RestController	مدیریت هنرمند
+CatalogService	@Service	منطق کاتالوگ
+MetadataExtractor	@Component	استخراج Metadata
+CatalogRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+KafkaProducer	@Component	Kafka
+Audio Streaming Service
+Component	نوع	مسئولیت
+StreamController	@RestController	پخش
+StreamService	@Service	منطق پخش
+HlsHandler	@Component	HLS
+DashHandler	@Component	DASH
+CdnSigner	@Component	CDN Signed URL
+MultiCdnRouter	@Component	Multi-CDN
+AnalyticsPublisher	@Component	Kafka
+Playlist Service
+Component	نوع	مسئولیت
+PlaylistController	@RestController	مدیریت Playlist
+PlaylistService	@Service	منطق Playlist
+ShareService	@Service	اشتراک
+PlaylistRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+KafkaProducer	@Component	Kafka
+Royalty Service
+Component	نوع	مسئولیت
+RoyaltyController	@RestController	محاسبه Royalty
+RoyaltyService	@Service	منطق Royalty
+RuleEngine	@Component	Drools
+EscrowService	@Service	Escrow
+PlayCountRepository	@Repository	Cassandra
+KafkaConsumer	@Component	Event Stream
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	In-app Notification
+Service Discovery	Eureka/Consul	ثبت و کشف
+Config Server	Spring Cloud Config	تنظیمات
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Session
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	Play Count + Like
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	Audio + Backup
+Glacier	AWS Glacier	Cold Archive
+Multi-CDN	CloudFront + Akamai	توزیع Audio
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Music Catalog ──→ PostgreSQL + S3
+       ├──→ Audio Streaming ──→ S3 + CDN
+       ├──→ Playlist Service ──→ PostgreSQL + Redis
+       ├──→ Recommendation ──→ TensorFlow + Feast
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Royalty Service ──→ Cassandra + Drools
+       ├──→ Copyright Service ──→ AcoustID
+       ├──→ Offline Service ──→ DRM + Local Storage
+       ├──→ Notification ──→ Kafka + Firebase
+       ├──→ Social Service ──→ PostgreSQL + Redis
+       ├──→ Currency Service ──→ Redis + Central Bank
+       ├──→ Archive Service ──→ S3 + Glacier
+       └──→ Analytics Service ──→ ClickHouse
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus
+└──────────────┘

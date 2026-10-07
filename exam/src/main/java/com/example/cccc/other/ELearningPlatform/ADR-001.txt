@@ -1,0 +1,732 @@
+ADR-001: انتخاب معماری ذخیره‌سازی و توزیع ویدیو
+وضعیت: پذیرفته شده
+
+زمینه:
+میلیون‌ها ساعت ویدیو باید ذخیره و توزیع بشه. اگه از سرور خودمون توزیع کنیم، Bandwidth نجومی می‌شه. کاربر تو ایران نباید برای دیدن ویدیو منتظر بمونه.
+
+تصمیم:
+از S3 برای ذخیره‌سازی و CDN چندلایه (CloudFront + Akamai) برای توزیع استفاده می‌کنیم.
+
+دلیل تصمیم:
+S3 مقیاس‌پذیری نامحدود داره. CDN ویدیو رو از نزدیک‌ترین Edge Server به کاربر می‌رسونه. اینطوری Latency کم می‌شه و هزینه Bandwidth سرور اصلی کاهش پیدا می‌کنه.
+
+مزایا:
+
+مقیاس‌پذیری نامحدود
+
+Latency پایین برای کاربران جهانی
+
+کاهش ۹۰٪ بار روی سرور اصلی
+
+Durability ۹۹.۹۹۹۹۹۹۹۹۹٪
+
+معایب:
+
+هزینه CDN برای ترافیک بالا
+
+پیچیدگی Multi-CDN
+
+نیاز به Cache Invalidation
+
+وابستگی به AWS
+
+موارد دیگر بررسی‌شده:
+
+ذخیره در دیتابیس: DB منفجر می‌شه، هزینه نجومی
+
+فایل‌سیستم محلی: مقیاس‌پذیری محدود، بدون CDN
+
+فقط CDN بدون S3: CDN برای ذخیره‌سازی طراحی نشده
+
+پیامدها:
+
+مثبت: مقیاس‌پذیری، Latency پایین
+
+منفی: هزینه CDN، Multi-CDN
+
+ریسک: اگه CDN Down بشه → Multi-CDN + Fallback
+
+ADR-002: انتخاب مکانیزم Transcoding ویدیو
+وضعیت: پذیرفته شده
+
+زمینه:
+ویدیوها با فرمت‌ها و کیفیت‌های مختلف آپلود می‌شن. برای اینکه همه بتونن ببینن (از موبایل ضعیف تا 4K)، باید به چند کیفیت تبدیل بشن.
+
+تصمیم:
+از FFmpeg + Kafka + Kubernetes Job + GPU Node Pool استفاده می‌کنیم.
+
+دلیل تصمیم:
+FFmpeg استاندارد صنعتیه. Kafka صف‌بندی Jobها. K8s Spawn کردن Workerها. GPU برای 4K (سرعت ۱۰ برابر).
+
+مزایا:
+
+پشتیبانی از همه فرمت‌ها
+
+موازی‌سازی (چند کیفیت همزمان)
+
+GPU برای 4K
+
+مقیاس‌پذیری خودکار
+
+معایب:
+
+هزینه GPU
+
+پیچیدگی Pipeline
+
+زمان پردازش (۵ تا ۴۵ دقیقه)
+
+نیاز به Monitoring
+
+موارد دیگر بررسی‌شده:
+
+سرور واحد: کندی، غیرقابل مقیاس
+
+سرویس ابری: هزینه بالا، وابستگی
+
+بدون Transcoding: تجربه ضعیف
+
+پیامدها:
+
+مثبت: پشتیبانی از همه، مقیاس‌پذیری
+
+منفی: هزینه، پیچیدگی
+
+ریسک: خطا → DLQ + Retry + Alert
+
+ADR-003: انتخاب مکانیزم Adaptive Bitrate Streaming
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر با ۴G شروع می‌کنه، وسط ویدیو اینترنتش ضعیف می‌شه. اگه فقط یه کیفیت باشه، ویدیو قطع می‌شه یا Buffer می‌خوره.
+
+تصمیم:
+از HLS + DASH + Master Playlist استفاده می‌کنیم.
+
+دلیل تصمیم:
+HLS و DASH ویدیو رو به قطعات ۶ ثانیه‌ای تقسیم می‌کنن. Master Playlist لیست کیفیت‌ها. کلاینت خودکار سوییچ می‌کنه.
+
+مزایا:
+
+Adaptive Bitrate
+
+پشتیبانی از همه پلتفرم‌ها
+
+کاهش Buffer
+
+تجربه روان
+
+معایب:
+
+پیچیدگی تولید
+
+حجم ذخیره بیشتر
+
+نیاز به CDN
+
+تأخیر اولیه
+
+موارد دیگر بررسی‌شده:
+
+MP4 تک‌کیفیت: Buffer، تجربه ضعیف
+
+WebRTC: برای VOD مناسب نیست
+
+Smooth Streaming: کمتر رایجه
+
+پیامدها:
+
+مثبت: Adaptive Bitrate، پشتیبانی جهانی
+
+منفی: پیچیدگی، حجم بیشتر
+
+ریسک: Master Playlist خراب → Health Check
+
+ADR-004: انتخاب مکانیزم Progress Tracking
+وضعیت: پذیرفته شده
+
+مسئولیت: ذخیره و بازیابی پیشرفت دانشجو در هر جلسه
+
+تصمیم:
+از Cassandra برای Write + Redis برای Cache + Kafka برای Real-time Update استفاده می‌کنیم.
+
+دلیل تصمیم:
+Cassandra برای Write سنگین (میلیون‌ها دانشجو × هزاران جلسه). Redis برای Cache. Kafka برای انتشار رویداد به Recommendation و Analytics.
+
+مزایا:
+
+Write سریع (Cassandra)
+
+Query سریع (Redis)
+
+Real-time Update (Kafka)
+
+مقیاس‌پذیری خطی
+
+معایب:
+
+پیچیدگی سه‌گانه
+
+Eventual Consistency
+
+نیاز به Cache Invalidation
+
+هزینه Redis
+
+موارد دیگر بررسی‌شده:
+
+فقط PostgreSQL: Write کند، مقیاس محدود
+
+فقط Redis: از دست رفتن داده
+
+فقط MongoDB: ACID محدود
+
+پیامدها:
+
+مثبت: Write سریع، Query سریع
+
+منفی: پیچیدگی، Eventual Consistency
+
+ریسک: Cassandra Down → Multi-Node
+
+ADR-005: انتخاب مکانیزم Search دوره
+وضعیت: پذیرفته شده
+
+زمینه:
+میلیون‌ها دوره داریم. کاربرا می‌خوان بر اساس عنوان، موضوع، مدرس، سطح جستجو کنن.
+
+تصمیم:
+از Elasticsearch + PostgreSQL برای Metadata + CDC با Debezium.
+
+دلیل تصمیم:
+Elasticsearch برای Full-Text Search و Faceted Search. PostgreSQL برای Metadata (ACID). CDC تغییرات PostgreSQL رو به Elasticsearch Sync می‌کنه.
+
+مزایا:
+
+جستجوی سریع (زیر ۱۰۰ms)
+
+Full-Text Search
+
+Faceted Search
+
+Sync خودکار
+
+معایب:
+
+پیچیدگی CDC
+
+تأخیر Sync
+
+هزینه Elasticsearch
+
+مدیریت دو دیتابیس
+
+موارد دیگر بررسی‌شده:
+
+فقط PostgreSQL: Full-Text ضعیف
+
+فقط Elasticsearch: بدون ACID
+
+MongoDB Text: ضعیف‌تر
+
+پیامدها:
+
+مثبت: جستجوی سریع، Faceted Search
+
+منفی: پیچیدگی CDC، هزینه
+
+ریسک: CDC خطا → Retry + Alert
+
+ADR-006: انتخاب مکانیزم Recommendation
+وضعیت: پذیرفته شده
+
+زمینه:
+دانشجوها می‌خوان دوره‌های جدید کشف کنن. باید بر اساس علایق و رفتار پیشنهاد بدیم.
+
+تصمیم:
+از Hybrid Recommendation (Collaborative Filtering + Content-Based) با Matrix Factorization و Feature Store (Feast) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Collaborative Filtering بر اساس رفتار دانشجوهای مشابه. Content-Based بر اساس ویژگی‌های دوره. ترکیب این دو، هم دقت رو بالا می‌بره هم Cold Start رو حل می‌کنه.
+
+مزایا:
+
+دقت بالا
+
+کشف دوره‌های جدید
+
+شخصی‌سازی عمیق
+
+حل Cold Start
+
+معایب:
+
+پیچیدگی ML
+
+نیاز به Data Pipeline
+
+زمان آموزش
+
+نیاز به تیم Data Science
+
+موارد دیگر بررسی‌شده:
+
+فقط Trending: شخصی‌سازی نداره
+
+فقط Category: تنوع کم
+
+فقط Content-Based: عدم کشف علایق جدید
+
+پیامدها:
+
+مثبت: دقت بالا، کشف جدید
+
+منفی: پیچیدگی، زمان آموزش
+
+ریسک: مدل قدیمی → Retraining دوره‌ای
+
+ADR-007: انتخاب مکانیزم Live Class
+وضعیت: پذیرفته شده
+
+زمینه:
+مدرس‌ها می‌خوان Live Class برگزار کنن. تأخیر باید زیر ۵ ثانیه باشه. Recording هم باید ذخیره بشه.
+
+تصمیم:
+از RTMP (Ingest) + LL-HLS (Low-Latency HLS) + WebRTC (برای تعامل) استفاده می‌کنیم.
+
+دلیل تصمیم:
+RTMP استاندارد Ingest. LL-HLS تأخیر رو به ۲ تا ۵ ثانیه کاهش می‌ده. WebRTC برای تعامل (پرسش و پاسخ).
+
+مزایا:
+
+تأخیر پایین (۲ تا ۵ ثانیه)
+
+پشتیبانی از همه پلتفرم‌ها
+
+مقیاس‌پذیری با CDN
+
+Recording خودکار
+
+معایب:
+
+پیچیدگی LL-HLS
+
+نیاز به CDN مخصوص
+
+هزینه بالا
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+RTMP + HLS معمولی: تأخیر ۳۰ ثانیه
+
+WebRTC برای همه: مقیاس‌پذیری محدود
+
+RTMP + DASH: تأخیر ۱۰ تا ۳۰ ثانیه
+
+پیامدها:
+
+مثبت: تأخیر پایین، Recording
+
+منفی: پیچیدگی، هزینه
+
+ریسک: CDN کند → Multi-CDN
+
+ADR-008: انتخاب مکانیزم Certificate
+وضعیت: پذیرفته شده
+
+زمینه:
+بعد از اتمام دوره، باید Certificate صادر بشه. Certificate باید قابل تأیید باشه و از جعل جلوگیری کنه.
+
+تصمیم:
+از PostgreSQL + S3 (PDF) + QR Code + Blockchain (اختیاری) استفاده می‌کنیم.
+
+دلیل تصمیم:
+PostgreSQL برای Metadata. S3 برای ذخیره PDF. QR Code برای تأیید سریع. Blockchain (اختیاری) برای تأیید غیرقابل جعل.
+
+مزایا:
+
+تولید سریع PDF
+
+تأیید با QR Code
+
+غیرقابل جعل (Blockchain)
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی Blockchain (اختیاری)
+
+هزینه S3
+
+نیاز به PDF Generator
+
+مدیریت Verification
+
+موارد دیگر بررسی‌شده:
+
+فقط PDF: قابل جعل
+
+فقط Database: بدون فایل
+
+Blockchain اجباری: پیچیدگی زیاد
+
+پیامدها:
+
+مثبت: تأیید سریع، غیرقابل جعل
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Verification خطا → Manual Review
+
+ADR-009: انتخاب مکانیزم Monetization
+وضعیت: پذیرفته شده
+
+زمینه:
+مدرس‌ها می‌خوان از دوره‌هاشون درآمد داشته باشن. پلتفرم هم می‌خواد از فروش دوره درآمد داشته باشه.
+
+تصمیم:
+از Escrow + Rule Engine (Drools) + KYC + Subscription (اختیاری) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Escrow پول رو نگه می‌داره تا دوره کامل بشه. Rule Engine تقسیم درآمد (مثلاً ۷۰٪ مدرس، ۳۰٪ پلتفرم). KYC هویت مدرس. Subscription برای دسترسی نامحدود.
+
+مزایا:
+
+امنیت مالی (Escrow)
+
+قوانین پویا (Rule Engine)
+
+جلوگیری از کلاهبرداری (KYC)
+
+درآمد پایدار (Subscription)
+
+معایب:
+
+پیچیدگی مالی
+
+هزینه KYC
+
+زمان تسویه
+
+نیاز به تیم مالی
+
+موارد دیگر بررسی‌شده:
+
+پرداخت مستقیم: ریسک کلاهبرداری
+
+فقط Subscription: درآمد کمتر
+
+فقط Ads: تجربه ضعیف
+
+پیامدها:
+
+مثبت: امنیت، قوانین پویا
+
+منفی: پیچیدگی، هزینه
+
+ریسک: KYC خطا → Manual Review
+
+ADR-010: انتخاب مکانیزم GDPR و چرخه حیات داده
+وضعیت: پذیرفته شده
+
+زمینه:
+GDPR حق فراموشی رو الزامی کرده. از طرف دیگه، داده‌های آموزشی باید برای Certificate و Audit نگه‌داری بشن.
+
+تصمیم:
+از Tiered Storage + Soft Delete + Anonymization + Key Deletion استفاده می‌کنیم:
+
+Hot (۶ ماه): PostgreSQL
+
+Warm (۶ ماه تا ۲ سال): Elasticsearch
+
+Cold (> ۲ سال): S3 Glacier
+
+GDPR: Soft Delete + Anonymize بعد از ۳۰ روز + Key Deletion
+
+دلیل تصمیم:
+هر داده تو دیتابیس مناسب خودش. Soft Delete Foreign Keyها رو سالم نگه می‌داره. Anonymize حریم خصوصی. Key Deletion برای E2EE.
+
+مزایا:
+
+Compliance با GDPR
+
+کاهش هزینه Storage
+
+Foreign Keyها سالم
+
+Audit Trail حفظ
+
+معایب:
+
+تأخیر Restore از Glacier
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring
+
+حجم دیتابیس بیشتر
+
+موارد دیگر بررسی‌شده:
+
+حذف فیزیکی فوری: Foreign Key می‌شکنه
+
+نگه‌داری همه در PostgreSQL: هزینه نجومی
+
+بدون Archive: کوئری کند
+
+پیامدها:
+
+مثبت: هزینه کم، Compliance
+
+منفی: تأخیر Restore، پیچیدگی
+
+ریسک: Job خطا → DLQ + Retry + Alert
+
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	Live Class
+Service Discovery	Eureka/Consul	ثبت و کشف سرویس‌ها
+Config Server	Spring Cloud Config	تنظیمات مرکزی
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Session
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	Progress Tracking
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	ویدیو + Certificate
+Glacier	AWS Glacier	Cold Archive
+Multi-CDN	CloudFront + Akamai	توزیع ویدیو
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Course Service ──→ PostgreSQL + Redis
+       ├──→ Enrollment Service ──→ Cassandra + Redis + Kafka
+       ├──→ Video Service ──→ S3 + FFmpeg + CDN
+       ├──→ Quiz Service ──→ PostgreSQL + Redis
+       ├──→ Certificate Service ──→ PostgreSQL + S3
+       ├──→ Live Class Service ──→ RTMP + LL-HLS + WebRTC
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Recommendation Service ──→ TensorFlow + Feast
+       ├──→ Payment Service ──→ PostgreSQL + Stripe
+       ├──→ Notification Service ──→ Kafka + Firebase
+       ├──→ Moderation Service ──→ AI + Elasticsearch
+       ├──→ Archive Service ──→ S3 + Glacier
+       └──→ Analytics Service ──→ ClickHouse
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus بین سرویس‌ها
+└──────────────┘
+
+************************************************************************************************************************
+
+
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، نقش‌ها (دانشجو، مدرس، ادمین)
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Argon2
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود
+POST   /api/v1/auth/refresh           → تمدید توکن
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش
+GET    /api/v1/users/{id}/roles       → نقش‌ها
+DELETE /api/v1/users/{id}             → حذف (GDPR)
+۲. Course Service
+مسئولیت: مدیریت دوره، فصل، جلسه، Curriculum
+تکنولوژی: Spring Boot، PostgreSQL، Redis
+APIها:
+
+text
+POST   /api/v1/courses                 → ساخت دوره (مدرس)
+GET    /api/v1/courses/{id}            → جزئیات
+PATCH  /api/v1/courses/{id}            → ویرایش
+DELETE /api/v1/courses/{id}            → حذف
+POST   /api/v1/courses/{id}/sections   → افزودن فصل
+POST   /api/v1/courses/{id}/lessons    → افزودن جلسه
+GET    /api/v1/courses/{id}/curriculum → Curriculum
+POST   /api/v1/courses/{id}/publish    → انتشار
+۳. Enrollment Service
+مسئولیت: ثبت‌نام در دوره، Progress Tracking
+تکنولوژی: Spring Boot، PostgreSQL، Cassandra، Kafka
+APIها:
+
+text
+POST   /api/v1/enrollments             → ثبت‌نام در دوره
+GET    /api/v1/enrollments/{id}        → جزئیات
+DELETE /api/v1/enrollments/{id}        → لغو
+GET    /api/v1/enrollments/my          → دوره‌های من
+POST   /api/v1/enrollments/{id}/progress → ثبت پیشرفت
+GET    /api/v1/enrollments/{id}/progress → پیشرفت
+۴. Video Service
+مسئولیت: آپلود، Transcoding، Streaming
+تکنولوژی: Spring Boot، S3، FFmpeg، HLS، CDN
+APIها:
+
+text
+POST   /api/v1/videos/upload/initiate  → شروع آپلود
+POST   /api/v1/videos/upload/complete  → تکمیل
+GET    /api/v1/videos/{id}             → جزئیات
+GET    /api/v1/videos/{id}/stream      → دریافت لینک پخش
+POST   /api/v1/videos/{id}/subtitle    → آپلود زیرنویس
+DELETE /api/v1/videos/{id}             → حذف
+۵. Quiz Service
+مسئولیت: Quiz، Assignment، نمره‌دهی
+تکنولوژی: Spring Boot، PostgreSQL، Redis
+APIها:
+
+text
+POST   /api/v1/quizzes                 → ساخت Quiz (مدرس)
+GET    /api/v1/quizzes/{id}            → جزئیات
+POST   /api/v1/quizzes/{id}/submit     → ارسال پاسخ
+GET    /api/v1/quizzes/{id}/results    → نتایج
+POST   /api/v1/assignments             → ساخت Assignment
+POST   /api/v1/assignments/{id}/submit → ارسال
+POST   /api/v1/assignments/{id}/grade  → نمره‌دهی (مدرس)
+۶. Certificate Service
+مسئولیت: صدور Certificate، Verification
+تکنولوژی: Spring Boot، PostgreSQL، S3، Blockchain (اختیاری)
+APIها:
+
+text
+POST   /api/v1/certificates/issue      → صدور
+GET    /api/v1/certificates/{id}       → دریافت
+GET    /api/v1/certificates/verify/{code} → تأیید
+GET    /api/v1/certificates/my         → Certificateهای من
+۷. Live Class Service
+مسئولیت: Live Class، Recording، Attendance
+تکنولوژی: Spring Boot، WebRTC، RTMP، LL-HLS
+APIها:
+
+text
+POST   /api/v1/live/sessions           → ساخت جلسه
+POST   /api/v1/live/sessions/{id}/start → شروع
+POST   /api/v1/live/sessions/{id}/join → شرکت
+POST   /api/v1/live/sessions/{id}/end  → پایان
+GET    /api/v1/live/sessions/{id}/recording → Recording
+GET    /api/v1/live/sessions/{id}/attendance → حضور
+۸. Search Service
+مسئولیت: جستجوی دوره، مدرس، موضوع
+تکنولوژی: Spring Boot، Elasticsearch، Kafka (CDC)
+APIها:
+
+text
+GET    /api/v1/search/courses          → جستجوی دوره
+GET    /api/v1/search/instructors      → جستجوی مدرس
+GET    /api/v1/search/suggest          → Auto-complete
+GET    /api/v1/search/faceted          → جستجوی Faceted
+POST   /api/v1/search/reindex          → Reindex (Admin)
+۹. Recommendation Service
+مسئولیت: پیشنهاد دوره بر اساس علایق
+تکنولوژی: Python، TensorFlow، Feature Store، Redis
+APIها:
+
+text
+GET    /api/v1/recommendations/{userId} → پیشنهادها
+GET    /api/v1/recommendations/similar/{courseId} → مشابه
+GET    /api/v1/recommendations/trending → Trendها
+POST   /api/v1/recommendations/feedback → بازخورد
+۱۰. Payment Service
+مسئولیت: پرداخت، Refund، Instructor Payout
+تکنولوژی: Spring Boot، PostgreSQL، Stripe، Drools
+APIها:
+
+text
+POST   /api/v1/payments/checkout       → پرداخت
+POST   /api/v1/payments/webhook        → Webhook
+GET    /api/v1/payments/{id}           → وضعیت
+POST   /api/v1/payments/{id}/refund    → بازگشت
+GET    /api/v1/earnings/{instructorId} → درآمد مدرس
+POST   /api/v1/payouts                 → تسویه
+۱۱. Notification Service
+مسئولیت: Push، Email، SMS
+تکنولوژی: Spring Boot، Kafka، Firebase، SendGrid
+APIها:
+
+text
+POST   /api/v1/notifications/send      → ارسال
+GET    /api/v1/notifications           → لیست
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings  → تنظیمات
+۱۲. Moderation Service
+مسئولیت: بررسی محتوا، گزارش تخلف
+تکنولوژی: Spring Boot، AI، Elasticsearch
+APIها:
+
+text
+POST   /api/v1/moderation/report       → گزارش
+GET    /api/v1/moderation/queue        → صف
+POST   /api/v1/moderation/approve/{id} → تأیید
+POST   /api/v1/moderation/reject/{id}  → رد
+۱۳. Archive Service
+مسئولیت: Tiered Storage، GDPR
+تکنولوژی: Spring Boot، S3، Glacier، PostgreSQL
+APIها:
+
+text
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/gdpr/export             → خروجی داده
+DELETE /api/v1/gdpr/delete/{userId}    → حذف (GDPR)
+۱۴. Analytics Service
+مسئولیت: آمار دوره، دانشجو، درآمد
+تکنولوژی: Spring Boot، ClickHouse، Kafka
+APIها:
+
+text
+GET    /api/v1/analytics/course/{id}   → آمار دوره
+GET    /api/v1/analytics/instructor/{id} → آمار مدرس
+GET    /api/v1/analytics/revenue       → آمار درآمد
+POST   /api/v1/analytics/events        → ثبت رویداد
+🔧 لایه Component (نمونه برای ۴ سرویس)
+Course Service
+Component	نوع	مسئولیت
+CourseController	@RestController	مدیریت دوره
+SectionController	@RestController	فصل‌ها
+LessonController	@RestController	جلسات
+CourseService	@Service	منطق دوره
+CurriculumService	@Service	Curriculum
+PublishService	@Service	انتشار
+CourseRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+EventPublisher	@Component	Kafka
+Enrollment Service
+Component	نوع	مسئولیت
+EnrollmentController	@RestController	ثبت‌نام
+ProgressController	@RestController	پیشرفت
+EnrollmentService	@Service	منطق ثبت‌نام
+ProgressService	@Service	پیشرفت
+ProgressRepository	@Repository	Cassandra
+CacheManager	@Component	Redis
+KafkaProducer	@Component	Kafka
+Quiz Service
+Component	نوع	مسئولیت
+QuizController	@RestController	Quiz
+AssignmentController	@RestController	Assignment
+QuizService	@Service	منطق Quiz
+GradingService	@Service	نمره‌دهی
+QuizRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+Certificate Service
+Component	نوع	مسئولیت
+CertificateController	@RestController	صدور
+CertificateService	@Service	منطق
+PdfGenerator	@Component	تولید PDF
+VerificationService	@Service	تأیید
+CertificateRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK

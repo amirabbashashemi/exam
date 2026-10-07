@@ -1,0 +1,1051 @@
+ADR-001: انتخاب معماری کلی سیستم
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم تناسب اندام باید میلیون‌ها کاربر و میلیون‌ها فعالیت ورزشی رو مدیریت کنه. هر بخش (فعالیت، GPS، Social، Leaderboard) داده و منطق خودش رو داره. تیم‌های مختلف باید مستقل کار کنن و خرابی یه بخش، کل سیستم رو از کار نندازه.
+
+تصمیم:
+معماری میکروسرویس با تفکیک بر اساس Bounded Context (DDD) و Database per Service.
+
+دلیل تصمیم:
+هر دامنه (فعالیت، GPS، Social) داده و منطق خودش رو داره. میکروسرویس یعنی هر تیم مستقل Deploy می‌کنه. Database per Service یعنی هر سرویس دیتابیس مناسب خودش رو داره.
+
+مزایا:
+
+تیم‌ها مستقل کار می‌کنن
+
+هر سرویس با تکنولوژی مناسب
+
+خرابی یه بخش، بقیه رو از کار نمی‌ندازه
+
+مقیاس‌پذیری خطی
+
+معایب:
+
+پیچیدگی عملیاتی
+
+Debugging سخت‌تر
+
+نیاز به تیم Platform
+
+تست End-to-End سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Monolith:
+مزایا:
+
+سادگی Deploy
+
+Debugging راحت
+
+توسعه سریع اولیه
+معایب:
+
+تیم‌ها نمی‌تونن مستقل Deploy کنن
+
+وابستگی کد زیاد
+
+مقیاس‌پذیری محدود
+
+ب) Modular Monolith:
+مزایا:
+
+تعادل بین سادگی و ماژولاریتی
+
+Deploy یکپارچه
+معایب:
+
+همچنان وابستگی در Deploy
+
+مقیاس‌پذیری محدود
+
+ج) Serverless:
+مزایا:
+
+هزینه فقط به ازای مصرف
+
+مقیاس‌پذیری خودکار
+معایب:
+
+Cold Start
+
+Debugging سخت
+
+Vendor Lock-in
+
+پیامدها:
+
+مثبت: استقلال تیم‌ها، مقیاس‌پذیری، تحمل خطا
+
+منفی: پیچیدگی، نیاز به تیم Platform
+
+ریسک: مرز Domain اشتباه → Event Storming
+
+ADR-002: انتخاب مکانیزم GPS Tracking
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا موقع دویدن، دوچرخه‌سواری، یا شنا، مسیرشون رو با GPS ثبت می‌کنن. این داده‌ها باید Real-time و دقیق باشن. حجم داده بالاست (هر ثانیه یه نقطه).
+
+تصمیم:
+از WebSocket + Redis Pub/Sub + TimescaleDB + Compression (Gorilla) + Adaptive Sampling استفاده می‌کنیم.
+
+دلیل تصمیم:
+WebSocket برای ارتباط Real-time. Redis Pub/Sub برای انتشار به دوستان. TimescaleDB برای ذخیره Time-Series با Compression. Gorilla برای فشرده‌سازی (۹۰٪ کاهش). Adaptive Sampling (در حال حرکت: ۱ ثانیه، متوقف: ۳۰ ثانیه).
+
+مزایا:
+
+Real-time (زیر ۱۰۰ms)
+
+ذخیره Time-Series با Compression
+
+مقیاس‌پذیری بالا
+
+کاهش حجم داده (۹۰٪)
+
+معایب:
+
+پیچیدگی WebSocket
+
+Redis ممکنه SPOF بشه
+
+هزینه TimescaleDB
+
+نیاز به Connection Registry
+
+موارد دیگر بررسی‌شده:
+
+الف) REST Polling:
+مزایا:
+
+سادگی
+
+Stateless
+معایب:
+
+تأخیر بالا
+
+بار روی سرور
+
+برای Real-time مناسب نیست
+
+ب) Kafka:
+مزایا:
+
+مقیاس‌پذیری
+
+Decoupling
+معایب:
+
+تأخیر بیشتر از Redis
+
+Overhead Kafka
+
+برای Real-time مناسب نیست
+
+ج) MQTT:
+مزایا:
+
+سبک
+
+مناسب IoT
+معایب:
+
+کمتر رایجه
+
+نیاز به Broker جدا
+
+ادغام سخت
+
+پیامدها:
+
+مثبت: Real-time، Compression، مقیاس‌پذیری
+
+منفی: پیچیدگی WebSocket، هزینه TimescaleDB
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-003: انتخاب مکانیزم Social Feed
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان فعالیت‌های دوستانشون رو ببینن. اگه هر فعالیت مستقیم به همه Push بشه، بار زیاد می‌شه. باید Fan-out بهینه باشه.
+
+تصمیم:
+از Hybrid Fan-out (Write for < ۱۰۰۰ فالوور، Read for > ۱۰۰۰ فالوور) + Redis Cache + Cassandra (Feed Storage) استفاده می‌کنیم.
+
+دلیل تصمیم:
+برای کاربرای عادی (< ۱۰۰۰ فالوور)، Fan-out on Write (Push فوری). برای سلبریتی‌ها (> ۱۰۰۰ فالوور)، Fan-out on Read (Pull when needed). Redis برای Cache. Cassandra برای Feed Storage.
+
+مزایا:
+
+بهینه برای هر اندازه
+
+کاهش Load
+
+تأخیر کم برای کاربرای عادی
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی Hybrid Logic
+
+تأخیر بیشتر برای سلبریتی‌ها
+
+نیاز به تشخیص اندازه
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Fan-out on Write برای همه:
+مزایا:
+
+تأخیر کم
+
+سادگی
+معایب:
+
+Load زیاد برای سلبریتی
+
+Kafka منفجر می‌شه
+
+هزینه Bandwidth
+
+ب) Fan-out on Read برای همه:
+مزایا:
+
+Load کم
+
+مقیاس‌پذیری
+معایب:
+
+تأخیر اضافه
+
+Load زیاد روی Read
+
+تجربه ضعیف
+
+ج) بدون Feed:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+بدون Social
+
+تجربه ضعیف
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: بهینه، کاهش Load
+
+منفی: پیچیدگی Hybrid
+
+ریسک: آستانه اشتباه → Config Server
+
+ADR-004: انتخاب مکانیزم Leaderboard
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان تو چالش‌ها با دوستانشون رقابت کنن. Leaderboard باید Real-time و دقیق باشه. حجم داده بالاست (میلیون‌ها کاربر).
+
+تصمیم:
+از Redis Sorted Set (ZSET) + Kafka (Event) + ClickHouse (Historical) + WebSocket (Real-time) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Redis Sorted Set برای Leaderboard Real-time (O(log N)). Kafka برای Event Stream. ClickHouse برای Historical Analytics. WebSocket برای نمایش Real-time.
+
+مزایا:
+
+Real-time (Redis)
+
+دقت بالا
+
+Historical (ClickHouse)
+
+مقیاس‌پذیری
+
+معایب:
+
+Redis SPOF
+
+محدودیت حافظه
+
+نیاز به ClickHouse
+
+پیچیدگی
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+ACID
+
+یکپارچگی
+معایب:
+
+کندی در Ranking
+
+مقیاس‌پذیری محدود
+
+بار روی DB
+
+ب) فقط Redis:
+مزایا:
+
+سرعت بالا
+
+Real-time
+معایب:
+
+محدودیت حافظه
+
+بدون Historical
+
+از دست رفتن داده
+
+ج) فقط ClickHouse:
+مزایا:
+
+Historical
+
+Analytics
+معایب:
+
+برای Real-time مناسب نیست
+
+کندی
+
+پیامدها:
+
+مثبت: Real-time، Historical
+
+منفی: Redis SPOF، پیچیدگی
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-005: انتخاب مکانیزم Wearable Integration
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا از ساعت هوشمند (Garmin، Apple Watch، Fitbit) استفاده می‌کنن. داده‌های Heart Rate، Step، Calorie باید Sync بشه. هر برند API خودش رو داره.
+
+تصمیم:
+از Integration Service (Adapter Pattern) + OAuth 2.0 + Webhook + Kafka + Normalization Layer استفاده می‌کنیم.
+
+دلیل تصمیم:
+Adapter Pattern برای هر برند. OAuth 2.0 برای احراز هویت. Webhook برای Real-time Sync. Kafka برای Event Stream. Normalization Layer برای یکسان‌سازی داده‌ها.
+
+مزایا:
+
+پشتیبانی از چند برند
+
+Real-time Sync
+
+Normalization
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی Adapter
+
+نیاز به OAuth
+
+وابستگی به API خارجی
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط یک برند:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+محدودیت کاربر
+
+بازار محدود
+
+نقض نیازمندی
+
+ب) Polling:
+مزایا:
+
+سادگی
+
+بدون Webhook
+معایب:
+
+تأخیر بالا
+
+بار روی سرور
+
+بدون Real-time
+
+ج) Integration مستقیم:
+مزایا:
+
+سرعت
+
+کنترل
+معایب:
+
+وابستگی کد
+
+نگهداری سخت
+
+بدون Adapter
+
+پیامدها:
+
+مثبت: چند برند، Real-time
+
+منفی: پیچیدگی، وابستگی
+
+ریسک: Webhook خطا → Retry + DLQ
+
+ADR-006: انتخاب مکانیزم Recommendation
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان مسیر، چالش، و ورزش جدید کشف کنن. اگه فقط بر اساس Follow باشه، تنوع کم می‌شه. باید بر اساس رفتار کاربر (GPS، Pace، Heart Rate) پیشنهاد بدیم.
+
+تصمیم:
+از Hybrid Recommendation (Collaborative Filtering + Content-Based) با Matrix Factorization + Feature Store (Feast) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Collaborative Filtering بر اساس رفتار کاربران مشابه. Content-Based بر اساس ویژگی‌های مسیر (طول، شیب، سطح). ترکیب این دو، هم دقت رو بالا می‌بره هم Cold Start رو حل می‌کنه.
+
+مزایا:
+
+دقت بالا
+
+کشف مسیرهای جدید
+
+شخصی‌سازی عمیق
+
+حل Cold Start
+
+معایب:
+
+پیچیدگی ML
+
+نیاز به Data Pipeline
+
+زمان آموزش
+
+نیاز به تیم Data Science
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Trending:
+مزایا:
+
+سادگی
+
+بدون ML
+معایب:
+
+شخصی‌سازی نداره
+
+برای همه یه چیز
+
+تجربه ضعیف
+
+ب) فقط Content-Based:
+مزایا:
+
+Cold Start خوب
+
+شفافیت
+معایب:
+
+محدود به ویژگی‌ها
+
+عدم کشف جدید
+
+ج) فقط Collaborative:
+مزایا:
+
+دقت بالا
+
+کشف جدید
+معایب:
+
+Cold Start ضعیف
+
+نیاز به داده زیاد
+
+پیامدها:
+
+مثبت: دقت بالا، کشف جدید
+
+منفی: پیچیدگی، نیاز به ML
+
+ریسک: مدل قدیمی → Retraining دوره‌ای
+
+ADR-007: انتخاب مکانیزم Analytics
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان پیشرفت خودشون رو ببینن (Pace، Heart Rate، Elevation). این آمار باید دقیق و Real-time باشه.
+
+تصمیم:
+از ClickHouse (Columnar DB) + Kafka (Event Stream) + Grafana (Dashboard) + Materialized View + Pre-aggregation استفاده می‌کنیم.
+
+دلیل تصمیم:
+ClickHouse برای Analytics سریع (Columnar). Kafka برای Event Stream. Grafana برای Dashboard. Materialized View برای Aggregation خودکار. Pre-aggregation برای سرعت.
+
+مزایا:
+
+Analytics سریع (ClickHouse)
+
+Real-time (Kafka)
+
+Dashboard (Grafana)
+
+Aggregation خودکار
+
+معایب:
+
+پیچیدگی ClickHouse
+
+هزینه Kafka
+
+نیاز به تیم Data
+
+Storage زیاد
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+سادگی
+
+ACID
+معایب:
+
+کندی در Aggregation
+
+مقیاس‌پذیری محدود
+
+ب) Elasticsearch:
+مزایا:
+
+سرعت بالا
+
+Aggregation
+معایب:
+
+برای Analytics سنگین مناسب نیست
+
+هزینه بالا
+
+ج) بدون Analytics:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+کاربر نمی‌دونه پیشرفتش
+
+تجربه ضعیف
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: Analytics سریع، Real-time
+
+منفی: پیچیدگی، هزینه
+
+ریسک: ClickHouse Down → Multi-Node
+
+ADR-008: انتخاب مکانیزم Real-time Live Tracking
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان موقع دویدن، موقعیتشون رو با دوستانشون به اشتراک بذارن (Live Tracking). این باید Real-time و دقیق باشه. حریم خصوصی هم مهمه.
+
+تصمیم:
+از WebSocket + Redis Pub/Sub + Privacy Control (Public/Friends/Private) + Geo-fencing (Alert) + WebRTC (اختیاری) استفاده می‌کنیم.
+
+دلیل تصمیم:
+WebSocket برای ارتباط Real-time. Redis Pub/Sub برای انتشار. Privacy Control برای کنترل حریم خصوصی. Geo-fencing برای Alert (مثلاً رسیدن به مقصد). WebRTC برای تماس صوتی (اختیاری).
+
+مزایا:
+
+Real-time (زیر ۱۰۰ms)
+
+Privacy Control
+
+Geo-fencing
+
+WebRTC (اختیاری)
+
+معایب:
+
+پیچیدگی WebSocket
+
+Redis SPOF
+
+نیاز به Connection Registry
+
+حریم خصوصی
+
+موارد دیگر بررسی‌شده:
+
+الف) REST Polling:
+مزایا:
+
+سادگی
+
+Stateless
+معایب:
+
+تأخیر بالا
+
+بار روی سرور
+
+برای Real-time مناسب نیست
+
+ب) فقط Share Location (Static):
+مزایا:
+
+سادگی
+
+حریم خصوصی
+معایب:
+
+بدون Real-time
+
+تجربه ضعیف
+
+نقض نیازمندی
+
+ج) بدون Privacy Control:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+حریم خصوصی نقض
+
+کاربر ناراضی
+
+GDPR ناقص
+
+پیامدها:
+
+مثبت: Real-time، Privacy
+
+منفی: پیچیدگی، Redis SPOF
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-009: انتخاب مکانیزم Challenge و Achievement
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان تو چالش‌ها شرکت کنن و Badge بگیرن. چالش‌ها می‌تونن زمان‌دار باشن (مثلاً "۱۰۰ کیلومتر در ماه"). Achievement باید خودکار اعطا بشه.
+
+تصمیم:
+از Rule Engine (Drools) + Kafka (Event Trigger) + Redis (Progress Cache) + PostgreSQL (Challenge Store) + Notification (Achievement) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Drools برای قوانین Challenge. Kafka برای Event Trigger (فعالیت ثبت شد). Redis برای Progress Cache. PostgreSQL برای Challenge Store. Notification برای اعطای Achievement.
+
+مزایا:
+
+قوانین پویا
+
+Real-time Progress
+
+اعطای خودکار
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی Drools
+
+نیاز به Rule Engine
+
+Debugging سخت
+
+ممکنه Rule اشتباه باشه
+
+موارد دیگر بررسی‌شده:
+
+الف) Hardcode:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+نیاز به Deploy
+
+inflexible
+
+نگهداری سخت
+
+ب) فقط Manual:
+مزایا:
+
+سادگی
+
+کنترل
+معایب:
+
+کندی
+
+خطای انسانی
+
+مقیاس‌پذیری محدود
+
+ج) بدون Challenge:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+بدون انگیزه
+
+تجربه ضعیف
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: قوانین پویا، Real-time
+
+منفی: پیچیدگی Drools
+
+ریسک: Rule اشتباه → Unit Test + Canary
+
+ADR-010: انتخاب مکانیزم چرخه حیات داده و GDPR
+وضعیت: پذیرفته شده
+
+زمینه:
+داده‌های GPS، فعالیت، Heart Rate باید برای Analytics نگه‌داری بشن. ولی GDPR حق فراموشی رو الزامی کرده. باید تعادل برقرار بشه.
+
+تصمیم:
+از Tiered Storage + Soft Delete + Anonymization + Key Deletion + Audit Log + GPS Trail Compaction استفاده می‌کنیم:
+
+Hot (۳ ماه): TimescaleDB
+
+Warm (۳ ماه تا ۱ سال): S3 Infrequent Access
+
+Cold (> ۱ سال): S3 Glacier
+
+GDPR: Soft Delete فوری + Anonymize بعد از ۳۰ روز
+
+GPS Trail: Compaction (حذف نقاط تکراری)
+
+دلیل تصمیم:
+هر داده تو دیتابیس مناسب سنش. Soft Delete Foreign Keyها رو سالم نگه می‌داره. Anonymize حریم خصوصی. GPS Compaction برای کاهش حجم.
+
+مزایا:
+
+Compliance با GDPR
+
+کاهش هزینه Storage
+
+Foreign Keyها سالم
+
+GPS Compaction (۹۰٪ کاهش)
+
+معایب:
+
+تأخیر Restore از Glacier
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring
+
+حجم دیتابیس بیشتر
+
+موارد دیگر بررسی‌شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص
+
+Audit از بین می‌ره
+
+ب) نگه‌داری همه در TimescaleDB:
+مزایا:
+
+سادگی
+
+Query یکپارچه
+معایب:
+
+هزینه نجومی
+
+کندی با حجم زیاد
+
+ج) فقط S3:
+مزایا:
+
+هزینه کم
+
+سادگی
+معایب:
+
+کوئری کند
+
+بدون Index
+
+پیامدها:
+
+مثبت: Compliance، هزینه کم
+
+منفی: تأخیر Restore، پیچیدگی
+
+ریسک: Job خطا → DLQ + Retry + Alert
+
+📦 لایه Container (۱۴ سرویس)
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، نقش‌ها (ورزشکار، مربی، ادمین)
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش
+GET    /api/v1/users/{id}/followers   → فالوورها
+POST   /api/v1/users/{id}/follow      → Follow
+DELETE /api/v1/users/{id}             → حذف (GDPR)
+۲. Activity Service
+مسئولیت: ثبت فعالیت (Run، Ride، Swim)
+APIها:
+
+text
+POST   /api/v1/activities              → ثبت فعالیت
+GET    /api/v1/activities/{id}         → جزئیات
+PATCH  /api/v1/activities/{id}         → ویرایش
+DELETE /api/v1/activities/{id}         → حذف
+GET    /api/v1/activities/my           → فعالیت‌های من
+GET    /api/v1/activities/feed         → Feed
+۳. GPS Service
+مسئولیت: GPS Tracking، Real-time
+APIها:
+
+text
+POST   /api/v1/gps/track               → شروع Tracking
+POST   /api/v1/gps/point               → ثبت نقطه
+POST   /api/v1/gps/stop                → پایان Tracking
+GET    /api/v1/gps/{activityId}        → GPS Trail
+WS     /ws/gps/{activityId}            → Real-time
+۴. Social Feed Service
+مسئولیت: Feed، Like، Comment
+APIها:
+
+text
+GET    /api/v1/feed                    → Feed
+POST   /api/v1/feed/{activityId}/like  → Like
+DELETE /api/v1/feed/{activityId}/like  → Unlike
+POST   /api/v1/feed/{activityId}/comment → Comment
+GET    /api/v1/feed/{activityId}/comments → Comments
+۵. Leaderboard Service
+مسئولیت: Leaderboard، Ranking
+APIها:
+
+text
+GET    /api/v1/leaderboard/global      → Global
+GET    /api/v1/leaderboard/friends     → Friends
+GET    /api/v1/leaderboard/challenge/{id} → Challenge
+GET    /api/v1/leaderboard/segment/{id} → Segment
+WS     /ws/leaderboard/{id}            → Real-time
+۶. Challenge Service
+مسئولیت: Challenge، Achievement
+APIها:
+
+text
+POST   /api/v1/challenges              → ساخت Challenge
+GET    /api/v1/challenges              → لیست
+POST   /api/v1/challenges/{id}/join    → شرکت
+GET    /api/v1/challenges/{id}/progress → پیشرفت
+GET    /api/v1/achievements            → Achievementها
+۷. Wearable Service
+مسئولیت: Integration با Garmin، Apple Watch، Fitbit
+APIها:
+
+text
+POST   /api/v1/wearables/connect       → اتصال
+DELETE /api/v1/wearables/{id}          → قطع
+GET    /api/v1/wearables               → لیست
+POST   /api/v1/wearables/sync          → Sync
+POST   /api/v1/wearables/webhook       → Webhook
+۸. Recommendation Service
+مسئولیت: پیشنهاد مسیر، Challenge، ورزش
+APIها:
+
+text
+GET    /api/v1/recommendations/routes  → مسیر
+GET    /api/v1/recommendations/challenges → Challenge
+GET    /api/v1/recommendations/workouts → ورزش
+POST   /api/v1/recommendations/feedback → بازخورد
+۹. Analytics Service
+مسئولیت: آمار پیشرفت، Pace، Heart Rate
+APIها:
+
+text
+GET    /api/v1/analytics/user/{id}     → آمار کاربر
+GET    /api/v1/analytics/activity/{id} → آمار فعالیت
+GET    /api/v1/analytics/trends        → Trendها
+POST   /api/v1/analytics/events        → ثبت رویداد
+۱۰. Search Service
+مسئولیت: جستجوی مسیر، کاربر، Challenge
+APIها:
+
+text
+GET    /api/v1/search/routes           → جستجوی مسیر
+GET    /api/v1/search/users            → جستجوی کاربر
+GET    /api/v1/search/challenges       → جستجوی Challenge
+GET    /api/v1/search/suggest          → Auto-complete
+۱۱. Notification Service
+مسئولیت: Push، Email، In-app
+APIها:
+
+text
+POST   /api/v1/notifications/send      → ارسال
+GET    /api/v1/notifications           → لیست
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings  → تنظیمات
+۱۲. Privacy Service
+مسئولیت: Privacy Control، Geo-fencing
+APIها:
+
+text
+GET    /api/v1/privacy/settings        → تنظیمات
+PATCH  /api/v1/privacy/settings        → ویرایش
+POST   /api/v1/privacy/geofence        → Geo-fence
+GET    /api/v1/privacy/geofence        → لیست Geo-fence
+۱۳. Archive Service
+مسئولیت: Tiered Storage، GDPR
+APIها:
+
+text
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/archive/restore         → بازیابی
+POST   /api/v1/gdpr/export             → خروجی
+DELETE /api/v1/gdpr/delete/{userId}    → حذف (GDPR)
+۱۴. Admin Service
+مسئولیت: مدیریت سیستم، گزارش، تنظیمات
+APIها:
+
+text
+GET    /api/v1/admin/dashboard         → داشبورد
+GET    /api/v1/admin/reports/users     → گزارش کاربران
+GET    /api/v1/admin/reports/activities → گزارش فعالیت‌ها
+POST   /api/v1/admin/config            → تنظیمات
+POST   /api/v1/admin/users/{id}/ban    → مسدودسازی
+🔧 لایه Component (نمونه برای ۴ سرویس)
+Activity Service
+Component	نوع	مسئولیت
+ActivityController	@RestController	مدیریت فعالیت
+ActivityService	@Service	منطق فعالیت
+ActivityRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+EventPublisher	@Component	Kafka
+GPS Service
+Component	نوع	مسئولیت
+GpsController	@RestController	GPS Tracking
+GpsService	@Service	منطق GPS
+WebSocketHandler	@Component	WebSocket
+RedisPublisher	@Component	Redis Pub/Sub
+GpsTrailRepository	@Repository	TimescaleDB
+CompactionJob	@Component	Compaction
+Leaderboard Service
+Component	نوع	مسئولیت
+LeaderboardController	@RestController	Leaderboard
+LeaderboardService	@Service	منطق Leaderboard
+RedisZSetManager	@Component	Redis Sorted Set
+WebSocketHandler	@Component	WebSocket
+ClickHouseClient	@Component	ClickHouse
+Challenge Service
+Component	نوع	مسئولیت
+ChallengeController	@RestController	مدیریت Challenge
+ChallengeService	@Service	منطق Challenge
+RuleEngine	@Component	Drools
+ProgressTracker	@Component	Redis
+ChallengeRepository	@Repository	PostgreSQL
+KafkaConsumer	@Component	Event Stream
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	GPS + Leaderboard
+Service Discovery	Eureka/Consul	ثبت و کشف
+Config Server	Spring Cloud Config	تنظیمات
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Session + Pub/Sub
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	Feed + Comment
+TimescaleDB	TimescaleDB	GPS Trail
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	Archive + Backup
+Glacier	AWS Glacier	Cold Archive
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Activity Service ──→ PostgreSQL + Kafka
+       ├──→ GPS Service ──→ WebSocket + TimescaleDB
+       ├──→ Social Feed ──→ Cassandra + Redis
+       ├──→ Leaderboard ──→ Redis ZSET + ClickHouse
+       ├──→ Challenge ──→ PostgreSQL + Drools
+       ├──→ Wearable ──→ Integration + OAuth
+       ├──→ Recommendation ──→ TensorFlow + Feast
+       ├──→ Analytics ──→ ClickHouse
+       ├──→ Search ──→ Elasticsearch
+       ├──→ Notification ──→ Kafka + Firebase
+       ├──→ Privacy ──→ PostgreSQL + Redis
+       ├──→ Archive ──→ S3 + Glacier
+       └──→ Admin ──→ ClickHouse + PostgreSQL
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus
+└──────────────┘

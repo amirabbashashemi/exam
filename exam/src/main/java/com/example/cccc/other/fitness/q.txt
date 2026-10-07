@@ -1,0 +1,35 @@
+صورت سوال
+طراحی یک پلتفرم تناسب اندام (مشابه Strava / Nike Run Club) که:
+
+میلیون‌ها کاربر و میلیون‌ها فعالیت ورزشی در آن ثبت شود.
+
+کاربران بتوانند فعالیت (دویدن، دوچرخه‌سواری، شنا) ثبت کنند.
+
+GPS Tracking برای ثبت مسیر و سرعت لحظه‌ای.
+
+Real-time نمایش فعالیت به دوستان (Live Tracking).
+
+Social Feed برای اشتراک فعالیت با دوستان.
+
+Leaderboard برای رقابت در چالش‌ها.
+
+Wearable Integration با Garmin، Apple Watch، Fitbit.
+
+Recommendation برای مسیر، چالش، و ورزش.
+
+Analytics برای پیشرفت شخصی (Pace، Heart Rate، Elevation).
+
+Challenge و Achievement (Badge، Trophy).
+
+GDPR و حذف حساب کاربر.
+
+Multi-language و Multi-currency (برای اشتراک Premium).
+
+🎯 چالش‌های ۶گانه (هر کدام ۱۰ نمره)
+#	چالش	توضیح
+۱	مقیاس‌پذیری و عملکرد در GPS Tracking و Real-time	۱۰
+۲	سازگاری (Consistency) در Leaderboard، Achievement، و Analytics	۱۰
+۳	پیکربندی آسان برای کاربر (Challenge، Privacy، Wearable)	۱۰
+۴	پشتیبانی از چندزبانگی، Wearable، و GPS	۱۰
+۵	مدیریت چرخه حیات داده (GPS Trail، GDPR، Archive)	۱۰
+۶	کاربردپذیری (UX) برای ورزشکار، مربی، و ادمین	۱۰

@@ -1,0 +1,1067 @@
+ADR-001: انتخاب معماری کلی سیستم
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم کاریابی باید میلیون‌ها کاربر، آگهی، و رزومه رو مدیریت کنه. هر بخش (شغل، رزومه، Matching، Messaging) داده و منطق خودش رو داره. تیم‌های مختلف باید مستقل کار کنن و خرابی یه بخش، کل سیستم رو از کار نندازه.
+
+تصمیم:
+معماری میکروسرویس با تفکیک بر اساس Bounded Context (DDD) و Database per Service.
+
+دلیل تصمیم:
+هر دامنه (شغل، رزومه، Messaging) داده و منطق خودش رو داره. میکروسرویس یعنی هر تیم مستقل Deploy می‌کنه. Database per Service یعنی هر سرویس دیتابیس مناسب خودش رو داره.
+
+مزایا:
+
+تیم‌ها مستقل کار می‌کنن
+
+هر سرویس با تکنولوژی مناسب
+
+خرابی یه بخش، بقیه رو از کار نمی‌ندازه
+
+مقیاس‌پذیری خطی
+
+معایب:
+
+پیچیدگی عملیاتی
+
+Debugging سخت‌تر
+
+نیاز به تیم Platform
+
+تست End-to-End سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Monolith:
+مزایا:
+
+سادگی Deploy
+
+Debugging راحت
+
+توسعه سریع اولیه
+معایب:
+
+تیم‌ها نمی‌تونن مستقل Deploy کنن
+
+وابستگی کد زیاد
+
+مقیاس‌پذیری محدود
+
+ب) Modular Monolith:
+مزایا:
+
+تعادل بین سادگی و ماژولاریتی
+
+Deploy یکپارچه
+معایب:
+
+همچنان وابستگی در Deploy
+
+مقیاس‌پذیری محدود
+
+ج) Serverless:
+مزایا:
+
+هزینه فقط به ازای مصرف
+
+مقیاس‌پذیری خودکار
+معایب:
+
+Cold Start
+
+Debugging سخت
+
+Vendor Lock-in
+
+پیامدها:
+
+مثبت: استقلال تیم‌ها، مقیاس‌پذیری، تحمل خطا
+
+منفی: پیچیدگی، نیاز به تیم Platform
+
+ریسک: مرز Domain اشتباه → Event Storming
+
+ADR-002: انتخاب مکانیزم Search شغل
+وضعیت: پذیرفته شده
+
+زمینه:
+میلیون‌ها آگهی شغلی. کارجویان می‌خوان بر اساس عنوان، مهارت، موقعیت مکانی، حقوق، نوع همکاری جستجو کنن. Search باید سریع باشه و Faceted Search داشته باشه.
+
+تصمیم:
+از Elasticsearch + PostgreSQL (Metadata) + CDC (Debezium) + Kafka + Geo-Point + Multi-language Analyzer استفاده می‌کنیم.
+
+دلیل تصمیم:
+Elasticsearch برای Full-Text Search و Faceted Search. PostgreSQL برای Metadata (ACID). CDC برای Sync. Geo-Point برای جستجوی مکانی. Multi-language Analyzer برای جستجوی چندزبانه.
+
+مزایا:
+
+جستجوی سریع (زیر ۱۰۰ms)
+
+Full-Text Search
+
+Faceted Search
+
+Geo-Search
+
+معایب:
+
+پیچیدگی CDC
+
+تأخیر Sync
+
+هزینه Elasticsearch
+
+مدیریت دو دیتابیس
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+سادگی
+
+ACID
+معایب:
+
+Full-Text Search ضعیف
+
+کندی با میلیون‌ها رکورد
+
+بدون Faceted Search
+
+ب) فقط Elasticsearch:
+مزایا:
+
+جستجوی سریع
+
+Faceted Search
+معایب:
+
+برای Transaction مناسب نیست
+
+بدون ACID
+
+ج) MongoDB Text Index:
+مزایا:
+
+سادگی
+
+یکپارچگی
+معایب:
+
+Full-Text Search ضعیف‌تر
+
+بدون Faceted Search
+
+پیامدها:
+
+مثبت: جستجوی سریع، Faceted Search
+
+منفی: پیچیدگی CDC، هزینه
+
+ریسک: CDC خطا → Retry + Alert
+
+ADR-003: انتخاب مکانیزم Resume Parsing
+وضعیت: پذیرفته شده
+
+زمینه:
+کارجویان رزومه‌شون رو آپلود می‌کنن (PDF، DOCX). سیستم باید اطلاعات رو خودکار استخراج کنه (نام، مهارت، سابقه، تحصیلات). این اطلاعات برای Matching و Search استفاده می‌شه.
+
+تصمیم:
+از Apache Tika + NLP (spaCy) + ML Model (NER) + Kafka (Event) + Elasticsearch (Index) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Apache Tika برای استخراج متن از PDF/DOCX. spaCy برای NLP. ML Model (NER) برای استخراج Entities (نام، مهارت). Kafka برای Event. Elasticsearch برای Index.
+
+مزایا:
+
+استخراج خودکار
+
+NLP دقیق
+
+Index برای Search
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی NLP
+
+False Extraction
+
+نیاز به ML
+
+هزینه پردازش
+
+موارد دیگر بررسی‌شده:
+
+الف) استخراج دستی توسط کارجو:
+مزایا:
+
+دقت بالا
+
+کنترل کامل
+معایب:
+
+کندی
+
+خطای انسانی
+
+کاربر ناراضی
+
+ب) فقط Regex:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+دقت پایین
+
+inflexible
+
+بدون NLP
+
+ج) بدون Resume Parsing:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+بدون Matching دقیق
+
+تجربه ضعیف
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: استخراج خودکار، NLP
+
+منفی: پیچیدگی، هزینه
+
+ریسک: NLP اشتباه → Human Review
+
+ADR-004: انتخاب مکانیزم Matching کارجو و آگهی
+وضعیت: پذیرفته شده
+
+زمینه:
+کارجو می‌خواد شغل‌های مرتبط با رزومه‌ش رو ببینه. کارفرما می‌خواد کارجوهای مرتبط با آگهی رو ببینه. Matching باید دقیق و Real-time باشه.
+
+تصمیم:
+از Embedding (BERT/Sentence-BERT) + Vector DB (Pinecone/Weaviate) + Rule Engine (Drools) + Kafka (Event) + Redis (Cache) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Embedding برای نمایش معنایی متن. Vector DB برای جستجوی Similarity. Rule Engine برای قوانین ساده (مثلاً حقوق). Kafka برای Event. Redis برای Cache.
+
+مزایا:
+
+Matching معنایی (Semantic)
+
+دقت بالا
+
+Real-time (Vector DB)
+
+قوانین ساده (Drools)
+
+معایب:
+
+پیچیدگی Embedding
+
+هزینه Vector DB
+
+نیاز به ML
+
+زمان پردازش
+
+موارد دیگر بررسی‌شده:
+
+الف) Keyword Matching:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+دقت پایین
+
+بدون معنایی
+
+False Positive
+
+ب) Collaborative Filtering:
+مزایا:
+
+دقت بالا
+
+کشف جدید
+معایب:
+
+Cold Start
+
+نیاز به داده زیاد
+
+بدون Semantic
+
+ج) Hybrid (CF + Content-Based):
+مزایا:
+
+دقت بالا
+
+Cold Start حل
+معایب:
+
+پیچیدگی
+
+نیاز به ML
+
+زمان آموزش
+
+پیامدها:
+
+مثبت: Matching معنایی، دقت بالا
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Embedding قدیمی → Retraining دوره‌ای
+
+ADR-005: انتخاب مکانیزم Recommendation شغل
+وضعیت: پذیرفته شده
+
+زمینه:
+کارجو می‌خواد شغل‌های پیشنهادی ببینه. کارفرما می‌خواد کارجوهای پیشنهادی ببینه. این پیشنهادها باید بر اساس رفتار (کلیک، Apply، Save) و پروفایل باشه.
+
+تصمیم:
+از Hybrid Recommendation (Collaborative Filtering + Content-Based) با Matrix Factorization + Feature Store (Feast) + Real-time Update استفاده می‌کنیم.
+
+دلیل تصمیم:
+Collaborative Filtering بر اساس رفتار کاربران مشابه. Content-Based بر اساس ویژگی‌های شغل (مهارت، موقعیت). ترکیب این دو، هم دقت رو بالا می‌بره هم Cold Start رو حل می‌کنه.
+
+مزایا:
+
+دقت بالا
+
+کشف شغل‌های جدید
+
+شخصی‌سازی عمیق
+
+حل Cold Start
+
+معایب:
+
+پیچیدگی ML
+
+نیاز به Data Pipeline
+
+زمان آموزش
+
+نیاز به تیم Data Science
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Trending:
+مزایا:
+
+سادگی
+
+بدون ML
+معایب:
+
+شخصی‌سازی نداره
+
+برای همه یه چیز
+
+تجربه ضعیف
+
+ب) فقط Keyword:
+مزایا:
+
+سادگی
+
+شفافیت
+معایب:
+
+دقت پایین
+
+بدون معنایی
+
+False Positive
+
+ج) فقط Content-Based:
+مزایا:
+
+Cold Start خوب
+
+شفافیت
+معایب:
+
+محدود به ویژگی‌ها
+
+عدم کشف جدید
+
+پیامدها:
+
+مثبت: دقت بالا، کشف جدید
+
+منفی: پیچیدگی، نیاز به ML
+
+ریسک: مدل قدیمی → Retraining دوره‌ای
+
+ADR-006: انتخاب مکانیزم Messaging
+وضعیت: پذیرفته شده
+
+زمینه:
+کارجو و کارفرما باید بتونن با هم چت کنن. این چت باید Real-time و امن باشه. باید از Spam جلوگیری بشه.
+
+تصمیم:
+از WebSocket + Kafka (Event) + Cassandra (Message Store) + Redis (Presence) + AI Spam Filter استفاده می‌کنیم.
+
+دلیل تصمیم:
+WebSocket برای Real-time. Kafka برای Event. Cassandra برای ذخیره پیام‌ها (Write سنگین). Redis برای Presence. AI Spam Filter برای جلوگیری از Spam.
+
+مزایا:
+
+Real-time
+
+ذخیره پیام‌ها (Cassandra)
+
+Presence (Redis)
+
+Spam Filter (AI)
+
+معایب:
+
+پیچیدگی WebSocket
+
+Cassandra Complexity
+
+هزینه AI
+
+Redis SPOF
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط REST:
+مزایا:
+
+سادگی
+
+Stateless
+معایب:
+
+تأخیر بالا
+
+بدون Real-time
+
+کاربر ناراضی
+
+ب) فقط Email:
+مزایا:
+
+سادگی
+
+قابل اعتماد
+معایب:
+
+کندی
+
+بدون Real-time
+
+Spam
+
+ج) فقط Chat ساده:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+بدون Spam Filter
+
+بدون Presence
+
+تجربه ضعیف
+
+پیامدها:
+
+مثبت: Real-time، Spam Filter
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-007: انتخاب مکانیزم Payment و Subscription
+وضعیت: پذیرفته شده
+
+زمینه:
+کارفرما می‌خواد آگهی ویژه ثبت کنه یا اشتراک Premium بخره. پرداخت باید امن باشه و درآمد درست تقسیم بشه.
+
+تصمیم:
+از Stripe (Payment) + Escrow + Rule Engine (Drools) + Kafka (Event) + Idempotency Key استفاده می‌کنیم.
+
+دلیل تصمیم:
+Stripe برای پرداخت. Escrow برای نگه‌داری. Drools برای تقسیم درآمد. Kafka برای Event. Idempotency Key برای جلوگیری از پرداخت دوبار.
+
+مزایا:
+
+پرداخت امن (Stripe)
+
+قوانین پویا (Drools)
+
+جلوگیری از پرداخت دوبار
+
+Audit Trail
+
+معایب:
+
+هزینه Stripe
+
+پیچیدگی Escrow
+
+نیاز به KYC
+
+زمان تسویه
+
+موارد دیگر بررسی‌شده:
+
+الف) پرداخت مستقیم:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+ریسک کلاهبرداری
+
+بدون محافظت
+
+نقض قوانین
+
+ب) پرداخت با کریپتو:
+مزایا:
+
+سرعت بالا
+
+هزینه کم
+معایب:
+
+نوسان قیمت
+
+پیچیدگی قانونی
+
+کاربرا آشنا نیستن
+
+ج) بدون Escrow:
+مزایا:
+
+سادگی
+
+بدون پیچیدگی مالی
+معایب:
+
+ریسک کلاهبرداری
+
+کاربر ناراضی
+
+نقض قوانین
+
+پیامدها:
+
+مثبت: امنیت مالی، قوانین پویا
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Stripe خطا → Retry + Manual Review
+
+ADR-008: انتخاب مکانیزم Notification
+وضعیت: پذیرفته شده
+
+زمینه:
+کارجو باید از آگهی جدید، پیام جدید، و وضعیت Application مطلع بشه. کارفرما باید از Application جدید و پیام جدید مطلع بشه. Notification باید Real-time و قابل تنظیم باشه.
+
+تصمیم:
+از Kafka + Firebase (Push) + SendGrid (Email) + WebSocket (In-app) + Redis (Dedup) + User Preferences استفاده می‌کنیم.
+
+دلیل تصمیم:
+Kafka برای Event Stream. Firebase برای Push. SendGrid برای Email. WebSocket برای In-app. Redis برای Dedup. User Preferences برای تنظیمات.
+
+مزایا:
+
+Real-time
+
+چند کانال
+
+Dedup
+
+قابل تنظیم
+
+معایب:
+
+پیچیدگی Kafka
+
+هزینه Firebase + SendGrid
+
+نیاز به User Preferences
+
+Redis SPOF
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Push:
+مزایا:
+
+سادگی
+
+Real-time
+معایب:
+
+نیاز به اپ موبایل
+
+بدون Email
+
+کاربرا Email رو ترجیح می‌دن
+
+ب) فقط Email:
+مزایا:
+
+قابل اعتماد
+
+بدون نیاز به اپ
+معایب:
+
+کندی
+
+بدون Real-time
+
+Spam
+
+ج) فقط In-app:
+مزایا:
+
+سادگی
+
+بدون هزینه خارجی
+معایب:
+
+نیاز به باز کردن اپ
+
+بدون Real-time
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: Real-time، چند کانال
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-009: انتخاب مکانیزم Application Tracking
+وضعیت: پذیرفته شده
+
+زمینه:
+کارجو می‌خواد بدونه Applicationش تو چه مرحله‌ایه (ثبت شد، در حال بررسی، مصاحبه، رد، قبول). کارفرما می‌خواد Applicationها رو مدیریت کنه.
+
+تصمیم:
+از PostgreSQL (State) + Kafka (Event) + WebSocket (Real-time) + Notification (Status Update) + Saga (Orchestration) استفاده می‌کنیم.
+
+دلیل تصمیم:
+PostgreSQL برای State. Kafka برای Event. WebSocket برای Real-time. Notification برای اطلاع‌رسانی. Saga برای Orchestration (مثلاً اگه مصاحبه لغو شد، Application برگرده).
+
+مزایا:
+
+Real-time Status
+
+Audit Trail
+
+Saga Orchestration
+
+Notification خودکار
+
+معایب:
+
+پیچیدگی Saga
+
+نیاز به WebSocket
+
+Orchestrator SPOF
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط REST:
+مزایا:
+
+سادگی
+
+Stateless
+معایب:
+
+تأخیر بالا
+
+بدون Real-time
+
+کاربر ناراضی
+
+ب) فقط Email:
+مزایا:
+
+سادگی
+
+قابل اعتماد
+معایب:
+
+کندی
+
+بدون Real-time
+
+Spam
+
+ج) بدون Tracking:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+کاربر نمی‌دونه وضعیتش
+
+تجربه ضعیف
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: Real-time، Saga
+
+منفی: پیچیدگی، SPOF
+
+ریسک: Orchestrator Down → HA + State Recovery
+
+ADR-010: انتخاب مکانیزم چرخه حیات داده و GDPR
+وضعیت: پذیرفته شده
+
+زمینه:
+داده‌های رزومه، آگهی، Application باید برای Audit نگه‌داری بشن. ولی GDPR حق فراموشی رو الزامی کرده. باید تعادل برقرار بشه.
+
+تصمیم:
+از Tiered Storage + Soft Delete + Anonymization + Key Deletion + Audit Log استفاده می‌کنیم:
+
+Hot (۶ ماه): PostgreSQL + Cassandra
+
+Warm (۶ ماه تا ۲ سال): S3 Infrequent Access
+
+Cold (> ۲ سال): S3 Glacier
+
+GDPR: Soft Delete فوری + Anonymize بعد از ۳۰ روز
+
+دلیل تصمیم:
+هر داده تو دیتابیس مناسب سنش. Soft Delete Foreign Keyها رو سالم نگه می‌داره. Anonymize حریم خصوصی. Job شبانه انتقال‌ها رو انجام می‌ده.
+
+مزایا:
+
+Compliance با GDPR
+
+کاهش هزینه Storage
+
+Foreign Keyها سالم
+
+Audit Trail حفظ
+
+معایب:
+
+تأخیر Restore از Glacier
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring
+
+حجم دیتابیس بیشتر
+
+موارد دیگر بررسی‌شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص
+
+Audit از بین می‌ره
+
+ب) نگه‌داری همه در PostgreSQL:
+مزایا:
+
+سادگی
+
+Query یکپارچه
+معایب:
+
+هزینه نجومی
+
+کندی با حجم زیاد
+
+ج) فقط S3:
+مزایا:
+
+هزینه کم
+
+سادگی
+معایب:
+
+کوئری کند
+
+بدون Index
+
+پیامدها:
+
+مثبت: Compliance، هزینه کم
+
+منفی: تأخیر Restore، پیچیدگی
+
+ریسک: Job خطا → DLQ + Retry + Alert
+
+📦 لایه Container (۱۵ سرویس)
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، نقش‌ها (کارجو، کارفرما، ادمین)
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش
+DELETE /api/v1/users/{id}             → حذف (GDPR)
+۲. Job Service
+مسئولیت: مدیریت آگهی شغلی
+APIها:
+
+text
+POST   /api/v1/jobs                    → ثبت آگهی
+GET    /api/v1/jobs/{id}               → جزئیات
+PATCH  /api/v1/jobs/{id}               → ویرایش
+DELETE /api/v1/jobs/{id}               → حذف
+POST   /api/v1/jobs/{id}/publish       → انتشار
+GET    /api/v1/jobs/my                 → آگهی‌های من
+۳. Resume Service
+مسئولیت: مدیریت رزومه، Parsing
+APIها:
+
+text
+POST   /api/v1/resumes/upload          → آپلود رزومه
+GET    /api/v1/resumes/{id}            → جزئیات
+PATCH  /api/v1/resumes/{id}            → ویرایش
+DELETE /api/v1/resumes/{id}            → حذف
+POST   /api/v1/resumes/{id}/parse      → Parsing
+GET    /api/v1/resumes/my              → رزومه‌های من
+۴. Application Service
+مسئولیت: مدیریت Application، Tracking
+APIها:
+
+text
+POST   /api/v1/applications            → ثبت Application
+GET    /api/v1/applications/{id}       → جزئیات
+PATCH  /api/v1/applications/{id}/status → تغییر وضعیت
+DELETE /api/v1/applications/{id}       → لغو
+GET    /api/v1/applications/my         → Applicationهای من
+۵. Matching Service
+مسئولیت: Matching کارجو و آگهی
+APIها:
+
+text
+GET    /api/v1/matching/jobs/{userId}  → شغل‌های پیشنهادی
+GET    /api/v1/matching/candidates/{jobId} → کارجوهای پیشنهادی
+POST   /api/v1/matching/feedback       → بازخورد
+GET    /api/v1/matching/score          → امتیاز
+۶. Recommendation Service
+مسئولیت: Recommendation شغل و کارجو
+APIها:
+
+text
+GET    /api/v1/recommendations/jobs/{userId} → شغل‌ها
+GET    /api/v1/recommendations/candidates/{jobId} → کارجوها
+GET    /api/v1/recommendations/trending → Trendها
+POST   /api/v1/recommendations/feedback → بازخورد
+۷. Search Service
+مسئولیت: جستجوی شغل و کارجو
+APIها:
+
+text
+GET    /api/v1/search/jobs             → جستجوی شغل
+GET    /api/v1/search/candidates       → جستجوی کارجو
+GET    /api/v1/search/suggest          → Auto-complete
+GET    /api/v1/search/faceted          → Faceted
+POST   /api/v1/search/reindex          → Reindex (Admin)
+۸. Messaging Service
+مسئولیت: Messaging بین کارجو و کارفرما
+APIها:
+
+text
+POST   /api/v1/messages                → ارسال پیام
+GET    /api/v1/messages/{conversationId} → دریافت
+POST   /api/v1/messages/{id}/read      → خوانده‌شده
+GET    /api/v1/conversations           → لیست مکالمات
+WS     /ws/messages/{conversationId}   → Real-time
+۹. Payment Service
+مسئولیت: پرداخت، Subscription، Payout
+APIها:
+
+text
+POST   /api/v1/payments/checkout       → پرداخت
+POST   /api/v1/payments/webhook        → Webhook
+GET    /api/v1/payments/{id}           → وضعیت
+POST   /api/v1/payments/{id}/refund    → بازگشت
+POST   /api/v1/subscriptions           → اشتراک
+GET    /api/v1/earnings/{employerId}   → درآمد
+۱۰. Notification Service
+مسئولیت: Push، Email، In-app
+APIها:
+
+text
+POST   /api/v1/notifications/send      → ارسال
+GET    /api/v1/notifications           → لیست
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings  → تنظیمات
+۱۱. Rating Service
+مسئولیت: Rating و Review
+APIها:
+
+text
+POST   /api/v1/ratings                 → ثبت امتیاز
+GET    /api/v1/ratings/company/{id}    → امتیاز شرکت
+GET    /api/v1/ratings/user/{id}       → امتیاز کاربر
+POST   /api/v1/reviews                 → ثبت Review
+GET    /api/v1/reviews/company/{id}    → Reviewهای شرکت
+۱۲. Analytics Service
+مسئولیت: آمار آگهی، Application، درآمد
+APIها:
+
+text
+GET    /api/v1/analytics/jobs          → آمار آگهی
+GET    /api/v1/analytics/applications  → آمار Application
+GET    /api/v1/analytics/revenue       → آمار درآمد
+POST   /api/v1/analytics/events        → ثبت رویداد
+۱۳. Currency Service
+مسئولیت: نرخ ارز، تبدیل
+APIها:
+
+text
+GET    /api/v1/currency/rates          → نرخ‌ها
+GET    /api/v1/currency/convert        → تبدیل
+GET    /api/v1/currency/supported      → ارزها
+POST   /api/v1/currency/refresh        → بروزرسانی (Admin)
+۱۴. Archive Service
+مسئولیت: Tiered Storage، GDPR
+APIها:
+
+text
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/archive/restore         → بازیابی
+POST   /api/v1/gdpr/export             → خروجی
+DELETE /api/v1/gdpr/delete/{userId}    → حذف (GDPR)
+۱۵. Admin Service
+مسئولیت: مدیریت سیستم، گزارش، تنظیمات
+APIها:
+
+text
+GET    /api/v1/admin/dashboard         → داشبورد
+GET    /api/v1/admin/reports/jobs      → گزارش آگهی
+GET    /api/v1/admin/reports/revenue   → گزارش درآمد
+POST   /api/v1/admin/config            → تنظیمات
+POST   /api/v1/admin/users/{id}/ban    → مسدودسازی
+🔧 لایه Component (نمونه برای ۴ سرویس)
+Job Service
+Component	نوع	مسئولیت
+JobController	@RestController	مدیریت آگهی
+JobService	@Service	منطق آگهی
+PublishService	@Service	انتشار
+JobRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+EventPublisher	@Component	Kafka
+Resume Service
+Component	نوع	مسئولیت
+ResumeController	@RestController	مدیریت رزومه
+ResumeService	@Service	منطق رزومه
+ResumeParser	@Component	Apache Tika + NLP
+NerExtractor	@Component	NER Model
+ResumeRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+Matching Service
+Component	نوع	مسئولیت
+MatchingController	@RestController	Matching
+MatchingService	@Service	منطق Matching
+EmbeddingClient	@Component	BERT
+VectorDbClient	@Component	Pinecone
+RuleEngine	@Component	Drools
+CacheManager	@Component	Redis
+Messaging Service
+Component	نوع	مسئولیت
+MessageController	@RestController	مدیریت پیام
+MessageService	@Service	منطق پیام
+WebSocketHandler	@Component	WebSocket
+SpamFilter	@Component	AI
+MessageRepository	@Repository	Cassandra
+PresenceManager	@Component	Redis
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	Messaging
+Service Discovery	Eureka/Consul	ثبت و کشف
+Config Server	Spring Cloud Config	تنظیمات
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Session + Presence
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	Message
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+Pinecone	Vector DB	Matching
+S3	AWS S3	Resume + Backup
+Glacier	AWS Glacier	Cold Archive
+Stripe	Stripe	Payment
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Job Service ──→ PostgreSQL + Redis
+       ├──→ Resume Service ──→ PostgreSQL + S3 + NLP
+       ├──→ Application Service ──→ PostgreSQL + Kafka
+       ├──→ Matching Service ──→ Embedding + Vector DB
+       ├──→ Recommendation ──→ TensorFlow + Feast
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Messaging Service ──→ Cassandra + WebSocket
+       ├──→ Payment Service ──→ PostgreSQL + Stripe
+       ├──→ Notification ──→ Kafka + Firebase + SendGrid
+       ├──→ Rating Service ──→ Cassandra + Redis
+       ├──→ Analytics ──→ ClickHouse
+       ├──→ Currency Service ──→ Redis + Central Bank
+       ├──→ Archive Service ──→ S3 + Glacier
+       └──→ Admin Service ──→ ClickHouse + PostgreSQL
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus
+└──────────────┘
