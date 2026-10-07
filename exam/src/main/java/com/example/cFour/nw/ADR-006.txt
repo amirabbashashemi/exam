@@ -1,0 +1,90 @@
+ADR-006: استفاده از Schema Registry و Contract-First Design
+وضعیت: پذیرفته شده
+
+زمینه:
+تیم‌های Stream-aligned به صورت مستقل کار می‌کنن. اگه هر تیم داده رو با فرمت خودش بفرسته، ارتباط بین سرویس‌ها می‌شکنه. باید استانداردسازی بشه.
+
+تصمیم:
+
+استفاده از Avro/Protobuf برای Schema
+
+Schema Registry (Confluent) برای مدیریت Version
+
+Contract-First: هر سرویس اول Contract خودش رو با OpenAPI تعریف می‌کنه
+
+Kafka با Schema Registry برای Eventها
+
+دلیل تصمیم:
+Schema Registry تضمین می‌کنه که داده‌ها با فرمت یکسان رد و بدل بشن. Contract-First یعنی تیم‌ها موازی کار می‌کنن. اگه Schema تغییر کنه، Versioning انجام می‌شه و Compatibility بررسی می‌شه.
+
+مزایا:
+
+استانداردسازی داده‌ها بین تیم‌ها
+
+جلوگیری از خطای Runtime
+
+Versioning خودکار Schema
+
+مستندات همیشه به‌روز
+
+معایب:
+
+پیچیدگی اولیه (نیاز به Schema Registry)
+
+یادگیری Avro/Protobuf
+
+Overhead در Serialization
+
+موارد دیگر بررسی شده:
+
+الف) JSON آزاد بدون Schema:
+مزایا:
+
+سادگی
+
+انعطاف بالا
+معایب:
+
+ناهماهنگی بین تیم‌ها
+
+خطای Runtime
+
+Debugging سخت
+
+حجم بیشتر
+
+ب) REST بدون Contract-First:
+مزایا:
+
+سرعت اولیه
+
+سادگی
+معایب:
+
+Breaking Change فاجعه
+
+مستندات ناقص
+
+Frontend و Backend نمی‌تونن موازی کار کنن
+
+ج) XML Schema:
+مزایا:
+
+استاندارد قدیمی
+
+Validation قوی
+معایب:
+
+حجم زیاد
+
+کند
+
+منسوخ شده
+
+پیامدها:
+
+مثبت: ارتباط پایدار بین تیم‌ها، Versioning خودکار
+
+منفی: پیچیدگی اولیه، Overhead
+
+ریسک: Schema Registry Down → HA + Local Cache
