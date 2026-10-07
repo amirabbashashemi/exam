@@ -1,0 +1,1204 @@
+ADR-001: انتخاب دیتابیس برای ذخیره‌ی رزروها
+وضعیت: پذیرفته شده
+
+زمینه:
+رزروها باید ACID باشن. اگه دو نفر همزمان یه اتاق رو رزرو کنن، نباید هر دو موفق بشن. داده‌ها ساختاریافته‌ست (کاربر، هتل، اتاق، تاریخ، پرداخت). نیاز به Query پیچیده (مثلاً "همه‌ی رزروهای یه کاربر تو بازه‌ی خاص") داریم.
+
+تصمیم:
+از PostgreSQL استفاده می‌کنیم.
+
+دلیل تصمیم:
+PostgreSQL ACID کامل داره و از تراکنش‌های پیچیده پشتیبانی می‌کنه. JSONB هم برای داده‌های نیمه‌ساختاریافته (مثل Metadata هتل) داره. Extensionهای مفید مثل PostGIS برای موقعیت مکانی.
+
+مزایا:
+
+ACID کامل (جلوگیری از Double Booking)
+
+Query پیچیده با JOIN
+
+JSONB برای داده‌های نیمه‌ساختاریافته
+
+Extensionهای قوی (PostGIS، TimescaleDB)
+
+معایب:
+
+Write Scaling محدود (نیاز به Sharding در آینده)
+
+برای داده‌های حجیم (میلیاردها رزرو) کند می‌شه
+
+Replication پیچیده‌ست
+
+موارد دیگر بررسی‌شده:
+
+الف) MongoDB:
+مزایا:
+
+Schema انعطاف‌پذیر
+
+Sharding خودکار
+معایب:
+
+ACID کامل نداره (مگر نسخه ۴+)
+
+برای Double Booking مناسب نیست
+
+بدون JOIN قوی
+
+ب) Cassandra:
+مزایا:
+
+Write سریع
+
+مقیاس‌پذیری خطی
+معایب:
+
+Eventual Consistency
+
+برای Double Booking فاجعه‌ست
+
+بدون ACID
+
+ج) MySQL:
+مزایا:
+
+ACID داره
+
+Read سریع
+معایب:
+
+JSONB نداره
+
+Extension محدود
+
+Full-Text Search ضعیف
+
+پیامدها:
+
+مثبت: ACID، Query پیچیده، JSONB
+
+منفی: Write Scaling محدود، Replication پیچیده
+
+ریسک: اگه حجم داده زیاد بشه → Sharding + Citus
+
+ADR-002: انتخاب مکانیزم برای تراکنش توزیع‌شده (رزرو همزمان هتل و پرواز)
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر می‌خواد همزمان هتل و پرواز رزرو کنه. اگه پرواز رزرو شد ولی هتل پر بود، باید پرواز کنسل بشه. این یه تراکنش توزیع‌شده‌ست چون هتل و پرواز سرویس‌های جداگانه‌ان.
+
+تصمیم:
+از Saga Orchestration استفاده می‌کنیم.
+
+دلیل تصمیم:
+Saga Orchestration مراحل رو با یه Orchestrator مرکزی هماهنگ می‌کنه. اگه مرحله‌ای شکست بخوره، Compensating Transaction اجرا می‌شه (مثلاً کنسل کردن پرواز). این الگو برای تراکنش‌های توزیع‌شده استاندارده.
+
+مزایا:
+
+Compensating Transaction خودکار
+
+شفافیت کامل مراحل (Audit Trail)
+
+جداسازی منطق کسب‌وکار
+
+مقیاس‌پذیری
+
+معایب:
+
+Orchestrator ممکنه Single Point of Failure بشه
+
+پیچیدگی پیاده‌سازی
+
+نیاز به State Machine و Persistence
+
+Debugging سناریوهای شکست سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Two-Phase Commit (2PC):
+مزایا:
+
+ACID کامل
+
+Consistency بالا
+معایب:
+
+Availability پایین
+
+برای Microservice مناسب نیست
+
+Blocking
+
+ب) Saga Choreography:
+مزایا:
+
+بدون Orchestrator مرکزی
+
+Decoupling
+معایب:
+
+پیچیدگی Tracking
+
+Debugging سخت
+
+بدون شفافیت کامل
+
+ج) Best Effort:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+برای پرداخت مالی غیرقابل قبول
+
+بدون Compensating Transaction
+
+از دست رفتن پول
+
+پیامدها:
+
+مثبت: Compensating Transaction، شفافیت، Audit
+
+منفی: پیچیدگی، Single Point of Failure
+
+ریسک: اگه Orchestrator Down بشه → HA و State Recovery
+
+ADR-003: انتخاب موتور جستجو برای هتل و پرواز
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر باید بتونه هتل و پرواز رو با فیلترهای مختلف (مکان، تاریخ، قیمت، امکانات) جستجو کنه. Query باید زیر ۲۰۰ میلی‌ثانیه باشه. داده‌ها میلیون‌ها رکورد هستن.
+
+تصمیم:
+از Elasticsearch استفاده می‌کنیم.
+
+دلیل تصمیم:
+Elasticsearch برای Full-Text Search و Faceted Search طراحی شده. با Inverted Index، جستجو تو میلیون‌ها رکورد زیر ۱۰۰ میلی‌ثانیه انجام می‌شه. Analyzerهای چندزبانه هم داره.
+
+مزایا:
+
+Full-Text Search سریع
+
+Faceted Search (فیلتر چندگانه)
+
+Geo-Spatial برای جستجوی مکانی
+
+Multi-language Analyzer
+
+معایب:
+
+برای Transaction مناسب نیست
+
+حجم RAM زیاد
+
+مدیریت Cluster پیچیده
+
+هزینه‌ی بالا
+
+موارد دیگر بررسی‌شده:
+
+الف) PostgreSQL Full-Text:
+مزایا:
+
+یکپارچگی
+
+ACID
+معایب:
+
+کندی برای میلیون‌ها رکورد
+
+بدون Faceted Search قوی
+
+Full-Text ضعیف
+
+ب) MongoDB Text Index:
+مزایا:
+
+سادگی
+
+یکپارچگی
+معایب:
+
+ضعیف‌تر از Elasticsearch
+
+بدون Faceted Search پیشرفته
+
+ج) Solr:
+مزایا:
+
+مشابه Elasticsearch
+
+بالغ
+معایب:
+
+جامعه‌ی کوچک‌تر
+
+پیچیدگی بیشتر
+
+کمتر رایجه
+
+پیامدها:
+
+مثبت: جستجوی سریع، Faceted Search، Geo
+
+منفی: هزینه، پیچیدگی، بدون ACID
+
+ریسک: اگه ES Down بشه → Multi-Node و Replication
+
+ADR-004: انتخاب استراتژی کش برای قیمت لحظه‌ای
+وضعیت: پذیرفته شده
+
+زمینه:
+قیمت هتل و پرواز هر لحظه تغییر می‌کنه. اگه هر درخواست مستقیم به GDS بره، هزینه‌ی نجومی و تأخیر بالا داریم. اما اگه طولانی کش کنیم، قیمت اشتباه نشون می‌دیم.
+
+تصمیم:
+از کش دو‌لایه استفاده می‌کنیم:
+
+هتل: TTL = ۱ ساعت (قیمت پایدارتر)
+
+پرواز: TTL = ۹۰ ثانیه (قیمت لحظه‌ای)
+
+دلیل تصمیم:
+قیمت هتل معمولاً ساعتی تغییر می‌کنه، پس TTL طولانی‌تر کافیه. قیمت پرواز لحظه‌ایه، پس TTL کوتاه لازمه. این تعادل بین دقت و هزینه‌ست.
+
+مزایا:
+
+کاهش ۸۰٪ هزینه‌ی GDS
+
+تأخیر زیر ۲۰۰ میلی‌ثانیه برای ۹۵٪ درخواست‌ها
+
+تعادل بین دقت و هزینه
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی مدیریت TTL متفاوت
+
+نیاز به Cache Invalidation
+
+ممکنه قیمت قدیمی نشون داده بشه
+
+نیاز به Redis Cluster
+
+موارد دیگر بررسی‌شده:
+
+الف) بدون کش:
+مزایا:
+
+همیشه قیمت تازه
+
+سادگی
+معایب:
+
+هزینه‌ی GDS نجومی
+
+تأخیر بالا
+
+کندی
+
+ب) کش طولانی (۱ ساعت برای همه):
+مزایا:
+
+هزینه‌ی کم
+
+سرعت بالا
+معایب:
+
+قیمت پرواز اشتباه
+
+کاربر ناراضی
+
+از دست رفتن فروش
+
+ج) کش کوتاه (۱۰ ثانیه برای همه):
+مزایا:
+
+دقت بالا
+
+سادگی
+معایب:
+
+هزینه‌ی GDS بالا
+
+بار زیاد روی GDS
+
+کندی
+
+پیامدها:
+
+مثبت: کاهش هزینه، Latency پایین، تعادل
+
+منفی: پیچیدگی TTL، Cache Invalidation
+
+ریسک: اگه Cache Stale بشه → Event-driven Invalidation
+
+ADR-005: انتخاب مکانیزم Real-time Booking Update
+وضعیت: پذیرفته شده
+
+زمینه:
+وقتی کاربر در حال رزرو یه اتاقه، ممکنه یه کاربر دیگه همون اتاق رو رزرو کنه. باید کاربر بفهمه که اتاق دیگه در دسترس نیست. این باید Real-time باشه (زیر ۵۰۰ میلی‌ثانیه).
+
+تصمیم:
+از WebSocket + Redis Pub/Sub استفاده می‌کنیم.
+
+دلیل تصمیم:
+WebSocket برای ارتباط دوطرفه و Real-time. Redis Pub/Sub برای انتشار رویدادهای Booking به همه‌ی کاربران علاقه‌مند. این ترکیب تأخیر رو زیر ۱۰۰ میلی‌ثانیه نگه می‌داره.
+
+مزایا:
+
+Real-time (تأخیر زیر ۱۰۰ میلی‌ثانیه)
+
+اتصال پایدار (بدون Polling)
+
+مقیاس‌پذیری با Redis Cluster
+
+کاهش بار سرور
+
+معایب:
+
+پیچیدگی WebSocket (Reconnection، Keep-alive)
+
+نیاز به Connection Registry
+
+Redis ممکنه Single Point of Failure بشه
+
+Resource بیشتر از REST
+
+موارد دیگر بررسی‌شده:
+
+الف) REST Polling:
+مزایا:
+
+سادگی
+
+Stateless
+معایب:
+
+تأخیر بالا (بیشتر از ۱ ثانیه)
+
+بار زیاد روی سرور
+
+مصرف باتری
+
+ب) Server-Sent Events (SSE):
+مزایا:
+
+ساده‌تر از WebSocket
+
+بر پایه‌ی HTTP
+معایب:
+
+یک‌طرفه
+
+برای Booking مناسب نیست
+
+محدودیت Connection
+
+ج) Long Polling:
+مزایا:
+
+سادگی نسبی
+
+سازگاری بالا
+معایب:
+
+تأخیر بالا
+
+مقیاس‌پذیری پایین
+
+Resource زیاد
+
+پیامدها:
+
+مثبت: Real-time، مقیاس‌پذیری، کاهش بار
+
+منفی: پیچیدگی WebSocket، Redis SPOF
+
+ریسک: اگه Redis Down بشه → Redis Cluster با Sentinel
+
+ADR-006: انتخاب مکانیزم Geo-Search هتل
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر می‌خواد هتل‌های نزدیک به یه مکان رو پیدا کنه (شعاع ۵ کیلومتر). این Query باید سریع باشه (زیر ۱۰۰ میلی‌ثانیه).
+
+تصمیم:
+از Geohashing + Elasticsearch Geo-Point استفاده می‌کنیم.
+
+دلیل تصمیم:
+Geohashing یه روش استاندارد برای تبدیل lat/lng به یه رشته‌ست که برای جستجو مناسبه. Elasticsearch Geo-Point هم برای جستجوی مکانی بهینه شده. ترکیب این دو، جستجوی سریع و دقیق رو فراهم می‌کنه.
+
+مزایا:
+
+جستجوی مکانی سریع (زیر ۱۰۰ میلی‌ثانیه)
+
+دقت بالا (سطح ۹ = ~۵ متر)
+
+یکپارچگی با Elasticsearch
+
+پشتیبانی از Geo-Distance
+
+معایب:
+
+نیاز به محاسبه Geohash هنگام Insert
+
+پیچیدگی در Query
+
+Edge Cases (نقاط مرزی)
+
+نیاز به Elasticsearch
+
+موارد دیگر بررسی‌شده:
+
+الف) BETWEEN lat/lng:
+مزایا:
+
+سادگی
+
+بدون محاسبه اضافه
+معایب:
+
+کندی برای میلیون‌ها رکورد
+
+بدون Index کارا
+
+دقت پایین
+
+ب) PostGIS:
+مزایا:
+
+یکپارچگی با PostgreSQL
+
+دقت بالا
+معایب:
+
+جدا از Elasticsearch
+
+کندتر از ES
+
+پیچیدگی
+
+ج) QuadTree:
+مزایا:
+
+کنترل کامل
+
+Performance بالا
+معایب:
+
+پیچیدگی پیاده‌سازی
+
+بدون Persistence
+
+نیاز به Sync
+
+پیامدها:
+
+مثبت: سرعت بالا، دقت مناسب، یکپارچگی
+
+منفی: محاسبه Geohash، وابستگی به ES
+
+ریسک: اگه Geohash اشتباه محاسبه بشه → Unit Test
+
+ADR-007: انتخاب مکانیزم چندزبانگی و چندارزی
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربران از کشورهای مختلف با زبان‌ها و ارزهای مختلف. زمان پرواز به Timezone مختلف وابسته است. قیمت باید به ارز محلی نمایش داده بشه.
+
+تصمیم:
+از i18next برای UI، UTC در DB + تبدیل در Frontend، Currency API (بانک مرکزی) با Cache در Redis، و RTL/LTR با CSS dir استفاده می‌کنیم.
+
+دلیل تصمیم:
+i18next استاندارد صنعتی برای i18n. UTC در DB یعنی یکپارچگی زمان. Currency API نرخ لحظه‌ای می‌ده و Cache در Redis سرعت رو بالا می‌بره. RTL/LTR هم با CSS dir خودکار اعمال می‌شه.
+
+مزایا:
+
+پشتیبانی از همه‌ی زبان‌ها
+
+تبدیل خودکار ارز
+
+Timezone دقیق
+
+RTL/LTR خودکار
+
+معایب:
+
+پیچیدگی تبدیل زمان
+
+وابستگی به API خارجی
+
+کارمزد تبدیل ارز
+
+نیاز به بازبینی ترجمه
+
+موارد دیگر بررسی‌شده:
+
+الف) Hardcode زبان‌ها:
+مزایا:
+
+سادگی
+
+Performance بالا
+معایب:
+
+نیاز به نسخه‌گذاری
+
+نگهداری فاجعه
+
+پشتیبانی سخت
+
+ب) مترجم آنلاین:
+مزایا:
+
+پوشش خودکار
+
+بدون فایل JSON
+معایب:
+
+وابستگی به خارج
+
+حریم خصوصی
+
+هزینه‌ی بالا
+
+ج) قیمت ثابت به دلار:
+مزایا:
+
+سادگی
+
+یکپارچگی
+معایب:
+
+تجربه‌ی کاربری بد
+
+کاربرا گیج می‌شن
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: پشتیبانی جهانی، تبدیل خودکار، RTL/LTR
+
+منفی: پیچیدگی، وابستگی، کارمزد
+
+ریسک: اگه API ارز Down بشه → Fallback به آخرین نرخ Cache شده
+
+ADR-008: انتخاب مکانیزم مدیریت خطا و Resiliency
+وضعیت: پذیرفته شده
+
+زمینه:
+GDS (Amadeus/Sabre) ممکنه Down بشه یا کند بشه. اگه هر درخواست مستقیم به GDS بره و GDS کند باشه، کل سیستم کند می‌شه.
+
+تصمیم:
+از Circuit Breaker (Resilience4j) + Retry + Fallback (کش) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Circuit Breaker جلوی Cascading Failure رو می‌گیره. Retry خطاهای موقت رو جبران می‌کنه. Fallback هم اگه GDS Down باشه، از آخرین کش استفاده می‌کنه.
+
+مزایا:
+
+جلوگیری از Cascading Failure
+
+بازیابی خودکار
+
+Fallback برای تداوم سرویس
+
+Fail Fast
+
+معایب:
+
+تنظیم آستانه‌ها نیاز به تست داره
+
+Retry ممکنه مشکل رو بدتر کنه
+
+پیچیدگی Debugging
+
+نیاز به Monitoring دقیق
+
+موارد دیگر بررسی‌شده:
+
+الف) بدون Circuit Breaker:
+مزایا:
+
+سادگی
+
+بدون تنظیمات
+معایب:
+
+Cascading Failure
+
+Thread Pool اشباع می‌شه
+
+سیستم از پا می‌افته
+
+ب) Timeout ساده:
+مزایا:
+
+سادگی
+
+جلوگیری از انتظار بی‌نهایت
+معایب:
+
+کافی نیست
+
+بدون Fallback
+
+بدون Retry
+
+ج) Bulkhead به تنهایی:
+مزایا:
+
+جداسازی منابع
+
+جلوگیری از Exhaustion
+معایب:
+
+بدون قطع ارتباط
+
+بدون Fallback
+
+بدون Retry
+
+پیامدها:
+
+مثبت: مقاومت بالا، Fail Fast، تداوم سرویس
+
+منفی: پیچیدگی، نیاز به Monitoring
+
+ریسک: آستانه اشتباه → Alert و بازبینی
+
+ADR-009: انتخاب مکانیزم Versioning API
+وضعیت: پذیرفته شده
+
+زمینه:
+کلاینت‌ها (موبایل، وب) نسخه‌های مختلف دارن. اگه API رو تغییر بدیم، کلاینت‌های قدیمی خراب می‌شن. باید بدون شکستن کلاینت‌ها، API رو تکامل بدیم.
+
+تصمیم:
+از URL Versioning (/api/v1/...، /api/v2/...) با پشتیبانی حداقل ۶ ماهه استفاده می‌کنیم.
+
+دلیل تصمیم:
+URL Versioning ساده‌ترین و قابل‌فهم‌ترین روشه. کلاینت‌ها می‌دونن کدوم Version رو صدا بزنن. مستندات جداگانه برای هر Version. Deprecation اعلام ۳ ماه قبل.
+
+مزایا:
+
+کلاینت‌های قدیمی کار می‌کنن
+
+مهاجرت تدریجی
+
+مستندات جداگانه
+
+Debugging ساده
+
+معایب:
+
+نگهداری چند Version (کد Duplicate)
+
+تست بیشتر
+
+پیچیدگی Deploy
+
+Debt فنی
+
+موارد دیگر بررسی‌شده:
+
+الف) Header Versioning:
+مزایا:
+
+URL تمیز
+
+استاندارد REST
+معایب:
+
+کمتر رایجه
+
+Debugging سخت
+
+کلاینت باید Header بفرسته
+
+ب) Query Parameter Versioning:
+مزایا:
+
+سادگی
+
+URL قابل اشتراک
+معایب:
+
+زشت و غیراستاندارد
+
+Cache مشکل
+
+مستندات سخت
+
+ج) بدون Versioning:
+مزایا:
+
+سادگی
+
+نگهداری کمتر
+معایب:
+
+Breaking Change فاجعه
+
+کلاینت‌های قدیمی می‌شکنن
+
+کاربرا ناراضی
+
+پیامدها:
+
+مثبت: کلاینت‌ها بدون نگرانی آپدیت می‌کنن
+
+منفی: نگهداری چند Version، Debt فنی
+
+ریسک: Version قدیمی فراموش بشه → Monitoring و Alert
+
+ADR-010: انتخاب مکانیزم چرخه‌ی حیات داده
+وضعیت: پذیرفته شده
+
+زمینه:
+رزروها و داده‌های مالی باید ۷ سال نگه‌داری بشن (قانون مالیات). ولی داده‌های حجیم می‌شن و کوئری کند می‌شه. از طرف دیگه GDPR حق فراموشی رو الزامی کرده.
+
+تصمیم:
+از Tiered Storage + Soft Delete + Anonymization استفاده می‌کنیم:
+
+Hot (۶ ماه): PostgreSQL
+
+Warm (۶ ماه تا ۲ سال): Elasticsearch
+
+Cold (بیشتر از ۲ سال): S3 Glacier
+
+GDPR: Soft Delete + Anonymize بعد از ۳۰ روز
+
+دلیل تصمیم:
+هر داده تو دیتابیسی که برای سنش مناسبه ذخیره می‌شه. Soft Delete هم Foreign Keyها رو سالم نگه می‌داره و Anonymize حریم خصوصی رو تضمین می‌کنه. Job شبانه انتقال‌ها رو انجام می‌ده.
+
+مزایا:
+
+کاهش ۷۰٪ هزینه‌ی Storage
+
+کوئری سریع برای داده‌های اخیر
+
+Compliance با GDPR و قانون مالیات
+
+Foreign Keyها سالم می‌مونن
+
+معایب:
+
+تأخیر در بازیابی از Glacier
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring دقیق
+
+حجم دیتابیس بیشتر (به خاطر Soft Delete)
+
+موارد دیگر بررسی‌شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فوری فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص (Backups)
+
+Audit Trail از بین می‌ره
+
+ب) نگه‌داری همه چیز در PostgreSQL:
+مزایا:
+
+سادگی
+
+Query یکپارچه
+معایب:
+
+هزینه‌ی نجومی
+
+کندی با حجم زیاد
+
+Backup سنگین
+
+ج) بدون Archive:
+مزایا:
+
+سادگی
+
+بدون Job
+معایب:
+
+کوئری کند
+
+هزینه‌ی بالا
+
+نقض قانون
+
+پیامدها:
+
+مثبت: هزینه‌ی کم، Performance بالا، Compliance
+
+منفی: تأخیر Restore، پیچیدگی Job
+
+ریسک: اگه Job خطا کنه → DLQ و Retry و Alert
+************************************************************************************************************************
+
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، مدیریت کاربران
+
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Argon2
+
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود
+POST   /api/v1/auth/refresh           → تمدید توکن
+POST   /api/v1/auth/logout            → خروج
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش پروفایل
+DELETE /api/v1/users/{id}             → حذف حساب (GDPR)
+GET    /api/v1/users/{id}/bookings    → رزروهای کاربر
+
+
+۲. Hotel Service
+مسئولیت: مدیریت هتل‌ها، اتاق‌ها، موجودی، قیمت
+
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Elasticsearch
+
+APIها:
+
+text
+POST   /api/v1/hotels                 → ثبت هتل (Admin)
+GET    /api/v1/hotels/{id}            → جزئیات هتل
+PATCH  /api/v1/hotels/{id}            → ویرایش هتل
+DELETE /api/v1/hotels/{id}            → حذف هتل
+GET    /api/v1/hotels/search          → جستجوی هتل (فیلتر)
+GET    /api/v1/hotels/{id}/rooms      → لیست اتاق‌ها
+POST   /api/v1/hotels/{id}/rooms      → افزودن اتاق
+PATCH  /api/v1/rooms/{id}             → ویرایش اتاق
+GET    /api/v1/rooms/{id}/availability → موجودی اتاق
+
+
+۳. Flight Service
+مسئولیت: مدیریت پروازها، صندلی‌ها، قیمت، GDS Integration
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Amadeus/Sabre API
+
+APIها:
+
+text
+GET    /api/v1/flights/search          → جستجوی پرواز
+GET    /api/v1/flights/{id}            → جزئیات پرواز
+GET    /api/v1/flights/{id}/seats      → لیست صندلی‌ها
+GET    /api/v1/flights/{id}/price      → قیمت لحظه‌ای
+POST   /api/v1/flights/{id}/hold       → Hold صندلی
+GET    /api/v1/airlines                → لیست ایرلاین‌ها
+GET    /api/v1/airports                → لیست فرودگاه‌ها
+
+
+۴. Booking Service
+مسئولیت: مدیریت رزروها، ترکیب هتل و پرواز، تأیید
+تکنولوژی: Spring Boot، PostgreSQL، Kafka
+
+APIها:
+
+text
+POST   /api/v1/bookings                → ثبت رزرو
+GET    /api/v1/bookings/{id}           → جزئیات رزرو
+PATCH  /api/v1/bookings/{id}           → ویرایش رزرو
+DELETE /api/v1/bookings/{id}           → لغو رزرو
+GET    /api/v1/bookings                → لیست رزروها
+POST   /api/v1/bookings/package        → رزرو پکیج (هتل + پرواز)
+GET    /api/v1/bookings/{id}/status    → وضعیت رزرو
+۵. Payment Service
+مسئولیت: پرداخت، Refund، Escrow
+
+تکنولوژی: Spring Boot، PostgreSQL، Kafka، Stripe API
+
+APIها:
+
+text
+POST   /api/v1/payments/checkout        → شروع پرداخت
+POST   /api/v1/payments/webhook         → Webhook درگاه
+GET    /api/v1/payments/{id}            → وضعیت پرداخت
+POST   /api/v1/payments/{id}/refund     → بازگشت وجه
+GET    /api/v1/payments/history         → تاریخچه پرداخت
+POST   /api/v1/payments/verify          → تأیید پرداخت
+۶. Search Service
+مسئولیت: جستجوی هتل و پرواز با Elasticsearch
+
+تکنولوژی: Spring Boot، Elasticsearch، Kafka (CDC)
+
+APIها:
+
+text
+GET    /api/v1/search/hotels            → جستجوی هتل
+GET    /api/v1/search/flights           → جستجوی پرواز
+GET    /api/v1/search/combined          → جستجوی ترکیبی
+GET    /api/v1/search/geo               → جستجوی مکانی (شعاع)
+GET    /api/v1/search/suggest           → Auto-complete
+POST   /api/v1/search/reindex           → Reindex (Admin)
+۷. Pricing Service
+مسئولیت: قیمت‌گذاری پویا، Surge Pricing، تخفیف
+
+تکنولوژی: Spring Boot، Redis، Drools (Rule Engine)
+
+APIها:
+
+text
+GET    /api/v1/pricing/hotel/{id}       → قیمت هتل (با تخفیف)
+GET    /api/v1/pricing/flight/{id}      → قیمت پرواز
+POST   /api/v1/pricing/calculate        → محاسبه قیمت کل
+GET    /api/v1/pricing/rules            → قوانین قیمت
+POST   /api/v1/pricing/rules            → افزودن قانون (Admin)
+POST   /api/v1/pricing/currency         → تبدیل ارز
+۸. Saga Orchestrator Service
+مسئولیت: هماهنگی تراکنش توزیع‌شده (رزرو هتل + پرواز + پرداخت)
+
+تکنولوژی: Spring Boot، PostgreSQL (State)، Kafka، State Machine
+
+APIها:
+
+text
+POST   /api/v1/saga/start               → شروع Saga
+GET    /api/v1/saga/{id}                → وضعیت Saga
+POST   /api/v1/saga/{id}/compensate     → جبران
+GET    /api/v1/saga/{id}/steps          → مراحل
+POST   /api/v1/saga/{id}/retry          → Retry
+۹. Notification Service
+مسئولیت: Email، SMS، Push برای تأیید رزرو و یادآوری
+
+تکنولوژی: Spring Boot، Kafka، SendGrid، Kavenegar
+
+APIها:
+
+text
+POST   /api/v1/notifications/send       → ارسال اعلان
+GET    /api/v1/notifications            → لیست اعلان‌ها
+PATCH  /api/v1/notifications/{id}/read  → خوانده‌شده
+GET    /api/v1/notifications/settings   → تنظیمات
+PATCH  /api/v1/notifications/settings   → ویرایش تنظیمات
+POST   /api/v1/notifications/reminder   → یادآوری سفر
+۱۰. Archive Service
+مسئولیت: چرخه حیات داده، Tiered Storage، GDPR
+
+تکنولوژی: Spring Boot، PostgreSQL، Elasticsearch، S3، Glacier
+
+APIها:
+
+text
+POST   /api/v1/archive/request          → درخواست آرشیو
+POST   /api/v1/archive/restore          → درخواست بازیابی
+GET    /api/v1/archive/status/{id}      → وضعیت
+POST   /api/v1/gdpr/export              → خروجی داده کاربر
+DELETE /api/v1/gdpr/delete/{userId}     → حذف حساب (GDPR)
+GET    /api/v1/gdpr/audit               → لاگ GDPR
+۱۱. Review Service
+مسئولیت: نظرات و امتیازات هتل و پرواز
+
+تکنولوژی: Spring Boot، Cassandra، Redis، Kafka
+
+APIها:
+
+text
+POST   /api/v1/reviews                  → ثبت نظر
+GET    /api/v1/reviews/hotel/{id}       → نظرات هتل
+GET    /api/v1/reviews/flight/{id}      → نظرات پرواز
+PATCH  /api/v1/reviews/{id}             → ویرایش نظر
+DELETE /api/v1/reviews/{id}             → حذف نظر
+POST   /api/v1/reviews/{id}/helpful     → رأی مفید
+۱۲. Currency Service
+مسئولیت: نرخ ارز، تبدیل ارز، کش
+
+تکنولوژی: Spring Boot، Redis، Central Bank API
+
+APIها:
+
+text
+GET    /api/v1/currency/rates           → نرخ‌های ارز
+GET    /api/v1/currency/convert         → تبدیل ارز
+GET    /api/v1/currency/supported       → ارزهای پشتیبانی‌شده
+POST   /api/v1/currency/refresh         → بروزرسانی نرخ (Admin)
+۱۳. Admin Service
+مسئولیت: مدیریت سیستم، گزارش‌گیری، تنظیمات
+
+تکنولوژی: Spring Boot، PostgreSQL، ClickHouse
+
+APIها:
+
+text
+GET    /api/v1/admin/dashboard          → داشبورد
+GET    /api/v1/admin/reports/bookings   → گزارش رزروها
+GET    /api/v1/admin/reports/revenue    → گزارش درآمد
+POST   /api/v1/admin/config             → تنظیمات سیستم
+GET    /api/v1/admin/logs               → لاگ‌ها
+POST   /api/v1/admin/users/{id}/ban     → مسدودسازی کاربر
+🔧 لایه Component (برای هر سرویس)
+۱. User Service
+Component	نوع	مسئولیت
+AuthController	@RestController	ثبت‌نام، ورود، خروج
+UserController	@RestController	پروفایل
+AuthService	@Service	احراز هویت، JWT
+UserService	@Service	منطق کاربر
+UserRepository	@Repository	PostgreSQL
+JwtProvider	@Component	تولید JWT
+PasswordEncoder	@Component	Argon2
+EventPublisher	@Component	Kafka
+۲. Hotel Service
+Component	نوع	مسئولیت
+HotelController	@RestController	مدیریت هتل
+RoomController	@RestController	مدیریت اتاق
+HotelService	@Service	منطق هتل
+RoomService	@Service	منطق اتاق
+AvailabilityService	@Service	موجودی
+HotelRepository	@Repository	PostgreSQL
+RoomRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+EventPublisher	@Component	Kafka
+۳. Flight Service
+Component	نوع	مسئولیت
+FlightController	@RestController	مدیریت پرواز
+SeatController	@RestController	مدیریت صندلی
+FlightService	@Service	منطق پرواز
+GdsAdapter	@Component	Amadeus/Sabre
+PricingClient	@Component	دریافت قیمت
+FlightRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+CircuitBreaker	@Component	Resilience4j
+۴. Booking Service
+Component	نوع	مسئولیت
+BookingController	@RestController	مدیریت رزرو
+PackageController	@RestController	پکیج سفر
+BookingService	@Service	منطق رزرو
+PackageService	@Service	منطق پکیج
+BookingRepository	@Repository	PostgreSQL
+SagaClient	@Component	ارتباط با Saga
+EventPublisher	@Component	Kafka
+۵. Payment Service
+Component	نوع	مسئولیت
+PaymentController	@RestController	مدیریت پرداخت
+RefundController	@RestController	بازگشت وجه
+PaymentService	@Service	منطق پرداخت
+RefundService	@Service	منطق Refund
+PaymentGateway	@Component	Stripe API
+PaymentRepository	@Repository	PostgreSQL
+IdempotencyGuard	@Component	Redis
+EventPublisher	@Component	Kafka
+۶. Search Service
+Component	نوع	مسئولیت
+SearchController	@RestController	جستجو
+HotelSearchService	@Service	جستجوی هتل
+FlightSearchService	@Service	جستجوی پرواز
+GeoSearchService	@Service	جستجوی مکانی
+IndexManager	@Component	ES Index
+KafkaConsumer	@Component	CDC
+ElasticsearchClient	@Component	ES SDK
+۷. Pricing Service
+Component	نوع	مسئولیت
+PricingController	@RestController	قیمت‌گذاری
+PricingService	@Service	منطق قیمت
+RuleEngine	@Component	Drools
+CurrencyConverter	@Component	تبدیل ارز
+DiscountService	@Service	تخفیف
+RedisCache	@Component	Redis
+KafkaProducer	@Component	Kafka
+۸. Saga Orchestrator Service
+Component	نوع	مسئولیت
+SagaController	@RestController	مدیریت Saga
+SagaOrchestrator	@Service	هماهنگی
+StateMachine	@Component	Spring State Machine
+SagaRepository	@Repository	PostgreSQL
+CompensatingHandler	@Component	جبران
+KafkaProducer	@Component	Kafka
+KafkaConsumer	@Component	Kafka
+۹. Notification Service
+Component	نوع	مسئولیت
+NotificationController	@RestController	ارسال اعلان
+NotificationService	@Service	منطق اعلان
+KafkaConsumer	@Component	مصرف رویدادها
+EmailSender	@Component	SendGrid
+SmsSender	@Component	Kavenegar
+PushSender	@Component	FCM
+NotificationRepository	@Repository	PostgreSQL
+۱۰. Archive Service
+Component	نوع	مسئولیت
+ArchiveController	@RestController	درخواست آرشیو
+ArchiveService	@Service	منطق آرشیو
+TieredStorageManager	@Service	Hot/Warm/Cold
+GdprAnonymizer	@Service	Anonymize
+RestoreJob	@Component	بازیابی
+ArchiveRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+GlacierClient	@Component	Glacier SDK
+۱۱. Review Service
+Component	نوع	مسئولیت
+ReviewController	@RestController	مدیریت نظر
+ReviewService	@Service	منطق نظر
+RatingCalculator	@Component	محاسبه امتیاز
+ReviewRepository	@Repository	Cassandra
+CacheManager	@Component	Redis
+KafkaProducer	@Component	Kafka
+۱۲. Currency Service
+Component	نوع	مسئولیت
+CurrencyController	@RestController	مدیریت ارز
+CurrencyService	@Service	منطق تبدیل
+RateProvider	@Component	Central Bank API
+CurrencyCache	@Component	Redis
+FallbackHandler	@Component	Fallback
+۱۳. Admin Service
+Component	نوع	مسئولیت
+AdminController	@RestController	داشبورد
+ReportController	@RestController	گزارش‌ها
+ConfigController	@RestController	تنظیمات
+DashboardService	@Service	داشبورد
+ReportService	@Service	گزارش‌گیری
+ConfigService	@Service	تنظیمات
+ClickHouseClient	@Component	ClickHouse
+AuditLogger	@Component	Audit
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+Service Discovery	Eureka/Consul	ثبت و کشف سرویس‌ها
+Config Server	Spring Cloud Config	تنظیمات مرکزی
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Lock + Session
+PostgreSQL	Postgres 16	داده ساختاریافته
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	Archive + Backup
+Glacier	AWS Glacier	Cold Archive
+CDN	CloudFront	توزیع محتوا
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Hotel Service ──→ PostgreSQL + Redis
+       ├──→ Flight Service ──→ PostgreSQL + GDS
+       ├──→ Booking Service ──→ PostgreSQL + Kafka
+       ├──→ Payment Service ──→ PostgreSQL + Stripe
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Pricing Service ──→ Redis + Drools
+       ├──→ Saga Orchestrator ──→ PostgreSQL + Kafka
+       ├──→ Notification Service ──→ Kafka + SendGrid
+       ├──→ Archive Service ──→ S3 + Glacier
+       ├──→ Review Service ──→ Cassandra + Redis
+       ├──→ Currency Service ──→ Redis + Central Bank
+       └──→ Admin Service ──→ ClickHouse + PostgreSQL
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus بین سرویس‌ها
+└──────────────┘

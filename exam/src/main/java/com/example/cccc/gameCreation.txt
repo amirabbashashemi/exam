@@ -1,0 +1,1223 @@
+ADR-001: Runtime Engine برای Cross-Platform
+وضعیت: پذیرفته شده
+
+زمینه:
+بازی‌هایی که کاربرا می‌سازن باید روی ویندوز، لینوکس و مک اجرا بشن. نمی‌شه برای هر سیستمعامل جداگانه کد زد. باید یه لایه‌ی میانی داشته باشیم که یه بار نوشته بشه و همه‌جا کار کنه.
+
+تصمیم:
+از WebAssembly (WASM) به عنوان Runtime اصلی و Electron برای پوسته‌ی دسکتاپ استفاده می‌کنیم.
+
+دلیل تصمیم:
+WASM یه بار کامپایل می‌شه و روی هر OS و حتی مرورگر اجرا می‌شه. Electron هم دسترسی به فایل‌سیستم و سخت‌افزار رو فراهم می‌کنه. این ترکیب یعنی یه کدبیس برای همه پلتفرم‌ها. تجربه‌ی موفقی هم توی پروژه‌هایی مثل Figma و VS Code داشته.
+
+مزایا:
+
+یه کدبیس برای ویندوز، لینوکس، مک و مرورگر
+
+Sandbox امن برای کد کاربر
+
+راه‌اندازی سریع (زیر ۵۰ میلی‌ثانیه)
+
+اجرای بازی تو مرورگر بدون نیاز به نصب
+
+معایب:
+
+Performance کمی پایین‌تر از Native، مخصوصاً تو گرافیک سنگین
+
+دیباگ کردن کد WASM سخت‌تره
+
+بعضی کتابخانه‌های C++ هنوز پشتیبانی کامل ندارن
+
+حجم Bundle Electron سنگینه
+
+موارد دیگر بررسی‌شده:
+
+الف) کد Native برای هر OS:
+مزایا:
+
+بهترین Performance
+
+دسترسی کامل به سخت‌افزار
+معایب:
+
+سه کدبیس جدا
+
+نگهداری خیلی سخت
+
+تیم بزرگ لازمه
+
+ب) Unity یا Unreal:
+مزایا:
+
+زیرساخت آماده
+
+Cross-platform خودکار
+معایب:
+
+وابستگی به شرکت خارجی
+
+هزینه لایسنس
+
+ما خودمون می‌خوایم پلتفرم ساخت بازی باشیم، نه کاربر
+
+ج) فقط وب (بدون دسکتاپ):
+مزایا:
+
+سادگی
+
+بدون نصب
+معایب:
+
+دسترسی محدود به سخت‌افزار
+
+Performance پایین
+
+تجربه‌ی ضعیف برای بازی‌های سنگین
+
+پیامدها:
+
+مثبت: یه کدبیس، Sandbox امن، Cross-platform
+
+منفی: Performance کمتر، پیچیدگی WASM
+
+ریسک: اگه WASM پشتیبانی نشه، Fallback به asm.js
+---***------------------------------------------------------------------------------------------------------------------
+ADR-002: Sandbox برای اجرای کد کاربران
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا کد بازی می‌نویسن. اگه این کد مستقیم روی سرور اجرا بشه، یه کاربر مخرب می‌تونه ویروس بفرسته یا اطلاعات بقیه رو بدزده. باید یه محیط ایزوله داشته باشیم که کد کاربر محدود بمونه.
+
+تصمیم:
+از WASM Sandbox به همراه V8 Isolates استفاده می‌کنیم.
+
+دلیل تصمیم:
+WASM Sandbox کد کاربر رو تو یه محیط محدود اجرا می‌کنه که فقط به APIهای مجاز دسترسی داره. V8 Isolates هم یعنی هر بازی تو یه محیط جدا اجرا می‌شه و نمی‌تونه به بقیه آسیب بزنه. این ترکیب امنیت بالا و Performance خوب رو با هم داره.
+
+مزایا:
+
+امنیت بالا (کد کاربر به فایل‌سیستم و شبکه دسترسی نداره)
+
+ایزوله بین بازی‌ها
+
+Performance خوب با V8 JIT
+
+راه‌اندازی سریع، بدون Docker
+
+معایب:
+
+محدودیت در قدرت بازی
+
+پیچیدگی پیاده‌سازی
+
+نیاز به طراحی دقیق APIهای مجاز
+
+دیباگ کردن خطاها تو Sandbox سخته
+
+موارد دیگر بررسی‌شده:
+
+الف) Docker Container برای هر بازی:
+مزایا:
+
+ایزوله‌ی کامل
+
+دسترسی به هر چیزی با تنظیمات
+معایب:
+
+هزینه‌ی بالا برای ۱۰۰ هزار بازی
+
+راه‌اندازی کند
+
+Overhead زیاد
+
+ب) Virtual Machine:
+مزایا:
+
+ایزوله‌ی سخت‌افزاری
+
+امنیت بالا
+معایب:
+
+هزینه‌ی بسیار بالا
+
+راه‌اندازی خیلی کند
+
+برای ۱۰۰ هزار بازی عملاً غیرممکنه
+
+ج) بدون Sandbox:
+مزایا:
+
+Performance کامل
+
+سادگی
+معایب:
+
+امنیت صفر
+
+کاربر می‌تونه به سیستم آسیب بزنه
+
+نقض قوانین
+
+پیامدها:
+
+مثبت: امنیت بالا، ایزوله، Performance خوب
+
+منفی: محدودیت API، پیچیدگی
+
+ریسک: اگه Sandbox نفوذپذیر باشه → Penetration Test دوره‌ای
+
+---***------------------------------------------------------------------------------------------------------------------
+ADR-003: ذخیره‌سازی پروژه با نسخه‌بندی
+وضعیت: پذیرفته شده
+
+زمینه:
+سازنده‌ها دارن بازی می‌سازن و ممکنه هر لحظه تغییراتشون رو ذخیره کنن. اگه تغییر بزرگی بدن و پشیمون بشن، باید بتونن به نسخه‌ی قبل برگردن. حجم پروژه‌ها هم می‌تونه زیاد باشه.
+
+تصمیم:
+از Op Log + Snapshot با Cassandra و S3 استفاده می‌کنیم.
+
+دلیل تصمیم:
+هر تغییر به صورت یه Operation ثبت می‌شه و تو Cassandra ذخیره می‌شه. هر ۱۰۰۰ تغییر، یه Snapshot کامل تو S3 ذخیره می‌شه. برای بازگردانی، آخرین Snapshot قبل از نسخه‌ی هدف رو می‌گیریم و Opهای بعدش رو اعمال می‌کنیم. این روش حجم ذخیره‌سازی رو بهینه می‌کنه.
+
+مزایا:
+
+کاربر می‌تونه به هر نسخه‌ای برگرده
+
+حجم ذخیره‌سازی بهینه (Snapshot + Delta)
+
+Audit Trail کامل
+
+Write سریع با Cassandra
+
+معایب:
+
+پیاده‌سازی پیچیده (Op Log و Replay)
+
+نیاز به Job برای Snapshot دوره‌ای
+
+Replay ممکنه برای پروژه‌های بزرگ کند باشه
+
+مدیریت State سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) ذخیره‌ی کل پروژه در هر تغییر:
+مزایا:
+
+سادگی
+
+بازگردانی سریع
+معایب:
+
+حجم نجومی
+
+کندی در Write
+
+هزینه‌ی بالا
+
+ب) Git-like (فقط Diff):
+مزایا:
+
+حجم کم
+
+استاندارد
+معایب:
+
+Merge پیچیده
+
+Conflict Resolution سخت
+
+برای داده‌های Binary مناسب نیست
+
+ج) بدون نسخه‌بندی:
+مزایا:
+
+سادگی
+
+Performance بالا
+معایب:
+
+از دست رفتن تغییرات
+
+کاربر ناراضی
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: نسخه‌بندی کامل، حجم بهینه، Audit Trail
+
+منفی: پیچیدگی، Job Snapshot
+
+ریسک: اگه Snapshot خطا کنه → DLQ و Retry و Alert
+
+---***------------------------------------------------------------------------------------------------------------------
+ADR-004: Multiplayer State Sync
+وضعیت: پذیرفته شده
+
+زمینه:
+بازی‌های Multiplayer باید Stateشون بین بازیکنا هماهنگ بمونه. اگه هر کلاینت خودش تصمیم بگیره، هر کدوم یه چیزی می‌بینه و بازی خراب می‌شه. اگه هم صبر کنیم تا سرور جواب بده، بازی Lag داره.
+
+تصمیم:
+از Server-Authoritative به همراه Client-side Prediction و Rollback استفاده می‌کنیم.
+
+دلیل تصمیم:
+سرور تصمیم‌گیرنده‌ی اصلیه و کلاینت فقط ورودی می‌فرسته. برای اینکه بازی Lag نداشته باشه، کلاینت خودش حدس می‌زنه (Prediction) و اگه با سرور اختلاف شد، Rollback می‌کنه و دوباره اعمال می‌کنه. این روش تو بازی‌هایی مثل Overwatch و Valorant جواب داده.
+
+مزایا:
+
+تقلب خیلی سخت می‌شه
+
+تجربه‌ی روان برای بازیکن
+
+سازگار با انواع بازی (FPS، RTS، Racing)
+
+امنیت بالا
+
+معایب:
+
+پیاده‌سازی پیچیده (Prediction و Rollback)
+
+نیاز به سرور قدرتمند
+
+برای بازیکنای دور، Prediction سخت‌تر
+
+دیباگ کردن سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Lockstep:
+مزایا:
+
+سادگی
+
+Deterministic
+معایب:
+
+فقط برای بازی‌های نوبتی
+
+تأخیر فاجعه‌بار برای بازی‌های سریع
+
+حساس به Latency
+
+ب) P2P:
+مزایا:
+
+هزینه‌ی کم
+
+بدون سرور مرکزی
+معایب:
+
+NAT Traversal سخت
+
+تقلب راحت
+
+تجربه‌ی ضعیف
+
+ج) Client-Authoritative:
+مزایا:
+
+سادگی
+
+بدون سرور
+معایب:
+
+تقلب بسیار راحت
+
+ناهماهنگی بین کلاینتا
+
+غیرقابل قبول برای بازی‌های رقابتی
+
+پیامدها:
+
+مثبت: امنیت، تجربه‌ی روان، سازگار با انواع بازی
+
+منفی: پیچیدگی، نیاز به سرور قدرتمند
+
+ریسک: Latency بالا → Region-based Servers و Matchmaking
+
+---***------------------------------------------------------------------------------------------------------------------
+ADR-005: Editor با Real-time Collaboration
+وضعیت: پذیرفته شده
+
+زمینه:
+چند سازنده ممکنه همزمان روی یه پروژه کار کنن. تغییرات باید Real-time بین همه Sync بشه. اگه دو نفر همزمان یه Object رو تغییر بدن، نباید Conflict پیش بیاد.
+
+تصمیم:
+از CRDT (Yjs) به همراه WebSocket برای Editor استفاده می‌کنیم.
+
+دلیل تصمیم:
+CRDT تغییرات رو خودکار Merge می‌کنه، بدون نیاز به Conflict Resolution دستی. Yjs یه کتابخانه‌ی بالغ CRDT هست که برای Editor طراحی شده. WebSocket هم برای Real-time Communication استفاده می‌شه.
+
+مزایا:
+
+Merge خودکار بدون Conflict
+
+Offline Support (کاربر می‌تونه آفلاین کار کنه)
+
+Real-time Collaboration
+
+Peer-to-Peer ممکن
+
+معایب:
+
+Memory Overhead (حدود ۱۰٪ حجم پروژه)
+
+CRDT Document Size رشد می‌کنه
+
+دیباگ کردن سخت‌تر
+
+نیاز به کتابخانه‌ی سنگین
+
+موارد دیگر بررسی‌شده:
+
+الف) OT (Operational Transformation):
+مزایا:
+
+استاندارد (Google Docs)
+
+Memory کمتر
+معایب:
+
+نیاز به Central Server
+
+پیچیدگی O(n²)
+
+Backward Transform سخت
+
+ب) Locking:
+مزایا:
+
+بدون Conflict
+
+سادگی
+معایب:
+
+فقط یه نفر همزمان
+
+Lock Timeout
+
+UX بد
+
+ج) Versioning و Merge دستی:
+مزایا:
+
+سادگی
+
+کنترل کامل
+معایب:
+
+Conflict دستی
+
+UX فاجعه
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: Merge خودکار، Offline، Real-time
+
+منفی: Memory Overhead، پیچیدگی
+
+ریسک: اگه CRDT Size رشد کنه → Snapshot و Garbage Collection
+
+---***------------------------------------------------------------------------------------------------------------------
+ADR-006: Asset Store
+وضعیت: پذیرفته شده
+
+زمینه:
+سازنده‌ها Assetهاشون (مدل سه‌بعدی، صدا، انیمیشن) رو آپلود می‌کنن. بقیه باید بتونن ازشون استفاده کنن. Assetها حجم زیادی دارن و باید سریع دانلود بشن. فرمت‌های ورودی هم متنوعه.
+
+تصمیم:
+از S3 به همراه CDN، Kafka و Assimp/FFmpeg برای Asset Pipeline استفاده می‌کنیم.
+
+دلیل تصمیم:
+Assetها تو S3 ذخیره می‌شن و با CDN توزیع می‌شن. وقتی کاربر آپلود می‌کنه، یه Event به Kafka می‌ره. Worker با Assimp (برای مدل‌های سه‌بعدی) و FFmpeg (برای صدا و ویدیو) Asset رو به فرمت استاندارد تبدیل می‌کنه.
+
+مزایا:
+
+دسترسی سریع با CDN
+
+تبدیل خودکار فرمت
+
+نسخه‌بندی Asset
+
+مقیاس‌پذیری نامحدود با S3
+
+معایب:
+
+هزینه‌ی S3 و CDN بالا برای Assetهای حجیم
+
+زمان پردازش برای Assetهای سنگین
+
+وابستگی به Assimp و FFmpeg
+
+نیاز به Moderation
+
+موارد دیگر بررسی‌شده:
+
+الف) ذخیره‌ی Asset در دیتابیس:
+مزایا:
+
+یکپارچگی
+
+Query ساده
+معایب:
+
+DB منفجر می‌شه
+
+کندی
+
+هزینه‌ی نجومی
+
+ب) فایل‌سیستم محلی:
+مزایا:
+
+سرعت بالا
+
+سادگی
+معایب:
+
+مقیاس‌پذیری محدود
+
+Backup سخت
+
+بدون CDN
+
+ج) Asset Store خارجی:
+مزایا:
+
+بدون نگهداری
+
+تنوع بالا
+معایب:
+
+وابستگی به خارج
+
+هزینه‌ی اشتراک
+
+کنترل کم
+
+پیامدها:
+
+مثبت: دسترسی سریع، تبدیل خودکار، مقیاس‌پذیری
+
+منفی: هزینه‌ی S3 و CDN، زمان پردازش
+
+ریسک: اگه Conversion خطا کنه → DLQ و Retry و Alert
+---***------------------------------------------------------------------------------------------------------------------
+ADR-007: Visual Scripting
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربران غیرفنی می‌خوان بدون کدنویسی، منطق بازی رو بسازن. نمی‌تونیم ازشون بخوایم C# یا JavaScript بنویسن. باید یه رابط بصری داشته باشیم.
+
+تصمیم:
+از Node-Based Editor (Visual Scripting) با کامپایل به WASM استفاده می‌کنیم.
+
+دلیل تصمیم:
+کاربر با کشیدن و رها کردن Nodeها منطق بازی رو می‌سازه. هر Node یه عمل داره. این Graph بعداً به WASM کامپایل می‌شه و اجرا می‌شه. این دقیقاً همون کاریه که Unreal با Blueprints می‌کنه.
+
+مزایا:
+
+کاربر غیرفنی می‌تونه منطق پیچیده بسازه
+
+بصری هست و دیباگ کردن راحت‌تره
+
+می‌شه کد هم بهش اضافه کرد
+
+کامپایل به WASM یعنی Performance خوب
+
+معایب:
+
+برای منطق‌های خیلی پیچیده، Graph شلوغ می‌شه
+
+Performance پایین‌تر از کد خالص
+
+نیاز به آموزش کاربر
+
+پیچیدگی پیاده‌سازی Editor
+
+موارد دیگر بررسی‌شده:
+
+الف) Text-Based Scripting:
+مزایا:
+
+قدرت کامل
+
+Performance بالا
+معایب:
+
+کاربر غیرفنی نمی‌تونه
+
+آموزش سخت
+
+نیاز به Sandbox
+
+ب) Block-Based:
+مزایا:
+
+برای بچه‌ها عالیه
+
+سادگی
+معایب:
+
+برای بازی‌های حرفه‌ای محدود
+
+کاربر بزرگسال باهاش ارتباط نمی‌گیره
+
+ج) فقط Template:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+محدودیت شدید
+
+بدون خلاقیت
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: کاربر غیرفنی می‌تونه، بصری، دیباگ راحت
+
+منفی: پیچیدگی Editor، Graph شلوغ
+
+ریسک: اگه Performance پایین باشه → Compile به WASM و Optimize
+---***------------------------------------------------------------------------------------------------------------------
+ADR-008: Monetization و Payout
+وضعیت: پذیرفته شده
+
+زمینه:
+سازنده‌ها می‌خوان از بازی‌هاشون درآمد داشته باشن. باید مطمئن باشیم پول درست تقسیم می‌شه و کلاهبرداری نمی‌شه. از طرف دیگه، مالیات و KYC هم باید رعایت بشه.
+
+تصمیم:
+از Escrow به همراه Rule Engine (Drools) و KYC استفاده می‌کنیم.
+
+دلیل تصمیم:
+پول تو یه حساب امن می‌مونه تا معامله کامل بشه. Rule Engine قوانین تقسیم درآمد رو تعیین می‌کنه. KYC هم هویت سازنده رو تأیید می‌کنه. این ترکیب امنیت مالی و Compliance رو با هم داره.
+
+مزایا:
+
+امنیت مالی با Escrow
+
+قوانین پویا با Rule Engine
+
+جلوگیری از کلاهبرداری با KYC
+
+Compliance با مالیات
+
+معایب:
+
+پیچیدگی پیاده‌سازی
+
+هزینه‌ی KYC برای هر سازنده
+
+زمان تسویه چند روزه
+
+نیاز به تیم مالی
+
+موارد دیگر بررسی‌شده:
+
+الف) پرداخت مستقیم:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+ریسک کلاهبرداری
+
+بدون محافظت از کاربر
+
+نقض قوانین
+
+ب) پرداخت با کریپتو:
+مزایا:
+
+سرعت بالا
+
+هزینه‌ی کم
+معایب:
+
+نوسان قیمت
+
+پیچیدگی قانونی
+
+کاربرا آشنا نیستن
+
+ج) بدون Monetization:
+مزایا:
+
+سادگی
+
+بدون پیچیدگی مالی
+معایب:
+
+سازنده‌ها انگیزه ندارن
+
+درآمد از دست می‌ره
+
+رقبا جلو می‌افتن
+
+پیامدها:
+
+مثبت: امنیت مالی، قوانین پویا، Compliance
+
+منفی: پیچیدگی، هزینه‌ی KYC، زمان تسویه
+
+ریسک: اگه KYC خطا کنه → Manual Review و Alert
+---***------------------------------------------------------------------------------------------------------------------
+ADR-009: Live Update بازی‌ها
+وضعیت: پذیرفته شده
+
+زمینه:
+سازنده‌ها بازی رو منتشر می‌کنن و بعداً می‌خوان تغییرات بدن. کاربرا نباید مجبور بشن دوباره دانلود کنن. تغییرات باید بدون قطعی اعمال بشن.
+
+تصمیم:
+از Hot Reload به همراه Versioned Assets و CDN Invalidation استفاده می‌کنیم.
+
+دلیل تصمیم:
+بازی از Assetهای Versioned استفاده می‌کنه. وقتی سازنده Asset رو آپدیت می‌کنه، نسخه‌ی جدید تو S3 ذخیره می‌شه و CDN Invalidate می‌شه. کلاینت موقع لود بعدی، نسخه‌ی جدید رو می‌گیره.
+
+مزایا:
+
+بدون نیاز به دانلود مجدد کل بازی
+
+تغییرات سریع اعمال می‌شن
+
+کاربر تجربه‌ی قطعی نداره
+
+کاهش بار CDN
+
+معایب:
+
+پیچیدگی Versioning Asset
+
+نیاز به CDN Invalidation دقیق
+
+ممکنه کاربر نسخه‌ی قدیمی ببینه
+
+برای تغییرات بزرگ کافی نیست
+
+موارد دیگر بررسی‌شده:
+
+الف) دانلود مجدد کل بازی:
+مزایا:
+
+سادگی
+
+یکپارچگی
+معایب:
+
+زمان‌بر
+
+مصرف Bandwidth بالا
+
+کاربر ناراضی
+
+ب) بدون Live Update:
+مزایا:
+
+سادگی
+
+Performance پایدار
+معایب:
+
+باگ‌ها اصلاح نمی‌شن
+
+محتوا به‌روز نمی‌شه
+
+کاربر ناراضی
+
+ج) Delta Update:
+مزایا:
+
+حجم کم
+
+سرعت بالا
+معایب:
+
+پیچیدگی محاسبه‌ی Delta
+
+مدیریت نسخه‌ها سخت
+
+دیباگ سخت
+
+پیامدها:
+
+مثبت: بدون قطعی، تغییرات سریع، کاهش Bandwidth
+
+منفی: پیچیدگی Versioning، CDN Invalidation
+
+ریسک: اگه Cache قدیمی بمونه → Version Query Param و CDN Purge
+---***------------------------------------------------------------------------------------------------------------------
+ADR-010: کاهش پیچیدگی و Lifecycle Management
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم قراره چند سال زنده بمونه. هر روز قابلیت جدید اضافه می‌شه، تیم بزرگ‌تر می‌شه و تعداد سرویس‌ها زیاد. اگه از اول به فکر نگهداری نباشیم، بعد از دو سال به یه هیولای غیرقابل نگهداری تبدیل می‌شیم.
+
+تصمیم:
+از استانداردسازی Tech Stack، Documentation as Code و Deprecation Policy استفاده می‌کنیم.
+
+دلیل تصمیم:
+Tech Stack یکسان یعنی استخدام و آموزش ساده‌تر. Documentation as Code یعنی مستندات همیشه به‌روز. Deprecation Policy هم یعنی سرویس‌های قدیمی به موقع بازنشسته می‌شن.
+
+مزایا:
+
+استخدام و آموزش ساده‌تر
+
+مستندات همیشه به‌روز
+
+کاهش تدریجی پیچیدگی
+
+Onboarding سریع
+
+معایب:
+
+محدودیت در انتخاب تکنولوژی
+
+زمان نوشتن مستندات
+
+سختگیری در CI/CD
+
+نیاز به Documentation Champion
+
+موارد دیگر بررسی‌شده:
+
+الف) چند زبان مختلف:
+مزایا:
+
+هر تیم بهترین ابزار رو انتخاب می‌کنه
+
+آزادی عمل
+معایب:
+
+استخدام سخت
+
+آموزش سخت
+
+دیباگ فاجعه
+
+کتابخانه‌ی مشترک نداریم
+
+ب) بدون Deprecation Policy:
+مزایا:
+
+سادگی
+
+بدون فشار به تیم‌ها
+معایب:
+
+سرویس‌های قدیمی جمع می‌شن
+
+کتابخانه‌های قدیمی باگ امنیتی دارن
+
+پیچیدگی روزافزون
+
+ج) بدون Documentation:
+مزایا:
+
+سرعت اولیه
+معایب:
+
+Onboarding کند
+
+دانش تو سر افراد می‌مونه
+
+ADRها فراموش می‌شن
+
+پیامدها:
+
+مثبت: نگهداری آسان، Onboarding سریع، کاهش پیچیدگی
+
+منفی: محدودیت تکنولوژی، زمان مستندسازی
+
+ریسک: اگه Documentation آپدیت نشه → CI Check و Documentation Champion
+************************************************************************************************************************
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، MFA، مدیریت کاربران
+
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Argon2
+
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود (با MFA)
+POST   /api/v1/auth/verify-otp        → تأیید OTP
+POST   /api/v1/auth/refresh           → تمدید توکن
+POST   /api/v1/auth/logout            → خروج
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش پروفایل
+POST   /api/v1/users/{id}/mfa/enable  → فعال‌سازی MFA
+DELETE /api/v1/users/{id}             → حذف حساب (GDPR)
+GET    /api/v1/users/{id}/roles       → نقش‌ها
+۲. Project Service
+مسئولیت: مدیریت پروژه‌ها، نسخه‌بندی (Op Log + Snapshot)
+
+تکنولوژی: Spring Boot، PostgreSQL، Cassandra (Op Log)، S3 (Snapshot)
+
+APIها:
+
+text
+POST   /api/v1/projects                → ساخت پروژه
+GET    /api/v1/projects/{id}           → دریافت پروژه
+PATCH  /api/v1/projects/{id}           → ویرایش
+DELETE /api/v1/projects/{id}           → حذف
+GET    /api/v1/projects/{id}/versions  → تاریخچه نسخه‌ها
+POST   /api/v1/projects/{id}/versions  → ذخیره نسخه جدید
+POST   /api/v1/projects/{id}/restore/{versionId} → بازگردانی
+GET    /api/v1/projects/{id}/snapshots → لیست Snapshotها
+۳. Editor Service
+مسئولیت: Node Graph، Visual Scripting، Real-time Collaboration
+
+تکنولوژی: Spring Boot، WebSocket، CRDT (Yjs)، Redis
+
+APIها:
+
+text
+GET    /api/v1/editor/{projectId}/graph      → دریافت گراف
+PUT    /api/v1/editor/{projectId}/graph      → ذخیره گراف
+POST   /api/v1/editor/{projectId}/nodes      → افزودن Node
+PATCH  /api/v1/editor/{projectId}/nodes/{id} → ویرایش Node
+DELETE /api/v1/editor/{projectId}/nodes/{id} → حذف Node
+POST   /api/v1/editor/{projectId}/compile    → کامپایل به WASM
+WS     /ws/editor/{projectId}                → Real-time Collaboration
+۴. Runtime Service
+مسئولیت: اجرای بازی‌ها (WASM)، Sandbox
+
+تکنولوژی: Rust + WASM، V8 Isolates، K8s
+
+APIها:
+
+text
+POST   /api/v1/runtime/sessions          → شروع Session
+GET    /api/v1/runtime/sessions/{id}     → وضعیت Session
+DELETE /api/v1/runtime/sessions/{id}     → پایان Session
+POST   /api/v1/runtime/build             → Build بازی
+GET    /api/v1/runtime/{gameId}/logs     → لاگ‌ها
+WS     /ws/runtime/{sessionId}           → ارتباط بلادرنگ
+۵. Asset Service
+مسئولیت: آپلود، تبدیل، نسخه‌بندی Asset
+
+تکنولوژی: Spring Boot، S3، Kafka، FFmpeg، Assimp، CDN
+
+APIها:
+
+text
+POST   /api/v1/assets/upload/initiate    → شروع آپلود (Presigned URL)
+POST   /api/v1/assets/upload/complete    → تکمیل آپلود
+GET    /api/v1/assets/{id}               → دریافت Asset
+GET    /api/v1/assets/{id}/versions      → نسخه‌ها
+DELETE /api/v1/assets/{id}               → حذف
+GET    /api/v1/assets/search             → جستجو
+POST   /api/v1/assets/{id}/convert       → تبدیل فرمت
+۶. Template Service
+مسئولیت: قالب‌های آماده (Platformer، Shooter، Puzzle)
+
+تکنولوژی: Spring Boot، PostgreSQL (JSONB)، Redis
+
+APIها:
+
+text
+GET    /api/v1/templates                 → لیست قالب‌ها
+GET    /api/v1/templates/{id}            → جزئیات قالب
+POST   /api/v1/templates                 → افزودن قالب (Admin)
+POST   /api/v1/templates/{id}/apply      → اعمال قالب به پروژه
+GET    /api/v1/templates/categories      → دسته‌بندی‌ها
+۷. Matchmaking Service
+مسئولیت: تخصیص بازیکن به سرور، تشکیل تیم
+
+تکنولوژی: Spring Boot، Redis (Lock)، Kafka
+
+APIها:
+
+text
+POST   /api/v1/matchmaking/queue         → ورود به صف
+DELETE /api/v1/matchmaking/queue/{id}    → خروج از صف
+GET    /api/v1/matchmaking/status/{id}   → وضعیت
+POST   /api/v1/matchmaking/room          → ساخت اتاق خصوصی
+POST   /api/v1/matchmaking/room/{id}/join → پیوستن
+۸. Game Server Service
+مسئولیت: سرور Authoritative برای Multiplayer
+
+تکنولوژی: Rust/C++، WebSocket، Redis، Kafka
+
+APIها:
+
+text
+POST   /api/v1/game-servers              → ثبت سرور جدید
+GET    /api/v1/game-servers/{id}         → وضعیت سرور
+DELETE /api/v1/game-servers/{id}         → حذف سرور
+POST   /api/v1/game-servers/{id}/allocate → تخصیص به Match
+WS     /ws/game/{serverId}               → ارتباط بلادرنگ
+۹. Monetization Service
+مسئولیت: پرداخت، درآمد سازندگان، Escrow، KYC
+
+تکنولوژی: Spring Boot، PostgreSQL، Kafka، Stripe API، Drools
+
+APIها:
+
+text
+POST   /api/v1/payments/checkout         → شروع پرداخت
+POST   /api/v1/payments/webhook          → Webhook درگاه
+GET    /api/v1/payments/{id}             → وضعیت پرداخت
+GET    /api/v1/earnings/{creatorId}      → درآمد سازنده
+POST   /api/v1/payouts                   → درخواست تسویه
+GET    /api/v1/payouts/{id}              → وضعیت تسویه
+POST   /api/v1/kyc/submit                → ارسال مدارک KYC
+GET    /api/v1/kyc/status                → وضعیت KYC
+۱۰. Live Update Service
+مسئولیت: به‌روزرسانی بازی‌ها بدون قطعی
+
+تکنولوژی: Spring Boot، S3، CDN، Kafka
+
+APIها:
+
+text
+POST   /api/v1/live-update/publish       → انتشار نسخه جدید
+GET    /api/v1/live-update/{gameId}/versions → نسخه‌ها
+POST   /api/v1/live-update/{gameId}/rollback → بازگردانی
+POST   /api/v1/live-update/invalidate    → CDN Invalidation
+GET    /api/v1/live-update/{gameId}/status → وضعیت
+۱۱. Notification Service
+مسئولیت: Push، Email، SMS، اعلان‌های درون‌برنامه‌ای
+
+تکنولوژی: Spring Boot، Kafka، Firebase، SendGrid
+
+APIها:
+
+text
+POST   /api/v1/notifications/send        → ارسال اعلان
+GET    /api/v1/notifications             → لیست اعلان‌ها
+PATCH  /api/v1/notifications/{id}/read   → خوانده‌شده
+GET    /api/v1/notifications/settings    → تنظیمات
+PATCH  /api/v1/notifications/settings    → ویرایش تنظیمات
+۱۲. Moderation Service
+مسئولیت: بررسی محتوا، گزارش تخلف، مسدودسازی
+
+تکنولوژی: Spring Boot، AI (TensorFlow)، Kafka، Elasticsearch
+
+APIها:
+
+text
+POST   /api/v1/moderation/report         → گزارش محتوا
+GET    /api/v1/moderation/queue          → صف بررسی
+POST   /api/v1/moderation/approve/{id}   → تأیید
+POST   /api/v1/moderation/reject/{id}    → رد
+POST   /api/v1/moderation/block          → مسدودسازی کاربر
+GET    /api/v1/moderation/logs           → لاگ‌ها
+۱۳. Archive Service
+مسئولیت: چرخه حیات داده، Tiered Storage، GDPR
+
+تکنولوژی: Spring Boot، S3، Glacier، Cassandra
+
+APIها:
+
+text
+POST   /api/v1/archive/request           → درخواست آرشیو
+POST   /api/v1/archive/restore           → درخواست بازیابی
+GET    /api/v1/archive/status/{id}       → وضعیت
+POST   /api/v1/gdpr/export               → خروجی داده کاربر
+DELETE /api/v1/gdpr/delete/{userId}      → حذف حساب (GDPR)
+۱۴. Analytics Service
+مسئولیت: آمار بازی‌ها، درآمد، کاربران
+
+تکنولوژی: Spring Boot، ClickHouse، Kafka، Grafana
+
+APIها:
+
+text
+GET    /api/v1/analytics/games           → آمار بازی‌ها
+GET    /api/v1/analytics/users           → آمار کاربران
+GET    /api/v1/analytics/revenue         → آمار درآمد
+GET    /api/v1/analytics/creators/{id}   → آمار سازنده
+POST   /api/v1/analytics/events          → ثبت رویداد
+🔧 لایه Component (برای هر سرویس)
+۱. User Service
+Component	نوع	مسئولیت
+AuthController	@RestController	ثبت‌نام، ورود، خروج
+UserController	@RestController	پروفایل
+RoleController	@RestController	نقش‌ها
+AuthService	@Service	احراز هویت، JWT
+UserService	@Service	منطق کاربر
+RoleService	@Service	مدیریت نقش
+UserRepository	@Repository	PostgreSQL
+RoleRepository	@Repository	PostgreSQL
+JwtProvider	@Component	تولید JWT
+PasswordEncoder	@Component	Argon2
+OtpSender	@Component	ارسال OTP
+EventPublisher	@Component	Kafka
+۲. Project Service
+Component	نوع	مسئولیت
+ProjectController	@RestController	مدیریت پروژه
+VersionController	@RestController	نسخه‌بندی
+ProjectService	@Service	منطق پروژه
+VersionService	@Service	Op Log + Snapshot
+SnapshotScheduler	@Component	Snapshot دوره‌ای
+OpLogRepository	@Repository	Cassandra
+ProjectRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+KafkaProducer	@Component	انتشار رویداد
+۳. Editor Service
+Component	نوع	مسئولیت
+EditorController	@RestController	مدیریت Editor
+GraphController	@RestController	Node Graph
+EditorService	@Service	منطق Editor
+CrdtManager	@Component	CRDT (Yjs)
+WebSocketHandler	@Component	Real-time
+CompilerService	@Service	کامپایل به WASM
+GraphRepository	@Repository	PostgreSQL
+۴. Runtime Service
+Component	نوع	مسئولیت
+RuntimeController	@RestController	مدیریت Session
+RuntimeService	@Service	منطق Runtime
+WasmSandbox	@Component	WASM Sandbox
+V8IsolateManager	@Component	V8 Isolates
+SessionRegistry	@Component	Redis
+WebSocketHandler	@Component	ارتباط بلادرنگ
+BuildService	@Service	Build بازی
+۵. Asset Service
+Component	نوع	مسئولیت
+AssetController	@RestController	آپلود/دانلود
+AssetService	@Service	منطق Asset
+PresignedUrlGenerator	@Component	S3 Presigned URL
+CdnSigner	@Component	CDN Signed URL
+AssetConverter	@Component	Assimp/FFmpeg
+VirusScanner	@Component	ClamAV
+AssetRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+KafkaProducer	@Component	انتشار رویداد
+۶. Template Service
+Component	نوع	مسئولیت
+TemplateController	@RestController	مدیریت قالب
+TemplateService	@Service	منطق قالب
+TemplateApplier	@Service	اعمال به پروژه
+TemplateRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+۷. Matchmaking Service
+Component	نوع	مسئولیت
+MatchmakingController	@RestController	مدیریت صف
+MatchmakingService	@Service	منطق Matchmaking
+QueueManager	@Component	Redis
+LockManager	@Component	Redlock
+GameServerAllocator	@Service	تخصیص سرور
+KafkaProducer	@Component	انتشار رویداد
+۸. Game Server Service
+Component	نوع	مسئولیت
+GameServerController	@RestController	مدیریت سرور
+GameServerService	@Service	منطق سرور
+StateSynchronizer	@Component	Sync State
+PredictionEngine	@Component	Client Prediction
+RollbackManager	@Component	Rollback
+WebSocketHandler	@Component	ارتباط بلادرنگ
+GameServerRepository	@Repository	PostgreSQL
+۹. Monetization Service
+Component	نوع	مسئولیت
+PaymentController	@RestController	پرداخت
+PayoutController	@RestController	تسویه
+KycController	@RestController	KYC
+PaymentService	@Service	منطق پرداخت
+EscrowService	@Service	Escrow
+RuleEngine	@Component	Drools
+KycService	@Service	KYC
+PaymentRepository	@Repository	PostgreSQL
+StripeClient	@Component	Stripe API
+KafkaProducer	@Component	انتشار رویداد
+۱۰. Live Update Service
+Component	نوع	مسئولیت
+LiveUpdateController	@RestController	انتشار نسخه
+LiveUpdateService	@Service	منطق Update
+VersionManager	@Component	Versioning
+CdnInvalidator	@Component	CDN Invalidation
+RollbackService	@Service	بازگردانی
+S3Client	@Component	S3 SDK
+KafkaProducer	@Component	انتشار رویداد
+۱۱. Notification Service
+Component	نوع	مسئولیت
+NotificationController	@RestController	ارسال اعلان
+NotificationService	@Service	منطق اعلان
+KafkaConsumer	@Component	مصرف رویدادها
+PushSender	@Component	FCM/APNs
+EmailSender	@Component	SendGrid
+SmsSender	@Component	Kavenegar
+NotificationRepository	@Repository	PostgreSQL
+۱۲. Moderation Service
+Component	نوع	مسئولیت
+ModerationController	@RestController	گزارش محتوا
+ModerationService	@Service	منطق Moderation
+AiModerationClient	@Component	TensorFlow
+CopyrightDetector	@Component	Audio Fingerprint
+HumanReviewQueue	@Component	صف بررسی
+ModerationRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	انتشار رویداد
+۱۳. Archive Service
+Component	نوع	مسئولیت
+ArchiveController	@RestController	درخواست آرشیو
+ArchiveService	@Service	منطق آرشیو
+TieredStorageManager	@Service	Hot/Warm/Cold
+GdprAnonymizer	@Service	Anonymize
+RestoreJob	@Component	بازیابی
+ArchiveRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+GlacierClient	@Component	Glacier SDK
+۱۴. Analytics Service
+Component	نوع	مسئولیت
+AnalyticsController	@RestController	دریافت آمار
+AnalyticsService	@Service	منطق Analytics
+KafkaConsumer	@Component	مصرف رویدادها
+ClickHouseClient	@Component	ClickHouse SDK
+ReportGenerator	@Service	گزارش‌گیری
+AnalyticsRepository	@Repository	ClickHouse
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	ارتباط بلادرنگ
+Service Discovery	Eureka/Consul	ثبت و کشف سرویس‌ها
+Config Server	Spring Cloud Config	تنظیمات مرکزی
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Lock + Session
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	Op Log، پیام‌ها
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	Asset + Snapshot + Media
+Glacier	AWS Glacier	Cold Archive
+CDN	CloudFront	توزیع Asset
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Project Service ──→ PostgreSQL + Cassandra + S3
+       ├──→ Editor Service ──→ WebSocket + CRDT
+       ├──→ Runtime Service ──→ WASM + K8s
+       ├──→ Asset Service ──→ S3 + CDN + Kafka
+       ├──→ Template Service ──→ PostgreSQL + Redis
+       ├──→ Matchmaking Service ──→ Redis + Kafka
+       ├──→ Game Server Service ──→ WebSocket + Redis
+       ├──→ Monetization Service ──→ PostgreSQL + Stripe
+       ├──→ Live Update Service ──→ S3 + CDN
+       ├──→ Notification Service ──→ Kafka + Firebase
+       ├──→ Moderation Service ──→ AI + Elasticsearch
+       ├──→ Archive Service ──→ S3 + Glacier
+       └──→ Analytics Service ──→ ClickHouse
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus بین سرویس‌ها
+└──────────────┘

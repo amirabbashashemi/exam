@@ -1,0 +1,1210 @@
+ADR-001: انتخاب پروتکل ارتباطی برای تحویل بلادرنگ پیام
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا انتظار دارن پیام‌ها بلافاصله برسن (زیر ۵۰۰ میلی‌ثانیه). اگه از REST استفاده کنیم، باید مدام Polling کنیم که هم کند هست هم بار سرور رو زیاد می‌کنه. باید یه راهی پیدا کنیم که سرور بتونه خودش پیام رو به کاربر Push کنه.
+
+تصمیم:
+از WebSocket (WSS) به عنوان پروتکل اصلی برای تحویل بلادرنگ استفاده می‌کنیم و Kafka رو برای Async Processing و تحمل پیک بار پشتش می‌ذاریم.
+
+دلیل تصمیم:
+WebSocket یه اتصال پایدار دوطرفه‌ست و سرور می‌تونه هر لحظه پیام Push کنه. تأخیرش زیر ۱۰۰ میلی‌ثانیه‌ست. Kafka هم به عنوان بافر عمل می‌کنه و اگه کاربر آفلاین باشه، پیام تو صف می‌مونه تا وصل بشه. این ترکیب هم تأخیر کم داره هم مقیاس‌پذیری بالا.
+
+مزایا:
+
+تأخیر زیر ۱۰۰ میلی‌ثانیه برای تحویل پیام
+اتصال پایدار و دوطرفه، بدون نیاز به Polling
+
+Kafka به عنوان بافر برای کاربران آفلاین
+
+مقیاس‌پذیری بالا با Sharding
+
+معایب:
+
+پیاده‌سازی WebSocket پیچیده‌تر از REST هست (Reconnection، Keep-alive)
+
+نیاز به Connection Registry برای مسیریابی
+
+مصرف حافظه‌ی زیاد برای میلیون‌ها Connection
+
+Kafka ممکنه Single Point of Failure بشه اگه HA نداشته باشه
+
+موارد دیگر بررسی‌شده:
+
+الف) REST Polling:
+مزایا:
+
+پیاده‌سازی ساده
+
+Stateless و مقیاس‌پذیر
+معایب:
+
+تأخیر بالا (بیشتر از ۱ ثانیه)
+
+بار زیاد روی سرور
+
+مصرف باتری زیاد در موبایل
+
+ب) Server-Sent Events (SSE):
+مزایا:
+
+ساده‌تر از WebSocket
+
+بر پایه‌ی HTTP
+معایب:
+
+فقط یک‌طرفه (سرور به کلاینت)
+
+برای چت نیاز به کانال جداگانه برای ارسال
+
+محدودیت Connection در HTTP/1.1
+
+ج) فقط Kafka بدون WebSocket:
+مزایا:
+
+مقیاس‌پذیری خطی
+
+جداسازی Producer و Consumer
+معایب:
+
+کلاینت نمی‌تونه Push دریافت کنه
+
+نیاز به Polling، پس همون مشکل REST
+
+پیامدها:
+
+مثبت: تأخیر کم، مقیاس‌پذیری، تحمل پیک بار
+
+منفی: پیچیدگی Connection Registry، مصرف حافظه
+
+ریسک: اگه Redis (Connection Registry) Down بشه → Redis Cluster با Sentinel
+
+ADR-002: انتخاب مکانیزم برای ترتیب پیام‌ها (Message Ordering)
+وضعیت: پذیرفته شده
+
+زمینه:
+پیام‌ها باید به ترتیب ارسال نشون داده بشن. اگه دو کاربر همزمان پیام بفرستن، باید یه ترتیب مشخص داشته باشیم. ساعت کامپیوتر کاربرا قابل اعتماد نیست چون ممکنه دستکاری بشه یا Timezone متفاوت داشته باشن.
+
+تصمیم:
+از Lamport Timestamp به همراه Sequence Number (Redis Atomic Increment) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Lamport Timestamp یه ساعت منطقیه که مستقل از ساعت واقعیه و Total Order ایجاد می‌کنه. Sequence Number هم از Redis گرفته می‌شه که Atomic هست. ترکیب این دو یعنی ترتیب دقیق در همه‌ی Replicaها، بدون توجه به ساعت کاربر.
+
+مزایا:
+
+ترتیب دقیق مستقل از ساعت واقعی (بدون Clock Skew)
+
+Total Order در همه‌ی Replicaها
+
+مقیاس‌پذیری خطی با Redis Atomic Increment
+
+مقاوم در برابر دستکاری ساعت کاربر
+
+معایب:
+
+پیچیدگی Clock Management در Client و Server
+
+Lamport برای Causality دقیق کافی نیست (نیاز به Vector Clock)
+
+اگه Redis Down بشه، Sequence Generation متوقف می‌شه
+
+نیاز به کتابخانه یا پیاده‌سازی دستی
+
+موارد دیگر بررسی‌شده:
+
+الف) Unix Timestamp (Nanosecond):
+مزایا:
+
+سادگی
+
+یکپارچگی در سراسر سیستم
+معایب:
+
+Clock Skew بین سرورها
+
+عدم Total Order
+
+NTP Sync کافی نیست
+
+ب) زمان کامپیوتر کاربر:
+مزایا:
+
+پیاده‌سازی بسیار ساده
+
+بدون سربار سرور
+معایب:
+
+کاربر می‌تونه ساعت رو تغییر بده
+
+Timezoneهای مختلف
+
+عدم امنیت
+
+ج) Vector Clock:
+مزایا:
+
+Causality دقیق
+
+مناسب سیستم‌های توزیع‌شده
+معایب:
+
+حجم زیاد برای گروه‌های بزرگ
+
+پیچیدگی زیاد
+
+برای ۱۰۰ هزار عضو، بردار ۱۰۰ هزار عنصری
+
+پیامدها:
+
+مثبت: ترتیب دقیق، Total Order، مقیاس‌پذیری
+
+منفی: پیچیدگی، نیاز به Redis HA
+
+ریسک: اگه Redis Down بشه → Redis Cluster با Sentinel
+
+ADR-003: انتخاب مکانیزم برای Read Receipt در گروه‌های بزرگ
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر می‌خواد بدونه پیامش خونده شده یا نه. تو گروه ۱۰۰ هزار عضوی، اگه هر عضو Read Receipt بفرسته، ۱۰۰ هزار ردیف برای یه پیام ایجاد می‌شه. این حجم داده قابل مدیریت نیست.
+
+تصمیم:
+از Batch Update + Aggregated Count با HyperLogLog استفاده می‌کنیم.
+
+دلیل تصمیم:
+به جای ذخیره‌ی هر Read Receipt به صورت جداگانه، هر ۵ ثانیه یه Batch Update انجام می‌شه. برای شمارش، از HyperLogLog استفاده می‌کنیم که با ۱۲ کیلوبایت حافظه، تعداد تقریبی خوانندگان رو می‌ده. اینطوری حجم داده ثابت می‌مونه.
+
+مزایا:
+
+حجم داده ثابت (۱۲ کیلوبایت برای هر پیام)
+
+سرعت بالا (In-Memory)
+
+کاهش Load از ۱۰۰ هزار Write در ثانیه به ۲۰ Write
+
+دقت ۹۹.۱۹٪ (کافی برای نمایش)
+
+معایب:
+
+دقت ۱۰۰٪ نداره (خطای ۰.۸۱٪)
+
+تأخیر ۵ ثانیه‌ای در نمایش
+
+نیاز به Redis با Persistence
+
+برای شمارش دقیق (مثل پرداخت) مناسب نیست
+
+موارد دیگر بررسی‌شده:
+
+الف) ذخیره‌ی هر Read Receipt جداگانه:
+مزایا:
+
+دقت کامل
+
+Real-time
+معایب:
+
+۱۰۰ هزار ردیف برای یه پیام
+
+Load زیاد روی Cassandra
+
+شبکه اشباع می‌شه
+
+ب) Batch Update بدون Aggregation:
+مزایا:
+
+کاهش Load
+
+دقت بالا
+معایب:
+
+حجم داده هنوز زیاد
+
+Query کند برای شمارش
+
+نیاز به Aggregation در Read Time
+
+ج) فقط Last Read Message ID:
+مزایا:
+
+حجم کم
+
+سادگی
+معایب:
+
+نمی‌دونیم چند نفر خوندن
+
+برای گروه‌های بزرگ کافی نیست
+
+تجربه‌ی کاربری ضعیف
+
+پیامدها:
+
+مثبت: حجم ثابت، سرعت بالا، کاهش Load
+
+منفی: دقت ۹۹.۱۹٪، تأخیر ۵ ثانیه
+
+ریسک: اگه Redis Down بشه → Redis Cluster با Sentinel
+
+ADR-004: انتخاب مکانیزم برای Fan-out در گروه‌های بزرگ
+وضعیت: پذیرفته شده
+
+زمینه:
+وقتی یه پیام تو گروه ۱۰۰ هزار عضوی فرستاده می‌شه، اگه بخوایم به همه Push کنیم، ۱۰۰ هزار ارسال برای یه پیام لازمه. اگه ۱۰ پیام در دقیقه فرستاده بشه، ۱ میلیون ارسال در دقیقه می‌شه که Kafka رو منفجر می‌کنه.
+
+تصمیم:
+از Hybrid Fan-out استفاده می‌کنیم: برای گروه‌های زیر ۱۰۰ نفر، Fan-out on Write و برای گروه‌های بالای ۱۰۰ نفر، Fan-out on Read.
+
+دلیل تصمیم:
+گروه‌های کوچک تأخیر براشون مهم‌تره، پس Push فوری می‌کنیم. گروه‌های بزرگ حجم مهم‌تره، پس فقط یه بار ذخیره می‌کنیم و کاربرا موقع باز کردن چت، Pull می‌کنن. این آستانه (۱۰۰ نفر) قابل تنظیمه.
+
+مزایا:
+
+بهینه برای هر اندازه گروه
+
+کاهش Load از ۱ میلیون Push در دقیقه به ۱۰ هزار
+
+تأخیر کم برای گروه‌های کوچک
+
+مقیاس‌پذیری برای گروه‌های بزرگ
+
+معایب:
+
+پیچیدگی Hybrid Logic
+
+تأخیر بیشتر برای گروه‌های بزرگ (تا ۵ ثانیه)
+
+نیاز به تشخیص اندازه گروه در Runtime
+
+Debugging سخت‌تر
+
+موارد دیگر بررسی‌شده:
+
+الف) Fan-out on Write برای همه:
+مزایا:
+
+تأخیر کم برای همه
+
+سادگی
+معایب:
+
+۱۰۰ هزار Push برای یه پیام
+
+Kafka منفجر می‌شه
+
+هزینه‌ی Bandwidth نجومی
+
+ب) Fan-out on Read برای همه:
+مزایا:
+
+Load کم
+
+مقیاس‌پذیری آسان
+معایب:
+
+تأخیر اضافه برای گروه‌های کوچک
+
+Load زیاد روی Read
+
+تجربه‌ی ضعیف
+
+ج) فقط Fan-out on Write با محدودیت گروه:
+مزایا:
+
+تأخیر کم
+
+سادگی
+معایب:
+
+محدودیت در اندازه گروه
+
+نقض نیازمندی (گروه ۱۰۰ هزار نفری)
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: بهینه برای هر اندازه، کاهش Load، تأخیر کم
+
+منفی: پیچیدگی Hybrid Logic، تأخیر گروه بزرگ
+
+ریسک: آستانه اشتباه → Config Server برای تنظیم پویا
+
+ADR-005: انتخاب مکانیزم برای End-to-End Encryption
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا انتظار دارن پیاماشون خصوصی بمونه. حتی مدیر زیرساخت نباید بتونه پیام‌ها رو بخونه. AES تنها کافی نیست چون کلید مشترک رو سرور داره و می‌تونه رمزگشایی کنه.
+
+تصمیم:
+از Signal Protocol (X3DH + Double Ratchet) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Signal Protocol استاندارد صنعتی برای E2EE هست. X3DH برای Key Exchange اولیه و Double Ratchet برای Forward Secrecy. هر پیام یه Session Key جدید داره، پس اگه یه کلید لو بره، فقط همون یه پیام لو می‌ره. سرور فقط Ciphertext می‌بینه.
+
+مزایا:
+
+E2EE واقعی (سرور نمی‌تونه رمزگشایی کنه)
+
+Forward Secrecy (کلید لو بره، بقیه پیام‌ها سالم)
+
+Multi-device Support
+
+استاندارد صنعتی
+
+معایب:
+
+پیچیدگی پیاده‌سازی (X3DH + Double Ratchet)
+
+Server-side Search غیرممکن
+
+Backup و Restore سخت
+
+اگه کاربر کلیدش رو گم کنه، پیام‌هاش از دست می‌ره
+
+موارد دیگر بررسی‌شده:
+
+الف) AES با کلید مشترک:
+مزایا:
+
+سرعت بالا
+
+سادگی
+معایب:
+
+سرور کلید رو داره و می‌تونه رمزگشایی کنه
+
+E2EE نیست
+
+نقض حریم خصوصی
+
+ب) RSA:
+مزایا:
+
+امنیت بالا
+
+دو کلید (Public و Private)
+معایب:
+
+کند
+
+Forward Secrecy نداره
+
+حجم کلید زیاد
+
+ج) بدون E2EE (فقط TLS):
+مزایا:
+
+سادگی
+
+Server-side Search ممکن
+معایب:
+
+مدیر زیرساخت می‌تونه پیام‌ها رو بخونه
+
+اعتماد کاربر پایین
+
+نقض حریم خصوصی
+
+پیامدها:
+
+مثبت: E2EE واقعی، Forward Secrecy، Multi-device
+
+منفی: پیچیدگی، Server-side Search غیرممکن، Backup سخت
+
+ریسک: اگه کاربر PIN رو گم کنه → Recovery Code و Social Recovery
+
+ADR-006: انتخاب مکانیزم برای Presence و Typing Indicator
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان بدونن کی آنلاینه، آخرین بازدید طرف مقابل کِی بوده، و کی داره تایپ می‌کنه. این اطلاعات باید Real-time باشه ولی حجمش زیاد و موقتیه.
+
+تصمیم:
+از Redis Pub/Sub به همراه WebSocket استفاده می‌کنیم.
+
+دلیل تصمیم:
+Redis Pub/Sub برای انتشار رویدادهای Presence (آنلاین، آفلاین، تایپ) استفاده می‌شه. WebSocket هم برای ارسال به کلاینت. Redis به خاطر سرعت In-Memory و TTL خودکار، برای داده‌های موقتی عالیه.
+
+مزایا:
+
+Real-time (تأخیر زیر ۵۰ میلی‌ثانیه)
+
+TTL خودکار برای داده‌های موقتی
+
+مقیاس‌پذیری بالا با Redis Cluster
+
+سبک و سریع
+
+معایب:
+
+Redis ممکنه Single Point of Failure بشه
+
+داده‌های Presence موقتی هستن (اگه Redis Restart بشه، از دست می‌رن)
+
+برای کاربران زیاد، حجم Pub/Sub بالا می‌ره
+
+نیاز به Redis Cluster
+
+موارد دیگر بررسی‌شده:
+
+الف) ذخیره‌ی Presence در دیتابیس:
+مزایا:
+
+Persistence
+
+Query ساده
+معایب:
+
+کند (هر تغییر یه Write)
+
+بار زیاد روی DB
+
+TTL نداره
+
+ب) بدون Presence (فقط Last Seen):
+مزایا:
+
+سادگی
+
+Load کم
+معایب:
+
+کاربر نمی‌دونه طرف آنلاینه یا نه
+
+تجربه‌ی ضعیف
+
+نقض نیازمندی
+
+ج) Presence از طریق Kafka:
+مزایا:
+
+مقیاس‌پذیری بالا
+
+Decoupling
+معایب:
+
+تأخیر بیشتر از Redis
+
+Overhead Kafka
+
+برای داده‌های موقتی مناسب نیست
+
+پیامدها:
+
+مثبت: Real-time، TTL خودکار، مقیاس‌پذیری
+
+منفی: Single Point of Failure، داده‌های موقتی
+
+ریسک: اگه Redis Down بشه → Redis Cluster با Sentinel
+
+ADR-007: انتخاب مکانیزم برای آپلود و توزیع Media
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا عکس، ویدیو، فایل و Voice Message آپلود می‌کنن. این فایل‌ها حجم زیادی دارن (تا ۱۰۰ مگابایت) و اگه از سرور ما رد بشن، API Gateway کند می‌شه و Bandwidth دو برابر مصرف می‌شه.
+
+تصمیم:
+از S3 Presigned URL برای آپلود مستقیم و CDN برای توزیع استفاده می‌کنیم.
+
+دلیل تصمیم:
+Presigned URL یعنی کلاینت مستقیم به S3 آپلود می‌کنه، بدون اینکه از سرور ما رد بشه. CDN هم فایل‌ها رو از نزدیک‌ترین سرور به کاربر می‌رسونه. اینطوری API Gateway آزاد می‌مونه و سرعت آپلود و دانلود بالا می‌ره.
+
+مزایا:
+
+آپلود مستقیم به S3 (سرعت بالا)
+
+CDN برای توزیع سریع
+
+کاهش بار API Gateway
+
+مقیاس‌پذیری نامحدود S3
+
+معایب:
+
+هزینه‌ی S3 و CDN برای حجم بالا
+
+نیاز به مدیریت Presigned URL (Expiration و امنیت)
+
+Media در S3 بدون Encryption (مگر SSE)
+
+نیاز به Virus Scan
+
+موارد دیگر بررسی‌شده:
+
+الف) آپلود از طریق سرور:
+مزایا:
+
+کنترل کامل
+
+Virus Scan قبل از ذخیره
+معایب:
+
+کندی
+
+بار زیاد روی API Gateway
+
+Bandwidth دو برابر
+
+ب) ذخیره‌ی Media در دیتابیس:
+مزایا:
+
+یکپارچگی
+
+Backup ساده
+معایب:
+
+DB منفجر می‌شه
+
+Query کند
+
+هزینه‌ی نجومی
+
+ج) ذخیره‌ی Media در فایل‌سیستم محلی:
+مزایا:
+
+سرعت بالا
+
+سادگی
+معایب:
+
+مقیاس‌پذیری محدود
+
+Backup سخت
+
+بدون CDN
+
+پیامدها:
+
+مثبت: آپلود سریع، توزیع سریع، کاهش بار
+
+منفی: هزینه‌ی S3 و CDN، مدیریت URL
+
+ریسک: اگه Presigned URL لو بره → TTL کوتاه و IP Binding
+
+ADR-008: انتخاب مکانیزم برای چرخه‌ی حیات داده‌ها
+وضعیت: پذیرفته شده
+
+زمینه:
+روزانه ۱۰ میلیارد پیام تولید می‌شه و Media هم روزانه ۵۰۰ ترابایت. نگه‌داری همه‌ی اینا تو یه جا هم هزینه‌ی نجومی داره هم کوئری‌ها رو کند می‌کنه. از طرف دیگه، GDPR حق فراموشی رو الزامی کرده.
+
+تصمیم:
+از Tiered Storage به همراه Soft Delete و Anonymization استفاده می‌کنیم:
+
+Hot (۳ ماه): Cassandra
+
+Warm (۳ ماه تا ۲ سال): S3 Infrequent Access
+
+Cold (بیشتر از ۲ سال): S3 Glacier
+
+GDPR: Soft Delete فوری، Anonymize بعد از ۳۰ روز
+
+دلیل تصمیم:
+هر داده تو دیتابیسی که برای سنش مناسبه ذخیره می‌شه. داده‌های اخیر سریع، داده‌های قدیمی ارزون. Soft Delete هم Foreign Keyها رو سالم نگه می‌داره و Anonymize حریم خصوصی رو تضمین می‌کنه.
+
+مزایا:
+
+کاهش ۷۰٪ هزینه‌ی Storage
+
+کوئری سریع برای داده‌های اخیر
+
+Compliance با GDPR
+
+Foreign Keyها سالم می‌مونن
+
+معایب:
+
+تأخیر در بازیابی از Glacier (۳ تا ۵ ساعت)
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring دقیق
+
+حجم دیتابیس بیشتر (به خاطر Soft Delete)
+
+موارد دیگر بررسی‌شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فوری فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص (Backups)
+
+Audit Trail از بین می‌ره
+
+ب) نگه‌داری همه چیز در Cassandra:
+مزایا:
+
+سادگی
+
+Query یکپارچه
+معایب:
+
+هزینه‌ی نجومی
+
+کندی با حجم زیاد
+
+Backup سنگین
+
+ج) فقط S3 (بدون Tiered):
+مزایا:
+
+هزینه‌ی کم
+
+سادگی
+معایب:
+
+کوئری کند
+
+بدون Index
+
+برای داده‌های اخیر مناسب نیست
+
+پیامدها:
+
+مثبت: هزینه‌ی کم، Performance بالا، Compliance
+
+منفی: تأخیر Restore، پیچیدگی Job
+
+ریسک: اگه Job خطا کنه → DLQ و Retry و Alert
+
+ADR-009: انتخاب مکانیزم برای احراز هویت و مدیریت Session
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم باید احراز هویت امن برای میلیون‌ها کاربر فراهم کنه. پسورد ساده کافی نیست. اگه پسورد لو بره، حساب کاربر نباید بره. از طرف دیگه، Session باید قابل Revoke باشه.
+
+تصمیم:
+از OAuth 2.0 + OIDC با JWT (Access Token کوتاه‌مدت) و Refresh Token (Opaque، در HttpOnly Cookie) به همراه MFA استفاده می‌کنیم.
+
+دلیل تصمیم:
+OAuth 2.0 استاندارد صنعتیه. JWT کوتاه‌مدت (۱۵ دقیقه) یعنی اگه لو بره، فقط ۱۵ دقیقه معتبره. Refresh Token تو HttpOnly Cookie ذخیره می‌شه که JavaScript نمی‌تونه بهش دسترسی داشته باشه (جلوگیری از XSS). MFA هم یعنی مهاجم حتی با پسورد، نمی‌تونه وارد بشه.
+
+مزایا:
+
+امنیت بالا با MFA
+
+Session امن با HttpOnly Cookie
+
+Revoke فوری Refresh Token
+
+استاندارد صنعتی (Keycloak)
+
+معایب:
+
+پیچیدگی پیاده‌سازی (Keycloak + JWT + MFA)
+
+تجربه‌ی کاربری سخت‌تر (MFA)
+
+هزینه‌ی SMS برای OTP
+
+نیاز به تیم امنیت
+
+موارد دیگر بررسی‌شده:
+
+الف) Session-based (بدون JWT):
+مزایا:
+
+Revoke ساده
+
+امنیت بالا (Stateful)
+معایب:
+
+نیاز به Query دیتابیس برای هر درخواست
+
+مقیاس‌پذیری کمتر
+
+برای Microservice مناسب نیست
+
+ب) فقط پسورد (بدون MFA):
+مزایا:
+
+سادگی
+
+تجربه‌ی کاربری بهتر
+معایب:
+
+اگه پسورد لو بره، حساب می‌ره
+
+نقض استانداردهای امنیتی
+
+Brute-force راحت
+
+ج) JWT بلندمدت (بدون Refresh Token):
+مزایا:
+
+سادگی
+
+بدون Refresh Flow
+معایب:
+
+JWT قابل Revoke نیست
+
+اگه لو بره، تا انقضا معتبره
+
+امنیت پایین
+
+پیامدها:
+
+مثبت: امنیت بالا، استاندارد صنعتی، Revoke فوری
+
+منفی: پیچیدگی، تجربه‌ی کاربری سخت‌تر، هزینه‌ی SMS
+
+ریسک: اگه Keycloak Down بشه → HA و Fallback به Local Auth
+
+ADR-010: انتخاب معماری برای تحمل خطا و بازیابی
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم چت باید ۲۴/۷ فعال باشه. اگه یه سرویس خراب بشه، نباید کل سیستم از کار بیفته. اگه یه Region از کار بیفته، کاربرا نباید قطعی حس کنن. باید یه معماری مقاوم داشته باشیم.
+
+تصمیم:
+از Circuit Breaker + Bulkhead + Multi-Region Active-Active + Chaos Engineering استفاده می‌کنیم.
+
+دلیل تصمیم:
+Circuit Breaker جلوی Cascading Failure رو می‌گیره. Bulkhead منابع رو جدا می‌کنه. Multi-Region Active-Active یعنی اگه یه Region Down بشه، ترافیک به Region دیگه می‌ره. Chaos Engineering هم یعنی قبل از کاربرا، خودمون خرابی رو تست می‌کنیم.
+
+مزایا:
+
+جلوگیری از Cascading Failure
+
+Downtime صفر در خرابی Region
+
+آمادگی تیم برای شرایط واقعی
+
+SLA 99.99%
+
+معایب:
+
+هزینه‌ی زیرساخت دو برابر
+
+پیچیدگی عملیاتی
+
+نیاز به تیم SRE حرفه‌ای
+
+Sync داده‌ها بین Regionها
+
+موارد دیگر بررسی‌شده:
+
+الف) Single Region با Backup:
+مزایا:
+
+سادگی
+
+هزینه‌ی کم
+معایب:
+
+Downtime طولانی در خرابی
+
+کاربرای دور، Latency بالا
+
+نقض SLA
+
+ب) Active-Passive:
+مزایا:
+
+هزینه‌ی کمتر
+
+پیاده‌سازی ساده‌تر
+معایب:
+
+Downtime در Failover
+
+Region دوم بیکار می‌مونه
+
+RTO بالا
+
+ج) بدون Chaos Engineering:
+مزایا:
+
+هزینه‌ی کمتر
+
+بدون ریسک تست
+معایب:
+
+نقاط ضعف پنهان می‌مونن
+
+تیم آماده نیست
+
+Failover ممکنه کار نکنه
+
+پیامدها:
+
+مثبت: SLA 99.99%، Downtime صفر، آمادگی تیم
+
+منفی: هزینه‌ی بالا، پیچیدگی، نیاز به SRE
+
+ریسک: اگه Chaos Test اشتباه اجرا بشه → Canary و Blast Radius محدود
+************************************************************************************************************************
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، MFA، مدیریت کاربران
+
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Argon2
+
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود (با MFA)
+POST   /api/v1/auth/verify-otp        → تأیید OTP
+POST   /api/v1/auth/refresh           → تمدید توکن
+POST   /api/v1/auth/logout            → خروج
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش پروفایل
+POST   /api/v1/users/{id}/mfa/enable  → فعال‌سازی MFA
+DELETE /api/v1/users/{id}             → حذف حساب (GDPR)
+GET    /api/v1/users/search           → جستجوی کاربر
+
+۲. Chat Service
+مسئولیت: ارسال/دریافت پیام، ترتیب پیام‌ها (Lamport)، Idempotency
+
+تکنولوژی: Spring Boot، Cassandra، Kafka، Redis
+
+APIها:
+
+text
+POST   /api/v1/chats                  → ساخت چت
+GET    /api/v1/chats/{id}             → دریافت چت
+POST   /api/v1/chats/{id}/messages    → ارسال پیام
+GET    /api/v1/chats/{id}/messages    → دریافت پیام‌ها
+PATCH  /api/v1/messages/{id}          → ویرایش پیام
+DELETE /api/v1/messages/{id}          → حذف پیام
+POST   /api/v1/messages/{id}/read     → علامت خوانده‌شده
+WS     /ws/chat/{chatId}              → ارتباط بلادرنگ
+
+۳. Group Service
+مسئولیت: مدیریت گروه‌ها، اعضا، نقش‌ها، تنظیمات
+
+تکنولوژی: Spring Boot، PostgreSQL، Redis
+
+APIها:
+
+text
+POST   /api/v1/groups                 → ساخت گروه
+GET    /api/v1/groups/{id}            → دریافت گروه
+PATCH  /api/v1/groups/{id}            → ویرایش گروه
+DELETE /api/v1/groups/{id}            → حذف گروه
+POST   /api/v1/groups/{id}/members    → افزودن عضو
+DELETE /api/v1/groups/{id}/members/{userId} → حذف عضو
+POST   /api/v1/groups/{id}/admins     → ارتقا به ادمین
+GET    /api/v1/groups/{id}/members    → لیست اعضا
+POST   /api/v1/groups/{id}/invite     → لینک دعوت
+
+۴. Presence Service
+مسئولیت: وضعیت آنلاین/آفلاین، آخرین بازدید، Typing Indicator
+
+تکنولوژی: Spring Boot، Redis (Pub/Sub)، WebSocket
+
+APIها:
+
+text
+POST   /api/v1/presence/online        → آنلاین شدن
+POST   /api/v1/presence/offline       → آفلاین شدن
+GET    /api/v1/presence/{userId}      → وضعیت کاربر
+GET    /api/v1/presence/last-seen/{userId} → آخرین بازدید
+POST   /api/v1/presence/typing        → Typing Indicator
+WS     /ws/presence                   → ارتباط بلادرنگ
+
+۵. Notification Service
+مسئولیت: Push، Email، SMS، اعلان‌های درون‌برنامه‌ای
+
+تکنولوژی: Spring Boot، Kafka، Firebase، SendGrid
+
+APIها:
+
+text
+POST   /api/v1/notifications/send     → ارسال اعلان
+GET    /api/v1/notifications          → لیست اعلان‌ها
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings → تنظیمات
+PATCH  /api/v1/notifications/settings → ویرایش تنظیمات
+POST   /api/v1/notifications/mute     → بی‌صدا کردن چت
+
+۶. Media Service
+مسئولیت: آپلود/دانلود فایل، تصویر، ویدیو، Voice Message
+
+تکنولوژی: Spring Boot، S3، CDN، FFmpeg
+
+APIها:
+
+text
+POST   /api/v1/media/upload/initiate  → شروع آپلود (Presigned URL)
+POST   /api/v1/media/upload/complete  → تکمیل آپلود
+GET    /api/v1/media/{id}             → دریافت فایل
+GET    /api/v1/media/{id}/thumbnail   → تصویر بندانگشتی
+DELETE /api/v1/media/{id}             → حذف فایل
+POST   /api/v1/media/voice            → ارسال Voice Message
+
+۷. Encryption Service
+مسئولیت: مدیریت کلیدها، E2EE (Signal Protocol)، امضای دیجیتال
+
+تکنولوژی: Spring Boot، HSM، KMS، Signal Protocol
+
+APIها:
+
+text
+POST   /api/v1/keys/identity          → ثبت Identity Key
+POST   /api/v1/keys/pre-keys          → ثبت Pre-keys
+GET    /api/v1/keys/bundle/{userId}   → دریافت PreKeyBundle
+POST   /api/v1/keys/backup            → بکاپ کلیدها (با PIN)
+POST   /api/v1/keys/restore           → بازیابی کلیدها
+DELETE /api/v1/keys/{userId}          → حذف کلیدها (GDPR)
+POST   /api/v1/encrypt                → رمزنگاری (Server-side)
+POST   /api/v1/decrypt                → رمزگشایی (Server-side)
+
+۸. Session Service
+مسئولیت: مدیریت Session، JWT، Refresh Token، Rate Limiting
+
+تکنولوژی: Spring Boot، Redis، JWT، Keycloak
+
+APIها:
+
+text
+POST   /api/v1/sessions               → ساخت Session
+GET    /api/v1/sessions               → لیست Sessionهای فعال
+DELETE /api/v1/sessions/{id}          → بستن Session
+DELETE /api/v1/sessions/all           → بستن همه Sessionها
+POST   /api/v1/sessions/refresh       → تمدید توکن
+GET    /api/v1/rate-limit/status      → وضعیت Rate Limit
+
+۹. Search Service
+مسئولیت: جستجوی پیام، کاربر، گروه
+
+تکنولوژی: Spring Boot، Elasticsearch، Kafka (CDC)
+
+APIها:
+
+text
+GET    /api/v1/search/messages        → جستجوی پیام
+GET    /api/v1/search/users           → جستجوی کاربر
+GET    /api/v1/search/groups          → جستجوی گروه
+GET    /api/v1/search/suggest         → Auto-complete
+POST   /api/v1/search/index           → Index کردن (Client-side)
+
+۱۰. Archive Service
+مسئولیت: چرخه حیات داده، Tiered Storage، GDPR
+
+تکنولوژی: Spring Boot، S3، Glacier، Cassandra، Kafka
+
+APIها:
+
+text
+POST   /api/v1/archive/request        → درخواست آرشیو
+POST   /api/v1/archive/restore        → درخواست بازیابی
+GET    /api/v1/archive/status/{id}    → وضعیت
+POST   /api/v1/gdpr/export            → خروجی داده کاربر
+DELETE /api/v1/gdpr/delete/{userId}   → حذف حساب (GDPR)
+GET    /api/v1/gdpr/audit             → لاگ GDPR
+
+۱۱. Moderation Service
+مسئولیت: بررسی محتوا، گزارش تخلف، مسدودسازی
+
+تکنولوژی: Spring Boot، AI (TensorFlow)، Kafka، Elasticsearch
+
+APIها:
+
+text
+POST   /api/v1/moderation/report      → گزارش محتوا
+GET    /api/v1/moderation/queue       → صف بررسی
+POST   /api/v1/moderation/approve/{id} → تأیید
+POST   /api/v1/moderation/reject/{id}  → رد
+POST   /api/v1/moderation/block       → مسدودسازی کاربر
+DELETE /api/v1/moderation/block/{userId} → رفع مسدودی
+GET    /api/v1/moderation/logs        → لاگ‌ها
+
+۱۲. Audit Service
+مسئولیت: ثبت همه عملیات حساس، Audit Trail، Compliance
+
+تکنولوژی: Spring Boot، Kafka، Elasticsearch، S3
+
+APIها:
+
+text
+POST   /api/v1/audit/events           → ثبت رویداد
+GET    /api/v1/audit/events           → دریافت رویدادها
+GET    /api/v1/audit/users/{id}       → رویدادهای کاربر
+GET    /api/v1/audit/export           → خروجی Audit Log
+GET    /api/v1/audit/compliance       → گزارش Compliance
+
+
+
+۱. User Service
+Component	نوع	مسئولیت
+AuthController	@RestController	ثبت‌نام، ورود، خروج
+UserController	@RestController	پروفایل، آواتار
+RoleController	@RestController	نقش‌ها
+AdminController	@RestController	مدیریت کاربران
+AuthService	@Service	احراز هویت، JWT
+UserService	@Service	منطق کاربر
+RoleService	@Service	مدیریت نقش
+KycService	@Service	احراز هویت
+UserRepository	@Repository	دسترسی به Users
+RoleRepository	@Repository	دسترسی به Roles
+KycRepository	@Repository	دسترسی به KYC
+SessionRepository	@Repository	Session در Redis
+JwtProvider	@Component	تولید JWT
+OtpSender	@Component	ارسال OTP
+PasswordEncoder	@Component	هش پسورد (Argon2)
+EventPublisher	@Component	انتشار رویداد به Kafka
+S3Client	@Component	آپلود آواتار
+RateLimiter	@Component	محدودیت درخواست
+۲. Chat Service
+Component	نوع	مسئولیت
+ChatController	@RestController	مدیریت چت
+MessageController	@RestController	ارسال/دریافت پیام
+ChatService	@Service	منطق چت
+MessageService	@Service	منطق پیام
+SequenceGenerator	@Component	تولید Sequence (Redis)
+LamportClock	@Component	ترتیب پیام‌ها
+IdempotencyGuard	@Component	جلوگیری از تکرار
+FanoutService	@Service	Fan-out گروهی (Hybrid)
+BlockListChecker	@Component	بررسی Block
+MessageRepository	@Repository	Cassandra
+ChatRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	انتشار رویداد
+WebSocketHandler	@Component	ارتباط بلادرنگ
+۳. Group Service
+Component	نوع	مسئولیت
+GroupController	@RestController	مدیریت گروه
+MemberController	@RestController	مدیریت اعضا
+GroupService	@Service	منطق گروه
+MemberService	@Service	منطق اعضا
+RoleManager	@Component	مدیریت نقش‌ها
+GroupSettingsService	@Service	تنظیمات گروه
+InviteLinkService	@Service	لینک دعوت
+GroupRepository	@Repository	PostgreSQL
+MemberRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	انتشار رویداد
+۴. Presence Service
+Component	نوع	مسئولیت
+PresenceController	@RestController	وضعیت آنلاین
+PresenceService	@Service	منطق Presence
+TypingIndicatorService	@Service	Typing Indicator
+RedisPublisher	@Component	انتشار به Redis
+WebSocketHandler	@Component	ارتباط بلادرنگ
+PresenceRepository	@Repository	Redis
+۵. Notification Service
+Component	نوع	مسئولیت
+NotificationController	@RestController	ارسال اعلان
+NotificationService	@Service	منطق اعلان
+KafkaConsumer	@Component	مصرف رویدادها
+PushSender	@Component	FCM/APNs
+EmailSender	@Component	SendGrid
+SmsSender	@Component	Kavenegar
+NotificationRepository	@Repository	PostgreSQL
+۶. Media Service
+Component	نوع	مسئولیت
+MediaController	@RestController	آپلود/دانلود
+MediaService	@Service	منطق Media
+PresignedUrlGenerator	@Component	S3 Presigned URL
+CdnSigner	@Component	CDN Signed URL
+VirusScanner	@Component	ClamAV
+MediaRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+۷. Encryption Service
+Component	نوع	مسئولیت
+CryptoController	@RestController	مدیریت کلیدها
+KeyManager	@Service	تولید/چرخش کلید
+SignalSession	@Component	Signal Protocol
+KeyBackupService	@Service	بکاپ کلید
+KeyDeletionService	@Service	حذف کلید (GDPR)
+HsmClient	@Component	HSM
+KmsClient	@Component	KMS
+KeyRepository	@Repository	PostgreSQL
+۸. Session Service
+Component	نوع	مسئولیت
+SessionController	@RestController	مدیریت Session
+SessionService	@Service	منطق Session
+JwtProvider	@Component	تولید JWT
+RefreshTokenStore	@Component	Redis
+RateLimiter	@Component	Redis
+SessionRepository	@Repository	Redis
+۹. Search Service
+Component	نوع	مسئولیت
+SearchController	@RestController	جستجو
+SearchService	@Service	منطق جستجو
+IndexManager	@Component	مدیریت Index
+KafkaConsumer	@Component	CDC
+ElasticsearchClient	@Component	ES SDK
+SearchRepository	@Repository	Elasticsearch
+۱۰. Archive Service
+Component	نوع	مسئولیت
+ArchiveController	@RestController	درخواست آرشیو
+ArchiveService	@Service	منطق آرشیو
+TieredStorageManager	@Service	Hot/Warm/Cold
+GdprAnonymizer	@Service	Anonymize
+RestoreJob	@Component	بازیابی
+ArchiveRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+GlacierClient	@Component	Glacier SDK
+۱۱. Moderation Service
+Component	نوع	مسئولیت
+ModerationController	@RestController	گزارش محتوا
+ModerationService	@Service	منطق Moderation
+AiModerationClient	@Component	TensorFlow
+CopyrightDetector	@Component	Audio Fingerprint
+HumanReviewQueue	@Component	صف بررسی
+ModerationRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	انتشار رویداد
+۱۲. Audit Service
+Component	نوع	مسئولیت
+AuditController	@RestController	دریافت لاگ
+AuditService	@Service	منطق Audit
+KafkaConsumer	@Component	مصرف رویدادها
+ElasticsearchClient	@Component	ES SDK
+S3Archiver	@Component	آرشیو به S3
+AuditRepository	@Repository	Elasticsearch
+🏗️ زیرساخت مشترک (Containerهای Non-Functional)
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	ارتباط بلادرنگ
+Service Discovery	Eureka/Consul	ثبت و کشف سرویس‌ها
+Config Server	Spring Cloud Config	تنظیمات مرکزی
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Session + Presence
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	پیام‌ها، Op Log
+Elasticsearch	ES 8	جستجو
+S3	AWS S3	Media + Backup
+Glacier	AWS Glacier	Cold Archive
+HSM	Hardware Security Module	کلیدهای E2EE
+Vault	HashiCorp Vault	Secret Management
+CDN	CloudFront	توزیع Media
+Keycloak	Keycloak	Identity Provider (OAuth 2.0 + OIDC)
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Chat Service ──→ Cassandra + Kafka
+       ├──→ Group Service ──→ PostgreSQL + Redis
+       ├──→ Presence Service ──→ Redis (Pub/Sub)
+       ├──→ Notification Service ──→ Kafka + Firebase
+       ├──→ Media Service ──→ S3 + CDN
+       ├──→ Encryption Service ──→ HSM + KMS
+       ├──→ Session Service ──→ Redis + Keycloak
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Archive Service ──→ S3 + Glacier
+       ├──→ Moderation Service ──→ AI + Elasticsearch
+       └──→ Audit Service ──→ Kafka + Elasticsearch
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus بین سرویس‌ها
+└──────────────┘
+این ۱۲ میکروسرویس + زیرساخت مشترک، معماری کامل پلتفرم چت بر اساس ۱۰ ADR هست. حالا اگه بخوای، می‌تونیم C4 Model رو هم بکشیم یا هر بخش دیگه. 🚀
+

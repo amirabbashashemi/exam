@@ -1,0 +1,1239 @@
+---***01----------------------------------------------------------------------------------------------------------------
+ADR-001: انتخاب معماری کلی سیستم
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم باید برای میلیون‌ها کاربر در سراسر جهان، پیشنهاد شخصی‌سازی‌شده تولید کنه.
+تیم‌های مختلف باید بتونن مستقل روی بخش‌های مختلف کار کنن. سیستم باید مقیاس‌پذیر باشه و خرابی یه بخش، کل سیستم رو از کار نندازه.
+
+تصمیم:
+معماری میکروسرویس با تفکیک بر اساس Bounded Context (DDD) و Database per Service.
+
+دلیل تصمیم:
+میکروسرویس یعنی هر تیم می‌تونه مستقل Deploy کنه. Database per Service یعنی هر سرویس دیتابیس مناسب خودش رو داره. DDD هم مرزها رو مشخص می‌کنه تا تیم‌ها بدون وابستگی کار کنن.
+
+مزایا:
+
+تیم‌ها مستقل کار می‌کنن (Stream-aligned Teams)
+
+هر سرویس با تکنولوژی مناسب خودش
+
+خرابی یه سرویس، بقیه رو از کار نمی‌ندازه
+
+مقیاس‌پذیری خطی
+
+معایب:
+
+پیچیدگی عملیاتی (چند سرویس، چند دیتابیس)
+
+Debugging سخت‌تر (Distributed Tracing لازمه)
+
+نیاز به تیم Platform
+
+تست End-to-End سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Monolith:
+مزایا:
+
+سادگی Deploy
+
+Debugging راحت
+
+توسعه‌ی سریع اولیه
+معایب:
+
+تیم‌ها نمی‌تونن مستقل Deploy کنن
+
+وابستگی کد زیاد
+
+مقیاس‌پذیری محدود
+
+ب) Serverless (Lambda):
+مزایا:
+
+هزینه فقط به ازای مصرف
+
+مقیاس‌پذیری خودکار
+معایب:
+
+Cold Start
+
+Debugging سخت
+
+Vendor Lock-in
+
+ج) Modular Monolith:
+مزایا:
+
+تعادل بین سادگی و ماژولاریتی
+
+Deploy یکپارچه
+معایب:
+
+همچنان وابستگی در Deploy
+
+مقیاس‌پذیری محدود
+
+پیامدها:
+
+مثبت: استقلال تیم‌ها، مقیاس‌پذیری، تحمل خطا
+
+منفی: پیچیدگی، نیاز به تیم Platform
+
+ریسک: مرز Domain اشتباه → Event Storming و بازبینی دوره‌ای
+
+ADR-002: انتخاب موتور پیشنهاد (Recommendation Engine)
+وضعیت: پذیرفته شده
+
+زمینه:
+موتور پیشنهاد باید بتونه بر اساس رفتار کاربر، پیشنهاد شخصی‌سازی‌شده بده. روش‌های مختلفی وجود داره: Collaborative Filtering، Content-Based، Hybrid. هر کدوم مزایا و معایب خودشون رو دارن. باید بهترین رو انتخاب کنیم.
+
+تصمیم:
+از Hybrid Recommendation (Collaborative Filtering + Content-Based) با Matrix Factorization استفاده می‌کنیم.
+
+دلیل تصمیم:
+Collaborative Filtering برای کاربران با تاریخچه‌ی غنی عالیه، ولی برای کاربران جدید (Cold Start) ضعیفه. Content-Based برای کاربران جدید خوبه ولی محدود به ویژگی‌های آیتم. ترکیب این دو، هم Cold Start رو حل می‌کنه هم دقت رو بالا می‌بره.
+
+مزایا:
+
+دقت بالا (ترکیب دو روش)
+
+حل Cold Start با Content-Based
+
+شخصی‌سازی عمیق
+
+مقیاس‌پذیری با Matrix Factorization
+
+معایب:
+
+پیچیدگی پیاده‌سازی
+
+نیاز به ML Pipeline
+
+آموزش مدل زمان‌بر
+
+نیاز به تیم Data Science
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Collaborative Filtering:
+مزایا:
+
+دقت بالا برای کاربران فعال
+
+کشف علایق جدید
+معایب:
+
+Cold Start ضعیف
+
+برای کاربران جدید کار نمی‌کنه
+
+نیاز به داده‌ی زیاد
+
+ب) فقط Content-Based:
+مزایا:
+
+Cold Start خوب
+
+شفافیت بالا
+معایب:
+
+محدود به ویژگی‌های آیتم
+
+دقت پایین‌تر
+
+عدم کشف علایق جدید
+
+ج) Trending / Popularity:
+مزایا:
+
+سادگی
+
+بدون نیاز به ML
+معایب:
+
+شخصی‌سازی نداره
+
+برای همه یه چیز نشون می‌ده
+
+تجربه‌ی ضعیف
+
+پیامدها:
+
+مثبت: دقت بالا، Cold Start حل، شخصی‌سازی
+
+منفی: پیچیدگی، نیاز به ML، زمان آموزش
+
+ریسک: مدل قدیمی بشه → Retraining دوره‌ای
+
+ADR-003: انتخاب مکانیزم برای Real-time Recommendations
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر انتظار داره پیشنهادها بلافاصله بعد از رفتارش (مثلاً دیدن یه محصول) به‌روز بشن. اگه بخوایم هر بار مدل رو از اول آموزش بدیم، ساعت‌ها طول می‌کشه. باید یه راهی برای Real-time Update داشته باشیم.
+
+تصمیم:
+از Online Learning + Feature Store + Redis Cache استفاده می‌کنیم.
+
+دلیل تصمیم:
+Online Learning یعنی مدل به صورت Incremental با هر رفتار کاربر به‌روز می‌شه (نه از اول). Feature Store ویژگی‌های کاربر و آیتم رو ذخیره می‌کنه. Redis هم برای Cache پیشنهادها. این ترکیب تأخیر رو زیر ۱۰۰ میلی‌ثانیه نگه می‌داره.
+
+مزایا:
+
+Real-time Update (تأخیر زیر ۱۰۰ میلی‌ثانیه)
+
+بدون نیاز به Retraining کامل
+
+Feature Store برای اشتراک ویژگی‌ها
+
+مقیاس‌پذیری بالا
+
+معایب:
+
+پیچیدگی Online Learning
+
+نیاز به Feature Store (زیرساخت اضافه)
+
+ممکنه مدل ناپایدار بشه
+
+نیاز به Monitoring دقیق
+
+موارد دیگر بررسی‌شده:
+
+الف) Batch Retraining (هر شب):
+مزایا:
+
+سادگی
+
+پایداری مدل
+معایب:
+
+تأخیر تا ۲۴ ساعت
+
+نمی‌تونه Real-time باشه
+
+تجربه‌ی ضعیف
+
+ب) فقط Cache (بدون Online Learning):
+مزایا:
+
+سرعت بالا
+
+سادگی
+معایب:
+
+پیشنهادها قدیمی می‌مونن
+
+بدون شخصی‌سازی Real-time
+
+کاربر ناراضی
+
+ج) Lambda Architecture (Batch + Speed Layer):
+مزایا:
+
+تعادل بین دقت و سرعت
+
+پوشش همه‌ی سناریوها
+معایب:
+
+پیچیدگی بسیار بالا
+
+نگهداری دو مسیر
+
+هزینه‌ی بالا
+
+پیامدها:
+
+مثبت: Real-time، بدون Retraining، مقیاس‌پذیری
+
+منفی: پیچیدگی، نیاز به Feature Store، ناپایداری
+
+ریسک: مدل ناپایدار بشه → A/B Test و Rollback
+
+ADR-004: انتخاب مکانیزم برای چندزبانگی و RTL/LTR
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم برای کاربران سراسر جهانه و باید از چندین زبان (فارسی، انگلیسی، عربی، ترکی) پشتیبانی کنه. زبان‌های RTL (فارسی، عربی) نیاز به چیدمان برعکس دارن. جستجو و پیشنهاد هم باید بر اساس زبان کاربر باشه.
+
+تصمیم:
+از i18next برای UI، UTF-8 در همه‌ی دیتابیس‌ها، Elasticsearch Analyzer مجزا برای هر زبان و RTL/LTR با CSS dir استفاده می‌کنیم.
+
+دلیل تصمیم:
+i18next استاندارد صنعتی برای i18n در React هست. UTF-8 تضمین می‌کنه که همه‌ی کاراکترها درست ذخیره بشن. Elasticsearch Analyzer مجزا یعنی جستجو در هر زبان دقیق انجام می‌شه. RTL/LTR هم با CSS dir خودکار اعمال می‌شه.
+
+مزایا:
+
+پشتیبانی کامل از چند زبان
+
+RTL/LTR خودکار
+
+جستجوی دقیق در هر زبان
+
+تغییر زبان بدون نسخه‌گذاری
+
+معایب:
+
+هر زبان یه فایل JSON جداگانه نیاز داره
+
+ترجمه‌ها باید توسط انسان بازبینی بشن
+
+بعضی کامپوننت‌های شخص ثالث با RTL سازگار نیستن
+
+نیاز به نگهداری چند Analyzer
+
+موارد دیگر بررسی‌شده:
+
+الف) Hardcode زبان‌ها:
+مزایا:
+
+سادگی
+
+Performance بالا
+معایب:
+
+هر تغییر نیاز به نسخه‌گذاری
+
+نگهداری فاجعه
+
+پشتیبانی سخت
+
+ب) مترجم آنلاین:
+مزایا:
+
+پوشش خودکار همه زبان‌ها
+
+بدون فایل JSON
+معایب:
+
+وابستگی به خارج
+
+حریم خصوصی
+
+هزینه‌ی بالا
+
+ج) فقط انگلیسی:
+مزایا:
+
+سادگی
+
+هزینه‌ی کم
+معایب:
+
+بازار محدود
+
+کاربرا ناراضی
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: پشتیبانی جهانی، جستجوی دقیق، RTL/LTR
+
+منفی: نگهداری JSON، پیچیدگی RTL
+
+ریسک: ترجمه ناقص → Fallback به انگلیسی و Crowdsourcing
+
+ADR-005: انتخاب مکانیزم برای Feature Store
+وضعیت: پذیرفته شده
+
+زمینه:
+مدل‌های ML به ویژگی‌های کاربر و آیتم نیاز دارن. اگه هر تیم ویژگی‌ها رو خودش محاسبه کنه، Duplication زیاد می‌شه و ناهماهنگی پیش میاد. باید یه جای مرکزی برای ذخیره و اشتراک ویژگی‌ها داشته باشیم.
+
+تصمیم:
+از Feast (Feature Store) با Redis (Online) و S3 (Offline) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Feast یه Feature Store متن‌بازه که هم Online (برای Real-time) و هم Offline (برای Training) رو پشتیبانی می‌کنه. Redis برای Online (سرعت بالا) و S3 برای Offline (حجم بالا). اینطوری تیم‌ها ویژگی‌ها رو یه بار تعریف می‌کنن و همه استفاده می‌کنن.
+
+مزایا:
+
+اشتراک ویژگی‌ها بین تیم‌ها
+
+Online و Offline یکسان
+
+کاهش Duplication
+
+Consistency بین Training و Serving
+
+معایب:
+
+پیچیدگی راه‌اندازی
+
+نیاز به زیرساخت Redis و S3
+
+یادگیری Feast
+
+Overhead در Sync
+
+موارد دیگر بررسی‌شده:
+
+الف) بدون Feature Store (هر تیم خودش):
+مزایا:
+
+سادگی اولیه
+
+آزادی عمل
+معایب:
+
+Duplication
+
+ناهماهنگی
+
+Training-Serving Skew
+
+نگهداری سخت
+
+ب) فقط Redis (بدون Offline Store):
+مزایا:
+
+سرعت بالا
+
+سادگی
+معایب:
+
+برای Training مناسب نیست
+
+حجم محدود
+
+بدون Versioning
+
+ج) فقط S3 (بدون Online Store):
+مزایا:
+
+حجم بالا
+
+ارزون
+معایب:
+
+کند برای Real-time
+
+بدون Cache
+
+تأخیر بالا
+
+پیامدها:
+
+مثبت: اشتراک ویژگی‌ها، Consistency، کاهش Duplication
+
+منفی: پیچیدگی، نیاز به زیرساخت
+
+ریسک: Sync خطا کنه → Monitoring و Alert
+
+ADR-006: انتخاب مکانیزم برای A/B Testing
+وضعیت: پذیرفته شده
+
+زمینه:
+می‌خوایم بدونیم کدوم الگوریتم پیشنهاد بهتر جواب می‌ده. نمی‌تونیم همه رو همزمان برای همه اجرا کنیم. باید بتونیم ترافیک رو بین نسخه‌های مختلف تقسیم کنیم و نتایج رو مقایسه کنیم.
+
+تصمیم:
+از Feature Toggle (LaunchDarkly) + Kafka + ClickHouse برای A/B Testing استفاده می‌کنیم.
+
+دلیل تصمیم:
+LaunchDarkly ترافیک رو بین نسخه‌های مختلف تقسیم می‌کنه. Kafka رویدادها رو جمع می‌کنه. ClickHouse برای تحلیل سریع نتایج. این ترکیب یعنی می‌تونیم بدون Deploy، نسخه‌های جدید رو تست کنیم.
+
+مزایا:
+
+تست بدون Deploy
+
+تقسیم ترافیک دقیق
+
+تحلیل سریع نتایج با ClickHouse
+
+Rollback فوری (خاموش کردن Flag)
+
+معایب:
+
+هزینه‌ی LaunchDarkly
+
+پیچیدگی کد (Flagهای زیاد)
+
+Debt فنی (Flagهای فراموش‌شده)
+
+نیاز به تیم Data
+
+موارد دیگر بررسی‌شده:
+
+الف) Deploy جداگانه برای هر نسخه:
+مزایا:
+
+کنترل کامل
+
+بدون وابستگی
+معایب:
+
+Deploy مکرر
+
+Rollback کند
+
+پیچیدگی عملیاتی
+
+ب) بدون A/B Testing:
+مزایا:
+
+سادگی
+
+هزینه‌ی کم
+معایب:
+
+نمی‌دونیم کدوم بهتره
+
+تصمیم‌گیری کورکورانه
+
+ریسک بالا
+
+ج) Multi-Armed Bandit:
+مزایا:
+
+بهینه‌سازی خودکار
+
+یادگیری در حین اجرا
+معایب:
+
+پیچیدگی ریاضی
+
+نیاز به تیم ML
+
+ممکنه کند همگرا بشه
+
+پیامدها:
+
+مثبت: تست بدون Deploy، Rollback فوری، تحلیل سریع
+
+منفی: هزینه‌ی LaunchDarkly، پیچیدگی، Debt فنی
+
+ریسک: Flagهای فراموش‌شده → بازبینی دوره‌ای و پاکسازی
+
+ADR-007: انتخاب مکانیزم برای Data Pipeline
+وضعیت: پذیرفته شده
+
+زمینه:
+داده‌ها از منابع مختلف (رفتار کاربر، کلیک، خرید، لاگ) میان. باید این داده‌ها جمع‌آوری، پردازش و به Feature Store و مدل برسن. حجم داده بالاست و باید Real-time و Batch هر دو پشتیبانی بشن.
+
+تصمیم:
+از Kafka + Spark Streaming + Airflow + S3 Data Lake استفاده می‌کنیم.
+
+دلیل تصمیم:
+Kafka برای Ingestion داده‌ها. Spark Streaming برای پردازش Real-time. Airflow برای Batch Jobها. S3 Data Lake برای ذخیره‌ی داده‌های خام. این ترکیب هم Real-time هم Batch رو پوشش می‌ده.
+
+مزایا:
+
+پوشش Real-time و Batch
+
+مقیاس‌پذیری بالا
+
+Data Lake برای ذخیره‌ی خام
+
+Orchestration با Airflow
+
+معایب:
+
+پیچیدگی زیرساخت
+
+نیاز به تیم Data Engineering
+
+هزینه‌ی Kafka و Spark
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Batch (Hadoop):
+مزایا:
+
+سادگی
+
+هزینه‌ی کمتر
+معایب:
+
+تأخیر بالا
+
+بدون Real-time
+
+برای Online Learning مناسب نیست
+
+ب) فقط Streaming (Kafka + Flink):
+مزایا:
+
+Real-time
+
+مقیاس‌پذیری بالا
+معایب:
+
+برای Batch مناسب نیست
+
+پیچیدگی Flink
+
+هزینه‌ی بالا
+
+ج) Lambda Architecture:
+مزایا:
+
+پوشش همه‌ی سناریوها
+
+دقت بالا
+معایب:
+
+پیچیدگی بسیار بالا
+
+نگهداری دو مسیر
+
+هزینه‌ی نجومی
+
+پیامدها:
+
+مثبت: Real-time و Batch، مقیاس‌پذیری، Data Lake
+
+منفی: پیچیدگی، هزینه، نیاز به تیم Data
+
+ریسک: اگه Kafka Down بشه → Multi-Broker و Replication
+
+ADR-008: انتخاب مکانیزم برای تحمل خطا و Resiliency
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم به سرویس‌های خارجی (Feature Store، ML Model، Database) وابسته است. اگه یکی از اینا خراب بشه، درخواست‌ها صف می‌شن و کل سیستم از کار می‌افته (Cascading Failure).
+
+تصمیم:
+از Circuit Breaker + Retry + Bulkhead + Fallback (Resilience4j) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Circuit Breaker جلوی Cascading Failure رو می‌گیره. Retry خطاهای موقت رو جبران می‌کنه. Bulkhead منابع رو جدا می‌کنه. Fallback هم اگه سرویس اصلی Down باشه، از پیشنهادهای محبوب استفاده می‌کنه.
+
+مزایا:
+
+جلوگیری از Cascading Failure
+
+بازیابی خودکار
+
+جداسازی منابع
+
+Fallback برای تداوم سرویس
+
+معایب:
+
+تنظیم آستانه‌ها نیاز به تست داره
+
+Retry ممکنه مشکل رو بدتر کنه
+
+پیچیدگی Debugging
+
+نیاز به Monitoring دقیق
+
+موارد دیگر بررسی‌شده:
+
+الف) Retry ساده:
+مزایا:
+
+سادگی
+
+پوشش خطاهای موقت
+معایب:
+
+Retry Storm
+
+Cascading Failure
+
+بدون Fallback
+
+ب) Timeout فقط:
+مزایا:
+
+سادگی
+
+جلوگیری از انتظار بی‌نهایت
+معایب:
+
+کافی نیست
+
+Thread Pool اشباع می‌شه
+
+بدون Fallback
+
+ج) Bulkhead به تنهایی:
+مزایا:
+
+جداسازی منابع
+
+جلوگیری از Exhaustion
+معایب:
+
+بدون قطع ارتباط با سرویس خراب
+
+Retry نداره
+
+بدون Fallback
+
+پیامدها:
+
+مثبت: مقاومت بالا، Fail Fast، تداوم سرویس
+
+منفی: پیچیدگی تنظیمات، نیاز به Monitoring
+
+ریسک: آستانه اشتباه → Alert و بازبینی دوره‌ای
+
+ADR-009: انتخاب مکانیزم برای چرخه‌ی حیات داده‌ها
+وضعیت: پذیرفته شده
+
+زمینه:
+داده‌های کاربران و تعاملاتشون روز به روز زیاد می‌شه. نگه‌داری همه چیز تو یه جا هزینه‌ی نجومی داره و کوئری‌ها رو کند می‌کنه. از طرف دیگه، GDPR حق فراموشی رو الزامی کرده.
+
+تصمیم:
+از Tiered Storage + Soft Delete + Anonymization استفاده می‌کنیم:
+
+Hot (۰-۶ ماه): PostgreSQL + Redis
+
+Warm (۶ ماه تا ۲ سال): Elasticsearch
+
+Cold (بیشتر از ۲ سال): S3 Glacier
+
+GDPR: Soft Delete فوری، Anonymize بعد از ۳۰ روز
+
+دلیل تصمیم:
+هر داده تو دیتابیسی که برای سنش مناسبه ذخیره می‌شه. Soft Delete هم Foreign Keyها رو سالم نگه می‌داره و Anonymize حریم خصوصی رو تضمین می‌کنه. Job شبانه انتقال‌ها رو انجام می‌ده.
+
+مزایا:
+
+کاهش ۷۰٪ هزینه‌ی Storage
+
+کوئری سریع برای داده‌های اخیر
+
+Compliance با GDPR
+
+Foreign Keyها سالم می‌مونن
+
+معایب:
+
+تأخیر در بازیابی از Glacier
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring دقیق
+
+حجم دیتابیس بیشتر (به خاطر Soft Delete)
+
+موارد دیگر بررسی‌شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فوری فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص (Backups)
+
+Audit Trail از بین می‌ره
+
+ب) نگه‌داری همه چیز در PostgreSQL:
+مزایا:
+
+سادگی
+
+Query یکپارچه
+معایب:
+
+هزینه‌ی نجومی
+
+کندی با حجم زیاد
+
+Backup سنگین
+
+ج) فقط S3 (بدون Tiered):
+مزایا:
+
+هزینه‌ی کم
+
+سادگی
+معایب:
+
+کوئری کند
+
+بدون Index
+
+برای داده‌های اخیر مناسب نیست
+
+پیامدها:
+
+مثبت: هزینه‌ی کم، Performance بالا، Compliance
+
+منفی: تأخیر Restore، پیچیدگی Job
+
+ریسک: اگه Job خطا کنه → DLQ و Retry و Alert
+
+ADR-010: انتخاب مکانیزم برای احراز هویت و مدیریت دسترسی
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم برای سازمان‌هاست و کاربران نقش‌های مختلفی دارن (Admin، Analyst، Viewer). باید مطمئن باشیم هر کاربر فقط به داده‌های مجاز دسترسی داره. از طرف دیگه، Enterpriseها معمولاً SSO می‌خوان.
+
+تصمیم:
+از OAuth 2.0 + OIDC + JWT + RBAC + SAML برای SSO استفاده می‌کنیم.
+
+دلیل تصمیم:
+OAuth 2.0 استاندارد صنعتیه. OIDC برای Authentication. JWT کوتاه‌مدت برای Authorization. RBAC برای کنترل دسترسی بر اساس نقش. SAML هم برای SSO سازمانی (Enterprise).
+
+مزایا:
+
+استاندارد صنعتی (OAuth 2.0 + OIDC)
+
+SSO سازمانی با SAML
+
+کنترل دسترسی دقیق با RBAC
+
+Session امن با JWT کوتاه‌مدت
+
+معایب:
+
+پیچیدگی پیاده‌سازی (Keycloak + SAML)
+
+نیاز به تیم امنیت
+
+تجربه‌ی کاربری سخت‌تر (SSO Flow)
+
+هزینه‌ی Keycloak Enterprise
+
+موارد دیگر بررسی‌شده:
+
+الف) Session-based ساده:
+مزایا:
+
+سادگی
+
+Revoke ساده
+معایب:
+
+مقیاس‌پذیری کمتر
+
+نیاز به Query دیتابیس
+
+بدون SSO
+
+ب) فقط JWT (بدون OAuth):
+مزایا:
+
+سادگی
+
+Stateless
+معایب:
+
+بدون Refresh Token
+
+JWT قابل Revoke نیست
+
+بدون SSO
+
+ج) Basic Auth:
+مزایا:
+
+سادگی
+
+بدون Token
+معایب:
+
+امنیت پایین
+
+بدون SSO
+
+برای Enterprise مناسب نیست
+
+پیامدها:
+
+مثبت: استاندارد، SSO، RBAC، امنیت بالا
+
+منفی: پیچیدگی، نیاز به تیم امنیت، هزینه
+
+ریسک: اگه Keycloak Down بشه → HA و Fallback به Local Auth
+************************************************************************************************************************
+
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، مدیریت کاربران و نقش‌ها
+
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Argon2، Keycloak
+
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود (با SSO)
+POST   /api/v1/auth/refresh           → تمدید توکن
+POST   /api/v1/auth/logout            → خروج
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش پروفایل
+DELETE /api/v1/users/{id}             → حذف حساب (GDPR)
+GET    /api/v1/users/{id}/roles       → نقش‌ها
+POST   /api/v1/users/{id}/roles       → تخصیص نقش (Admin)
+GET    /api/v1/users/search           → جستجوی کاربر
+۲. Recommendation Service
+مسئولیت: تولید پیشنهاد شخصی‌سازی‌شده (Hybrid CF)
+
+تکنولوژی: Python، TensorFlow، Feature Store (Feast)، Redis
+
+APIها:
+
+text
+GET    /api/v1/recommendations/{userId}      → پیشنهادها
+GET    /api/v1/recommendations/similar/{itemId} → مشابه
+GET    /api/v1/recommendations/trending      → Trendها
+POST   /api/v1/recommendations/feedback      → بازخورد کاربر
+GET    /api/v1/recommendations/health        → وضعیت مدل
+POST   /api/v1/recommendations/train         → آموزش مدل (Admin)
+۳. Feature Store Service
+مسئولیت: ذخیره و اشتراک ویژگی‌های ML (Feast)
+
+تکنولوژی: Python، Feast، Redis (Online)، S3 (Offline)
+
+APIها:
+
+text
+POST   /api/v1/features/register       → ثبت Feature
+GET    /api/v1/features/{name}         → دریافت Feature
+GET    /api/v1/features/online/{entityId} → Online Features
+GET    /api/v1/features/offline/{entityId} → Offline Features
+POST   /api/v1/features/materialize    → Materialize
+GET    /api/v1/features/list           → لیست Featureها
+۴. Search Service
+مسئولیت: جستجوی Full-Text و Faceted
+
+تکنولوژی: Spring Boot، Elasticsearch، Kafka (CDC)
+
+APIها:
+
+text
+GET    /api/v1/search                  → جستجوی عمومی
+GET    /api/v1/search/suggest          → Auto-complete
+GET    /api/v1/search/faceted          → جستجوی Faceted
+GET    /api/v1/search/multi-language   → جستجوی چندزبانه
+POST   /api/v1/search/reindex          → Reindex (Admin)
+GET    /api/v1/search/analytics        → آمار جستجو
+۵. A/B Testing Service
+مسئولیت: مدیریت آزمایش‌ها، تقسیم ترافیک، تحلیل نتایج
+
+تکنولوژی: Spring Boot، LaunchDarkly، Kafka، ClickHouse
+
+APIها:
+
+text
+POST   /api/v1/experiments             → ساخت آزمایش
+GET    /api/v1/experiments/{id}        → جزئیات
+POST   /api/v1/experiments/{id}/start  → شروع
+POST   /api/v1/experiments/{id}/stop   → توقف
+GET    /api/v1/experiments/{id}/results → نتایج
+POST   /api/v1/experiments/assign      → تخصیص کاربر
+GET    /api/v1/experiments/active      → آزمایش‌های فعال
+۶. Data Pipeline Service
+مسئولیت: Ingestion و پردازش داده (Real-time + Batch)
+
+تکنولوژی: Kafka، Spark Streaming، Airflow، S3 Data Lake
+
+APIها:
+
+text
+POST   /api/v1/pipeline/ingest         → Ingestion داده
+GET    /api/v1/pipeline/jobs           → لیست Jobها
+POST   /api/v1/pipeline/jobs           → ساخت Job (Admin)
+GET    /api/v1/pipeline/jobs/{id}      → وضعیت Job
+POST   /api/v1/pipeline/jobs/{id}/run  → اجرای Job
+GET    /api/v1/pipeline/data-lake      → Data Lake
+GET    /api/v1/pipeline/monitoring     → Monitoring
+۷. Notification Service
+مسئولیت: Push، Email، SMS، اعلان‌های درون‌برنامه‌ای
+
+تکنولوژی: Spring Boot، Kafka، Firebase، SendGrid
+
+APIها:
+
+text
+POST   /api/v1/notifications/send      → ارسال اعلان
+GET    /api/v1/notifications           → لیست اعلان‌ها
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings  → تنظیمات
+PATCH  /api/v1/notifications/settings  → ویرایش تنظیمات
+POST   /api/v1/notifications/broadcast → ارسال گروهی (Admin)
+۸. Archive Service
+مسئولیت: چرخه حیات داده، Tiered Storage، GDPR
+
+تکنولوژی: Spring Boot، PostgreSQL، Elasticsearch، S3، Glacier
+
+APIها:
+
+text
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/archive/restore         → درخواست بازیابی
+GET    /api/v1/archive/status/{id}     → وضعیت
+POST   /api/v1/gdpr/export             → خروجی داده کاربر
+DELETE /api/v1/gdpr/delete/{userId}    → حذف حساب (GDPR)
+GET    /api/v1/gdpr/audit              → لاگ GDPR
+GET    /api/v1/archive/retention       → سیاست نگهداری
+۹. Analytics Service
+مسئولیت: آمار، گزارش، داشبورد
+
+تکنولوژی: Spring Boot، ClickHouse، Kafka، Grafana
+
+APIها:
+
+text
+GET    /api/v1/analytics/dashboard     → داشبورد
+GET    /api/v1/analytics/users         → آمار کاربران
+GET    /api/v1/analytics/recommendations → آمار پیشنهادها
+GET    /api/v1/analytics/experiments   → آمار A/B Test
+POST   /api/v1/analytics/events        → ثبت رویداد
+GET    /api/v1/analytics/reports       → گزارش‌ها
+GET    /api/v1/analytics/export        → خروجی
+۱۰. Localization Service
+مسئولیت: چندزبانگی، RTL/LTR، ترجمه
+
+تکنولوژی: Spring Boot، PostgreSQL، Redis، i18next
+
+APIها:
+
+text
+GET    /api/v1/i18n/languages          → لیست زبان‌ها
+GET    /api/v1/i18n/{lang}/translation → ترجمه
+POST   /api/v1/i18n/translate          → افزودن ترجمه (Admin)
+GET    /api/v1/i18n/rtl/{lang}         → وضعیت RTL
+PATCH  /api/v1/i18n/settings           → تنظیمات
+GET    /api/v1/i18n/fallback           → Fallback
+۱۱. Auth Service (Keycloak)
+مسئولیت: احراز هویت متمرکز، SSO، RBAC
+
+تکنولوژی: Keycloak، OAuth 2.0، OIDC، SAML، JWT
+
+APIها:
+
+text
+POST   /api/v1/auth/token              → دریافت توکن
+POST   /api/v1/auth/refresh            → تمدید
+POST   /api/v1/auth/logout             → خروج
+GET    /api/v1/auth/userinfo           → اطلاعات کاربر
+POST   /api/v1/auth/sso/saml           → SSO با SAML
+GET    /api/v1/auth/roles              → لیست نقش‌ها
+POST   /api/v1/auth/roles              → تخصیص نقش
+۱۲. Model Serving Service
+مسئولیت: سرو مدل ML، Online Learning
+
+تکنولوژی: Python، TensorFlow Serving، Redis، Kafka
+
+APIها:
+
+text
+POST   /api/v1/models/predict          → پیش‌بینی
+POST   /api/v1/models/online-update    → Online Update
+GET    /api/v1/models/versions         → نسخه‌های مدل
+POST   /api/v1/models/rollback         → بازگردانی مدل
+GET    /api/v1/models/health           → وضعیت
+POST   /api/v1/models/deploy           → Deploy مدل جدید
+۱۳. Admin Service
+مسئولیت: مدیریت سیستم، تنظیمات، گزارش‌ها
+
+تکنولوژی: Spring Boot، PostgreSQL، ClickHouse، Keycloak
+
+APIها:
+
+text
+GET    /api/v1/admin/dashboard         → داشبورد
+POST   /api/v1/admin/config            → تنظیمات
+GET    /api/v1/admin/logs              → لاگ‌ها
+POST   /api/v1/admin/users/{id}/ban    → مسدودسازی
+GET    /api/v1/admin/audit             → Audit Log
+GET    /api/v1/admin/health            → وضعیت سیستم
+POST   /api/v1/admin/maintenance       → حالت تعمیر
+۱۴. API Gateway Service
+مسئولیت: ورودی REST، Auth، Rate Limiting
+
+تکنولوژی: Kong، Redis، JWT
+
+APIها:
+
+text
+GET    /api/v1/gateway/health          → وضعیت
+GET    /api/v1/gateway/routes          → Routeها
+POST   /api/v1/gateway/rate-limit      → تنظیم Rate Limit
+GET    /api/v1/gateway/metrics         → متریک‌ها
+POST   /api/v1/gateway/api-key         → مدیریت API Key
+🔧 لایه Component (برای هر سرویس)
+۱. User Service
+Component	نوع	مسئولیت
+AuthController	@RestController	ثبت‌نام، ورود
+UserController	@RestController	پروفایل
+RoleController	@RestController	نقش‌ها
+AuthService	@Service	احراز هویت
+UserService	@Service	منطق کاربر
+RoleService	@Service	مدیریت نقش
+UserRepository	@Repository	PostgreSQL
+RoleRepository	@Repository	PostgreSQL
+JwtProvider	@Component	JWT
+KeycloakClient	@Component	Keycloak SDK
+EventPublisher	@Component	Kafka
+۲. Recommendation Service
+Component	نوع	مسئولیت
+RecommendationController	@RestController	پیشنهادها
+RecommendationEngine	@Service	Hybrid CF
+CollaborativeFilter	@Component	CF
+ContentBasedFilter	@Component	Content-Based
+MatrixFactorizer	@Component	Matrix Factorization
+FeatureStoreClient	@Component	Feast
+CacheManager	@Component	Redis
+KafkaConsumer	@Component	رفتار کاربر
+۳. Feature Store Service
+Component	نوع	مسئولیت
+FeatureController	@RestController	مدیریت Feature
+FeatureService	@Service	منطق Feature
+FeastClient	@Component	Feast SDK
+OnlineStore	@Component	Redis
+OfflineStore	@Component	S3
+Materializer	@Component	Materialize
+KafkaConsumer	@Component	Ingestion
+۴. Search Service
+Component	نوع	مسئولیت
+SearchController	@RestController	جستجو
+SearchService	@Service	منطق جستجو
+SuggestService	@Service	Auto-complete
+FacetedSearchService	@Service	Faceted Search
+IndexManager	@Component	ES Index
+AnalyzerManager	@Component	Multi-language
+KafkaConsumer	@Component	CDC
+ElasticsearchClient	@Component	ES SDK
+۵. A/B Testing Service
+Component	نوع	مسئولیت
+ExperimentController	@RestController	مدیریت آزمایش
+ExperimentService	@Service	منطق آزمایش
+TrafficSplitter	@Component	LaunchDarkly
+ResultAnalyzer	@Component	تحلیل نتایج
+ClickHouseClient	@Component	ClickHouse
+KafkaProducer	@Component	رویدادها
+ExperimentRepository	@Repository	PostgreSQL
+۶. Data Pipeline Service
+Component	نوع	مسئولیت
+PipelineController	@RestController	مدیریت Pipeline
+PipelineService	@Service	منطق Pipeline
+KafkaIngestor	@Component	Kafka
+SparkProcessor	@Component	Spark Streaming
+AirflowOrchestrator	@Component	Airflow
+DataLakeManager	@Component	S3
+MonitoringService	@Service	Monitoring
+۷. Notification Service
+Component	نوع	مسئولیت
+NotificationController	@RestController	ارسال اعلان
+NotificationService	@Service	منطق اعلان
+KafkaConsumer	@Component	مصرف رویدادها
+PushSender	@Component	FCM/APNs
+EmailSender	@Component	SendGrid
+SmsSender	@Component	Kavenegar
+NotificationRepository	@Repository	PostgreSQL
+۸. Archive Service
+Component	نوع	مسئولیت
+ArchiveController	@RestController	درخواست آرشیو
+ArchiveService	@Service	منطق آرشیو
+TieredStorageManager	@Service	Hot/Warm/Cold
+GdprAnonymizer	@Service	Anonymize
+RestoreJob	@Component	بازیابی
+ArchiveRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+GlacierClient	@Component	Glacier SDK
+۹. Analytics Service
+Component	نوع	مسئولیت
+AnalyticsController	@RestController	دریافت آمار
+AnalyticsService	@Service	منطق Analytics
+KafkaConsumer	@Component	مصرف رویدادها
+ClickHouseClient	@Component	ClickHouse SDK
+ReportGenerator	@Service	گزارش‌گیری
+DashboardService	@Service	داشبورد
+ExportService	@Service	خروجی
+۱۰. Localization Service
+Component	نوع	مسئولیت
+I18nController	@RestController	مدیریت ترجمه
+I18nService	@Service	منطق i18n
+TranslationManager	@Component	فایل‌های JSON
+RtlLtrHandler	@Component	RTL/LTR
+FallbackHandler	@Component	Fallback
+CacheManager	@Component	Redis
+I18nRepository	@Repository	PostgreSQL
+۱۱. Auth Service (Keycloak)
+Component	نوع	مسئولیت
+TokenController	@RestController	مدیریت توکن
+KeycloakConfig	@Configuration	Keycloak
+SamlHandler	@Component	SAML SSO
+OidcHandler	@Component	OIDC
+RbacManager	@Component	RBAC
+RoleRepository	@Repository	Keycloak DB
+۱۲. Model Serving Service
+Component	نوع	مسئولیت
+ModelController	@RestController	مدیریت مدل
+PredictionService	@Service	پیش‌بینی
+OnlineLearningService	@Service	Online Update
+TensorFlowServer	@Component	TF Serving
+ModelRegistry	@Component	نسخه‌ها
+RollbackService	@Service	بازگردانی
+KafkaConsumer	@Component	بازخورد
+۱۳. Admin Service
+Component	نوع	مسئولیت
+AdminController	@RestController	داشبورد
+ConfigController	@RestController	تنظیمات
+AuditController	@RestController	Audit Log
+ConfigService	@Service	تنظیمات
+AuditService	@Service	Audit
+HealthChecker	@Component	Health Check
+MaintenanceManager	@Component	تعمیر
+ClickHouseClient	@Component	ClickHouse
+۱۴. API Gateway Service
+Component	نوع	مسئولیت
+GatewayController	@RestController	مدیریت Gateway
+RateLimiter	@Component	Rate Limit
+JwtValidator	@Component	اعتبارسنجی JWT
+RouteManager	@Component	Routeها
+ApiKeyManager	@Component	API Key
+MetricsCollector	@Component	متریک‌ها
+RedisClient	@Component	Redis
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+Service Discovery	Eureka/Consul	ثبت و کشف سرویس‌ها
+Config Server	Spring Cloud Config	تنظیمات مرکزی
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Feature Store
+PostgreSQL	Postgres 16	داده ساختاریافته
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	Data Lake + Offline Store
+Glacier	AWS Glacier	Cold Archive
+Keycloak	Keycloak	Identity Provider (SSO)
+Feast	Feast	Feature Store
+Spark	Spark Streaming	پردازش Real-time
+Airflow	Airflow	Orchestration
+LaunchDarkly	LaunchDarkly	A/B Testing
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis + Keycloak
+       ├──→ Recommendation Service ──→ TensorFlow + Feast
+       ├──→ Feature Store Service ──→ Redis + S3
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ A/B Testing Service ──→ LaunchDarkly + ClickHouse
+       ├──→ Data Pipeline Service ──→ Kafka + Spark + Airflow
+       ├──→ Notification Service ──→ Kafka + Firebase
+       ├──→ Archive Service ──→ S3 + Glacier
+       ├──→ Analytics Service ──→ ClickHouse
+       ├──→ Localization Service ──→ PostgreSQL + Redis
+       ├──→ Auth Service ──→ Keycloak
+       ├──→ Model Serving Service ──→ TensorFlow Serving
+       └──→ Admin Service ──→ ClickHouse + PostgreSQL
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus بین سرویس‌ها
+└──────────────┘

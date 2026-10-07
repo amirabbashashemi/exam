@@ -1,0 +1,1209 @@
+---***01----------------------------------------------------------------------------------------------------------------
+ADR-001: معماری Multi-Region Active-Active برای High Availability
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم باید ۲۴/۷ در دسترس باشه. اگه یه Region (مثلاً AWS us-east-1) از کار بیفته، کاربرا نباید قطعی حس کنن. سوال اینه که چطور Availability رو تضمین کنیم.
+
+تصمیم:
+معماری Multi-Region Active-Active با Global Load Balancer (Route 53 با Latency-based Routing) و Replication در Cassandra و PostgreSQL.
+
+دلیل تصمیم:
+چون Active-Active یعنی هر دو Region همزمان ترافیک می‌گیرن.
+اگه یکی Down بشه، Global Load Balancer خودکار ترافیک رو به Region دیگه می‌فرسته. کاربر حتی متوجه نمی‌شه.
+
+مزایا:
+Downtime صفر در صورت خرابی یک Region (کاربر متوجه نمی‌شه)
+کاربرا به نزدیک‌ترین Region وصل می‌شن (Latency کمتر)
+تحمل خرابی‌های بزرگ (زلزله، قطعی برق، حملات سایبری)
+
+معایب:
+هزینه زیرساخت دو برابر (دو Region فعال)
+پیچیدگی در Sync داده‌ها (Conflict Resolution)
+نیاز به تیم SRE حرفه‌ای
+
+موارد دیگر بررسی شده:
+الف) Active-Passive:
+مزایا:
+هزینه کمتر (Region دوم فقط Standby)
+پیاده‌سازی ساده‌تر
+معایب:
+Downtime در Failover (چند دقیقه تا چند ساعت)
+Region دوم همیشه بیکار می‌مونه (هدر رفت منابع)
+RTO بالا (Recovery Time Objective)
+
+ب) Single Region با Backup:
+مزایا:
+سادگی، هزینه کم
+معایب:
+Downtime طولانی در خرابی
+کاربرای دور، Latency بالا
+نقض SLA
+
+ج) Multi-Cloud (AWS + GCP):
+مزایا:
+تحمل خرابی Provider
+عدم Vendor Lock-in
+معایب:
+پیچیدگی بسیار بالا
+هزینه چند برابر
+Sync داده سخت‌تر
+
+پیامدها:
+
+مثبت: SLA 99.99%، Latency پایین برای کاربران جهانی
+منفی: هزینه بالا، پیچیدگی عملیاتی، نیاز به تیم SRE
+ریسک: Conflict در Replication → راه‌حل: Last-Write-Wins + CRDT برای داده‌های خاص
+---***02----------------------------------------------------------------------------------------------------------------
+ADR-002: استراتژی Caching برای مقابله با بار سنگین
+وضعیت: پذیرفته شده
+
+زمینه:
+موتور پیشنهاددهنده باید برای میلیون‌ها کاربر، پیشنهاد شخصی‌سازی‌شده تولید کنه. اگه هر درخواست مستقیم به دیتابیس بره، زیر بار سنگین می‌شکنه.
+
+تصمیم:
+استفاده از Redis Cluster با استراتژی Cache-Aside و TTL مبتنی بر نوع داده:
+
+پیشنهادات پرتکرار: TTL = ۵ دقیقه
+
+پروفایل کاربر: TTL = ۳۰ دقیقه
+
+Trendها: TTL = ۱ دقیقه
+
+دلیل تصمیم:
+Redis In-Memory هست و سرعتش زیر ۱ms. با Cache-Aside، فقط در صورت Cache Miss به دیتابیس می‌ریم. اینطوری ۹۰٪ درخواست‌ها از کش پاسخ می‌گیرن و بار دیتابیس ۱۰ برابر کاهش پیدا می‌کنه.
+
+مزایا:
+کاهش ۹۰٪ بار روی دیتابیس
+Latency < ۵ms برای ۹۰٪ درخواست‌ها
+مقیاس‌پذیری افقی با Redis Cluster
+معایب:
+Single Point of Failure (اگه Redis Cluster Down بشه)
+مصرف RAM زیاد (هزینه)
+Cache Invalidation پیچیده (کی داده رو Update کنیم؟)
+
+موارد دیگر بررسی شده:
+الف) بدون Cache (مستقیم به DB):
+مزایا:
+همیشه داده تازه (Consistency کامل)
+سادگی پیاده‌سازی
+معایب:
+کندی زیر بار سنگین
+دیتابیس به سرعت اشباع می‌شه
+هزینه دیتابیس بالا
+
+ب) Local Cache (In-Memory در هر سرویس):
+مزایا:
+سرعت فوق‌العاده (بدون Network)
+بدون وابستگی به Redis
+معایب:
+محدودیت حافظه هر سرویس
+ناهماهنگی بین Instanceها
+Cache Invalidation سخت
+
+
+ج) Memcached:
+مزایا:
+سادگی، سرعت بالا
+Multi-threaded
+معایب:
+فقط Key-Value (بدون ساختار داده پیشرفته)
+بدون Persistence
+بدون Replication داخلی
+
+
+پیامدها:
+مثبت: بار دیتابیس ۱۰ برابر کمتر، Latency پایین
+منفی: هزینه Redis Cluster، پیچیدگی Invalidation
+ریسک: Redis Down → Fallback به دیتابیس + Rate Limiting
+
+---***03----------------------------------------------------------------------------------------------------------------
+ADR-003: الگوهای Resilience (Circuit Breaker + Retry + Bulkhead)
+وضعیت: پذیرفته شده
+
+زمینه:
+موتور پیشنهاددهنده به سرویس‌های خارجی (مثل Analytics، ML Model) وابسته است. اگه یکی از این سرویس‌ها کند یا خراب بشه، درخواست‌ها صف می‌شن و کل سیستم از کار می‌افته (Cascading Failure).
+
+تصمیم:
+استفاده از Resilience4j با ترکیب سه الگو:
+
+Circuit Breaker: قطع ارتباط بعد از ۵۰٪ خطا در ۱۰ ثانیه
+
+Retry: ۳ بار با Exponential Backoff (۱s, ۲s, ۴s)
+
+Bulkhead: Thread Pool جداگانه برای هر سرویس خارجی
+
+دلیل تصمیم:
+Circuit Breaker جلوی Cascading Failure رو می‌گیره. Retry خطاهای موقت رو جبران می‌کنه. Bulkhead تضمین می‌کنه که یه سرویس کند، Thread Pool بقیه سرویس‌ها رو اشباع نکنه.
+
+مزایا:
+
+جلوگیری از Cascading Failure
+
+بازیابی خودکار (بعد از رفع مشکل، مدار بسته می‌شه)
+
+جداسازی منابع (یه سرویس خراب، بقیه رو خراب نمی‌کنه)
+
+معایب:
+
+تنظیم آستانه‌ها نیاز به تست و تجربه داره
+
+Retry ممکنه سرویس مقصد رو Overload کنه
+
+پیچیدگی Debugging (کدوم مرحله شکست خورد؟)
+
+موارد دیگر بررسی شده:
+
+الف) Retry ساده (بدون Circuit Breaker):
+مزایا:
+
+سادگی پیاده‌سازی
+
+پوشش خطاهای موقت
+معایب:
+
+Retry Storm (اگه سرویس خراب باشه، بار بیشتر می‌شه)
+
+Cascading Failure
+
+بدون Fallback
+
+ب) Timeout فقط:
+مزایا:
+
+سادگی
+
+جلوگیری از انتظار بی‌نهایت
+معایب:
+
+کافی نیست (سرویس ممکنه کند بمونه ولی Down نشه)
+
+Thread Pool اشباع می‌شه
+
+ج) Bulkhead به تنهایی:
+مزایا:
+
+جداسازی منابع
+
+جلوگیری از Exhaustion
+معایب:
+
+بدون قطع ارتباط با سرویس خراب
+
+Retry نداره
+
+پیامدها:
+
+مثبت: مقاومت بالا در برابر خرابی، Fail Fast
+
+منفی: پیچیدگی تنظیمات، نیاز به Monitoring دقیق
+
+ریسک: آستانه اشتباه → Alert + بازبینی دوره‌ای
+
+---***04----------------------------------------------------------------------------------------------------------------
+ADR-004: پیاده‌سازی Chaos Engineering و DR Drill خودکار
+وضعیت: پذیرفته شده
+
+زمینه:
+نمی‌دونیم معماری‌مون در برابر خرابی‌های واقعی چطور رفتار می‌کنه. اگه فقط تئوری باشه، ممکنه موقع خرابی واقعی، سیستم از پا بیفته. باید قبل از کاربرا، خودمون خرابی رو تست کنیم.
+
+تصمیم:
+استفاده از Litmus Chaos + Chaos Monkey برای اجرای آزمایش‌های دوره‌ای:
+
+هر هفته: Kill یک Pod تصادفی
+
+هر ماه: قطع یک Zone کامل
+
+هر فصل: DR Drill کامل (Failover به Region دوم)
+
+دلیل تصمیم:
+با شبیه‌سازی خرابی، نقاط ضعف رو قبل از کاربرا پیدا می‌کنیم. تیم SRE با شرایط واقعی آشنا می‌شه و Runbookها تست می‌شن.
+
+مزایا:
+
+پیدا کردن نقاط ضعف قبل از کاربرا
+
+آمادگی تیم برای شرایط واقعی
+
+تست خودکار Failover و Runbookها
+
+معایب:
+
+خطرناک (اگه اشتباه اجرا بشه، Production خراب می‌شه)
+
+نیاز به تیم SRE حرفه‌ای
+
+هزینه اجرای تست در محیط جداگانه
+
+موارد دیگر بررسی شده:
+
+الف) تست دستی (بدون Chaos Engineering):
+مزایا:
+
+کنترل کامل
+
+سادگی
+معایب:
+
+خطای انسانی
+
+تست کم (چون زمان‌بره)
+
+نقاط ضعف پنهان می‌مونن
+
+ب) Chaos Engineering در Production بدون محدودیت:
+مزایا:
+
+واقع‌گرایانه‌ترین تست
+معایب:
+
+ریسک بالای خرابی
+
+نقض SLA
+
+کاربرا ناراضی می‌شن
+
+ج) فقط DR Drill دستی سالانه:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+فقط سالی یه بار
+
+تیم آماده نمی‌مونه
+
+Runbookها به‌روز نمی‌شن
+
+پیامدها:
+
+مثبت: آمادگی کامل، نقاط ضعف پیدا می‌شن
+
+منفی: هزینه SRE، ریسک Chaos Test
+
+ریسک: Chaos Test Production رو خراب کنه → Canary + Blast Radius محدود
+---***05----------------------------------------------------------------------------------------------------------------
+ADR-005: معماری i18n و پشتیبانی از RTL/LTR
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم باید از چندین زبان (فارسی، انگلیسی، عربی، ترکی) پشتیبانی کنه. زبان‌های RTL (فارسی، عربی) نیاز به چیدمان برعکس دارن. اعداد و تاریخ هم باید محلی باشن.
+
+تصمیم:
+
+i18next برای UI
+
+UTF-8 در تمام دیتابیس‌ها
+
+Elasticsearch Analyzer مجزا برای هر زبان (persian_analyzer, english_analyzer)
+
+CSS dir="rtl" برای RTL
+
+اعداد و تاریخ محلی با Intl.NumberFormat و Intl.DateTimeFormat
+
+دلیل تصمیم:
+i18next استاندارد صنعتی برای i18n در React هست. UTF-8 تضمین می‌کنه که همه کاراکترها درست ذخیره بشن. Elasticsearch Analyzer مجزا یعنی جستجو در هر زبان دقیق انجام می‌شه.
+
+مزایا:
+
+پشتیبانی کامل از چند زبان (بدون نسخه‌گذاری)
+
+RTL/LTR خودکار بر اساس زبان
+
+جستجوی دقیق در هر زبان
+
+معایب:
+
+هر زبان یه فایل JSON جداگانه نیاز داره (نگهداری بیشتر)
+
+ترجمه‌ها باید توسط انسان بازبینی بشن
+
+بعضی کامپوننت‌های شخص ثالث با RTL سازگار نیستن
+
+موارد دیگر بررسی شده:
+
+الف) Hardcode زبان‌ها:
+مزایا:
+
+سادگی پیاده‌سازی
+
+Performance بالا
+معایب:
+
+هر تغییر نیاز به نسخه‌گذاری
+
+نگهداری فاجعه
+
+پشتیبانی سخت
+
+ب) مترجم آنلاین (Google Translate API):
+مزایا:
+
+پوشش خودکار همه زبان‌ها
+
+بدون فایل JSON
+معایب:
+
+وابستگی به خارج
+
+حریم خصوصی
+
+هزینه بالا
+
+کیفیت ترجمه پایین
+
+ج) فقط انگلیسی (بدون i18n):
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+بازار محدود
+
+کاربرا ناراضی
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: پشتیبانی جهانی، تجربه کاربری بومی
+
+منفی: نگهداری فایل‌های JSON، پیچیدگی RTL
+
+ریسک: ترجمه ناقص → Fallback به انگلیسی + Crowdsourcing
+
+
+---***06----------------------------------------------------------------------------------------------------------------
+ADR-006: استفاده از Schema Registry و Contract-First Design
+وضعیت: پذیرفته شده
+
+زمینه:
+تیم‌های Stream-aligned به صورت مستقل کار می‌کنن. اگه هر تیم داده رو با فرمت خودش بفرسته، ارتباط بین سرویس‌ها می‌شکنه. باید استانداردسازی بشه.
+
+تصمیم:
+
+استفاده از Avro/Protobuf برای Schema
+
+Schema Registry (Confluent) برای مدیریت Version
+
+Contract-First: هر سرویس اول Contract خودش رو با OpenAPI تعریف می‌کنه
+
+Kafka با Schema Registry برای Eventها
+
+دلیل تصمیم:
+Schema Registry تضمین می‌کنه که داده‌ها با فرمت یکسان رد و بدل بشن. Contract-First یعنی تیم‌ها موازی کار می‌کنن. اگه Schema تغییر کنه، Versioning انجام می‌شه و Compatibility بررسی می‌شه.
+
+مزایا:
+
+استانداردسازی داده‌ها بین تیم‌ها
+
+جلوگیری از خطای Runtime
+
+Versioning خودکار Schema
+
+مستندات همیشه به‌روز
+
+معایب:
+
+پیچیدگی اولیه (نیاز به Schema Registry)
+
+یادگیری Avro/Protobuf
+
+Overhead در Serialization
+
+موارد دیگر بررسی شده:
+
+الف) JSON آزاد بدون Schema:
+مزایا:
+
+سادگی
+
+انعطاف بالا
+معایب:
+
+ناهماهنگی بین تیم‌ها
+
+خطای Runtime
+
+Debugging سخت
+
+حجم بیشتر
+
+ب) REST بدون Contract-First:
+مزایا:
+
+سرعت اولیه
+
+سادگی
+معایب:
+
+Breaking Change فاجعه
+
+مستندات ناقص
+
+Frontend و Backend نمی‌تونن موازی کار کنن
+
+ج) XML Schema:
+مزایا:
+
+استاندارد قدیمی
+
+Validation قوی
+معایب:
+
+حجم زیاد
+
+کند
+
+منسوخ شده
+
+پیامدها:
+
+مثبت: ارتباط پایدار بین تیم‌ها، Versioning خودکار
+
+منفی: پیچیدگی اولیه، Overhead
+
+ریسک: Schema Registry Down → HA + Local Cache
+---***07----------------------------------------------------------------------------------------------------------------
+ADR-007: استراتژی Deploy با Canary Release و Blue-Green
+وضعیت: پذیرفته شده
+
+زمینه:
+آپدیت سیستم نباید باعث Downtime بشه. اگه نسخه جدید باگ داشته باشه، باید سریع برگردیم. کاربرا نباید متوجه آپدیت بشن.
+
+تصمیم:
+
+استفاده از Kubernetes + ArgoCD
+
+Canary Release: ۵٪ ترافیک → ۲۵٪ → ۱۰۰٪
+
+Blue-Green: دو محیط موازی، سوییچ ترافیک با یه کلیک
+
+Rollback خودکار در صورت خطا (بر اساس Metrics)
+
+Istio برای Traffic Shifting
+
+دلیل تصمیم:
+Canary Release اجازه می‌ده نسخه جدید رو با ترافیک کم تست کنیم. اگه خطا زیاد شد، خودکار Rollback می‌شه. Blue-Green برای تغییرات بزرگ (مثل Migration دیتابیس) استفاده می‌شه.
+
+مزایا:
+
+Zero Downtime (کاربر متوجه نمی‌شه)
+
+Rollback سریع (زیر ۱ دقیقه)
+
+تست نسخه جدید با ترافیک واقعی (۵٪)
+
+کاهش ریسک Deploy
+
+معایب:
+
+پیچیدگی زیرساخت (K8s + Istio + ArgoCD)
+
+نیاز به Monitoring دقیق
+
+هزینه دو محیط (Blue-Green)
+
+زمان Deploy بیشتر
+
+موارد دیگر بررسی شده:
+
+الف) Deploy یکجا (Recreate):
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+Downtime (چند دقیقه)
+
+ریسک بالا
+
+Rollback کند
+
+ب) Rolling Update ساده:
+مزایا:
+
+بدون Downtime
+
+سادگی نسبی
+معایب:
+
+اگه نسخه جدید باگ داشته باشه، همه کاربرا تحت تأثیر قرار می‌گیرن
+
+Rollback کند
+
+بدون تست ترافیک واقعی
+
+ج) Feature Toggle (LaunchDarkly):
+مزایا:
+
+کنترل کامل
+
+Rollback فوری (خاموش کردن Flag)
+معایب:
+
+پیچیدگی کد (Flagهای زیاد)
+
+هزینه LaunchDarkly
+
+Debt فنی (Flagهای فراموش‌شده)
+
+پیامدها:
+
+مثبت: Zero Downtime، Rollback سریع، ریسک کم
+
+منفی: پیچیدگی زیرساخت، هزینه
+
+ریسک: Canary Metrics اشتباه → A/B Test + بازبینی انسانی
+---***08----------------------------------------------------------------------------------------------------------------
+ADR-008: استراتژی Versioning در APIها
+وضعیت: پذیرفته شده
+
+زمینه:
+Clientهای مختلف (موبایل، وب، Desktop) نسخه‌های مختلف دارن. اگه API رو تغییر بدیم، Clientهای قدیمی خراب می‌شن. کاربرا هم نمی‌تونن فوری آپدیت کنن.
+
+تصمیم:
+
+URL Versioning: /api/v1/...، /api/v2/...
+
+هر Version حداقل ۶ ماه پشتیبانی می‌شه
+
+Deprecation اعلام ۳ ماه قبل
+
+Breaking Change فقط در Version جدید
+
+دلیل تصمیم:
+URL Versioning ساده‌ترین و قابل‌فهم‌ترین روشه. Clientها می‌دونن کدوم Version رو صدا بزنن. مستندات جداگانه برای هر Version.
+
+مزایا:
+
+Clientهای قدیمی کار می‌کنن (بدون شکستن)
+
+مهاجرت تدریجی و بدون فشار
+
+مستندات جداگانه برای هر Version
+
+Debugging ساده (از URL می‌فهمی کدوم Version)
+
+معایب:
+
+نگهداری چند Version (کد Duplicate)
+
+تست بیشتر (هر Version جدا)
+
+پیچیدگی Deploy (چند نسخه همزمان)
+
+Debt فنی (Versionهای قدیمی)
+
+موارد دیگر بررسی شده:
+
+الف) Header Versioning:
+مزایا:
+
+URL تمیز
+
+استاندارد REST
+معایب:
+
+کمتر رایجه
+
+Debugging سخت (باید Header رو ببینی)
+
+Client باید Header بفرسته
+
+ب) Query Parameter Versioning:
+مزایا:
+
+سادگی
+
+URL قابل اشتراک
+معایب:
+
+زشت و غیراستاندارد
+
+Cache مشکل
+
+مستندات سخت
+
+ج) بدون Versioning (همیشه آخرین):
+مزایا:
+
+سادگی
+
+نگهداری کمتر
+معایب:
+
+Breaking Change فاجعه
+
+Clientهای قدیمی می‌شکنن
+
+کاربرا ناراضی
+
+پیامدها:
+
+مثبت: Clientها بدون نگرانی آپدیت می‌کنن
+
+منفی: نگهداری چند Version، Debt فنی
+
+ریسک: Version قدیمی فراموش بشه → Monitoring + Alert
+
+
+---***09----------------------------------------------------------------------------------------------------------------
+ADR-009: معماری Tiered Storage برای داده‌های حجیم
+وضعیت: پذیرفته شده
+
+زمینه:
+داده‌های کاربران و تعاملاتشون روز به روز زیاد می‌شه. نگه‌داری همه چیز در PostgreSQL باعث کندی و هزینه نجومی می‌شه. از طرف دیگه، بعضی داده‌ها قدیمی‌ان و کم استفاده می‌شن ولی باید برای Audit بمونن.
+
+تصمیم:
+
+Hot (۰-۶ ماه): PostgreSQL + Redis
+
+Warm (۶ ماه - ۲ سال): Elasticsearch
+
+Cold (> ۲ سال): S3 Glacier
+
+Job شبانه برای انتقال خودکار
+
+بازیابی از Glacier: ۳-۵ ساعت (با اطلاع‌رسانی)
+
+دلیل تصمیم:
+هر داده تو دیتابیسی که برای سنش مناسبه ذخیره می‌شه. داده‌های اخیر سریع، داده‌های قدیمی ارزون. اینطوری هم Performance حفظ می‌شه هم هزینه کاهش پیدا می‌کنه.
+
+مزایا:
+
+کاهش ۷۰٪ هزینه Storage
+
+کوئری سریع برای داده‌های اخیر
+
+داده‌های قدیمی برای Audit باقی می‌مونن
+
+Compliance با قانون (نگه‌داری ۷ ساله)
+
+معایب:
+
+تأخیر در بازیابی از Glacier (۳-۵ ساعت)
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring دقیق
+
+مدیریت سه لایه
+
+موارد دیگر بررسی شده:
+
+الف) نگه‌داری همه چیز در PostgreSQL:
+مزایا:
+
+سادگی
+
+کوئری یکپارچه
+
+بدون Job
+معایب:
+
+هزینه نجومی
+
+کندی با حجم زیاد
+
+Backup سنگین
+
+ب) حذف فیزیکی داده‌های قدیمی:
+مزایا:
+
+هزینه کم
+
+Performance بالا
+معایب:
+
+Foreign Key می‌شکنه
+
+نقض قانون (نگه‌داری ۷ ساله)
+
+از دست رفتن Audit Trail
+
+ج) فقط S3 (بدون Tiered):
+مزایا:
+
+هزینه کم
+
+سادگی
+معایب:
+
+کوئری کند
+
+بدون Index
+
+برای داده‌های اخیر مناسب نیست
+
+پیامدها:
+
+مثبت: هزینه کم، Performance بالا، Compliance
+
+منفی: تأخیر Restore، پیچیدگی Job
+
+ریسک: Job خطا کنه → DLQ + Alert + Retry
+
+---***10----------------------------------------------------------------------------------------------------------------
+ADR-010: پیاده‌سازی GDPR و حذف اطلاعات با Soft Delete + Anonymization
+وضعیت: پذیرفته شده
+
+زمینه:
+GDPR حق فراموشی رو الزامی کرده. کاربر می‌تونه بگه "همه داده‌هام رو پاک کن". ولی حذف فیزیکی Foreign Keyها رو می‌شکنه و Audit Trail از بین می‌ره. از طرف دیگه، داده‌های مالی باید ۷ سال نگه‌داری بشن.
+
+تصمیم:
+
+Soft Delete فوری (is_deleted = true)
+
+بعد از ۳۰ روز: Anonymize کردن داده‌های شخصی (اسم، ایمیل، شماره)
+
+Crypto-Shredding: حذف کلیدهای رمزنگاری کاربر (برای E2EE)
+
+داده‌های مالی: ۷ سال نگه‌داری (بدون Anonymize)
+
+Audit Log برای همه عملیات
+
+دلیل تصمیم:
+Soft Delete یعنی Foreign Keyها سالم می‌مونن. Anonymize یعنی داده‌های شخصی از بین می‌رن ولی ساختار باقی می‌مونه. Crypto-Shredding یعنی حتی اگه داده‌ای مونده باشه، قابل خوندن نیست.
+
+مزایا:
+
+GDPR کامل رعایت می‌شه
+
+Foreign Keyها سالم می‌مونن
+
+Audit Trail حفظ می‌شه
+
+Crypto-Shredding امنیت بالا
+
+معایب:
+
+پیچیدگی پیاده‌سازی (Job + Anonymization)
+
+حجم دیتابیس بیشتر (رکوردها فیزیکی حذف نمی‌شن)
+
+نیاز به Key Management
+
+ممکنه بعضی Queryها کند بشن (چون رکوردهای Anonymize شده باقی می‌مونن)
+
+موارد دیگر بررسی شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فوری فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص (چون Backups باقی می‌مونن)
+
+Audit Trail از بین می‌ره
+
+ب) فقط Anonymize (بدون Soft Delete):
+مزایا:
+
+داده‌ها باقی می‌مونن
+
+Foreign Key سالم
+معایب:
+
+GDPR ناقص (رکورد هنوز هست)
+
+کاربر ناراضی (داده‌هاش هنوز تو سیستمه)
+
+ج) Hard Delete + Cascade:
+مزایا:
+
+آزاد شدن فضا
+
+سادگی
+معایب:
+
+حذف داده‌های مرتبط (مثلاً سفارش‌های دیگه کاربر)
+
+شکستن Foreign Key
+
+GDPR ناقص (Backups)
+
+پیامدها:
+
+مثبت: GDPR کامل، Audit Trail حفظ، امنیت بالا
+
+منفی: پیچیدگی، حجم بیشتر، Key Management
+
+ریسک: Job Anonymize خطا کنه → Monitoring + Alert + Retry
+---***11----------------------------------------------------------------------------------------------------------------
+
+ADR-011: احراز هویت با OAuth 2.0 + OIDC + JWT و MFA
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم باید احراز هویت امن برای میلیون‌ها کاربر فراهم کنه. پسورد ساده کافی نیست. باید MFA باشه، Session امن باشه، و اگه پسورد لو بره، حساب سالم بمونه.
+
+تصمیم:
+
+OAuth 2.0 + OIDC با Keycloak
+
+JWT برای Access Token (عمر ۱۵ دقیقه)
+
+Refresh Token (Opaque، عمر ۷ روز، در HttpOnly Cookie)
+
+MFA با TOTP (Google Authenticator) + SMS Fallback
+
+Argon2id برای Hashing پسورد
+
+دلیل تصمیم:
+OAuth 2.0 استاندارد صنعتی برای Authorization هست. OIDC برای Authentication. JWT کوتاه‌مدت یعنی اگه لو بره، فقط ۱۵ دقیقه معتبره. MFA یعنی مهاجم حتی با پسورد، نمی‌تونه وارد بشه.
+
+مزایا:
+
+امنیت بالا (MFA + Argon2id)
+
+Session امن (HttpOnly Cookie)
+
+Revoke فوری Refresh Token
+
+استاندارد صنعتی (Keycloak)
+
+معایب:
+
+پیچیدگی پیاده‌سازی (Keycloak + JWT + MFA)
+
+تجربه کاربری سخت‌تر (MFA)
+
+هزینه SMS برای OTP
+
+نیاز به تیم امنیت
+
+موارد دیگر بررسی شده:
+
+الف) Session-based (بدون JWT):
+مزایا:
+
+Revoke ساده
+
+امنیت بالا (Stateful)
+معایب:
+
+نیاز به Query دیتابیس برای هر درخواست
+
+مقیاس‌پذیری کمتر
+
+برای Microservice مناسب نیست
+
+ب) فقط پسورد (بدون MFA):
+مزایا:
+
+سادگی
+
+تجربه کاربری بهتر
+معایب:
+
+اگه پسورد لو بره، حساب می‌ره
+
+نقض استانداردهای امنیتی
+
+Brute-force راحت
+
+ج) OAuth 2.0 بدون OIDC:
+مزایا:
+
+سادگی نسبی
+معایب:
+
+فقط Authorization (نه Authentication)
+
+اطلاعات کاربر استاندارد نداره
+
+Identity Provider سخت
+
+پیامدها:
+
+مثبت: امنیت بالا، استاندارد صنعتی
+
+منفی: پیچیدگی، تجربه کاربری سخت‌تر، هزینه SMS
+
+ریسک: Keycloak Down → HA + Fallback به Local Auth
+---***12----------------------------------------------------------------------------------------------------------------
+
+ADR-012: امنیت ارتباطات داخلی با mTLS و RBAC در API Gateway
+وضعیت: پذیرفته شده
+
+زمینه:
+ارتباط بین میکروسرویس‌ها باید امن باشه. اگه کسی به شبکه داخلی دسترسی پیدا کنه، نباید بتونه ترافیک رو شنود کنه یا خودشو جای یه سرویس جا بزنه. از طرف دیگه، دسترسی‌ها باید بر اساس نقش کنترل بشه.
+
+تصمیم:
+
+mTLS (Mutual TLS) برای همه ارتباطات بین سرویس‌ها
+
+Certificateهای X.509 از CA داخلی
+
+RBAC در API Gateway (Kong)
+
+JWT با Claim نقش برای Authorization
+
+Certificate Rotation هر ۹۰ روز
+
+دلیل تصمیم:
+mTLS یعنی هر سرویس باید Certificate معتبر داشته باشه. اگه مهاجم به شبکه دسترسی پیدا کنه، بدون Certificate نمی‌تونه خودشو جای سرویس جا بزنه. RBAC در Gateway یعنی کنترل دسترسی متمرکز.
+
+مزایا:
+
+جلوگیری از Man-in-the-Middle
+
+احراز هویت متقابل سرویس‌ها
+
+کنترل دسترسی متمرکز (RBAC)
+
+Certificate Rotation خودکار
+
+معایب:
+
+Overhead در CPU (رمزنگاری/رمزگشایی)
+
+مدیریت Certificate پیچیده
+
+Debugging سخت (ترافیک رمزنگاری‌شده)
+
+نیاز به CA داخلی
+
+موارد دیگر بررسی شده:
+
+الف) فقط TLS (بدون mTLS):
+مزایا:
+
+سادگی
+
+Overhead کمتر
+معایب:
+
+سرویس‌ها همدیگه رو تأیید نمی‌کنن
+
+مهاجم می‌تونه خودشو جای سرویس جا بزنه
+
+بدون Mutual Auth
+
+ب) بدون رمزنگاری داخلی (فقط Network Isolation):
+مزایا:
+
+سادگی
+
+Performance بالا
+معایب:
+
+اگه شبکه نفوذ بشه، همه چیز لو می‌ره
+
+نقض Zero Trust
+
+بدون Audit
+
+ج) API Key به جای mTLS:
+مزایا:
+
+سادگی
+
+بدون Certificate
+معایب:
+
+اگه API Key لو بره، مهاجم دسترسی داره
+
+بدون Rotation خودکار
+
+امنیت کمتر
+
+پیامدها:
+
+مثبت: امنیت بالا، Zero Trust، کنترل دسترسی
+
+منفی: Overhead CPU، پیچیدگی Certificate، Debugging سخت
+
+ریسک: Certificate منقضی بشه → Auto-renewal + Alert
+
+************************************************************************************************************************
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، MFA، مدیریت کاربران
+
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Argon2
+
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود (با MFA)
+POST   /api/v1/auth/verify-otp        → تأیید OTP
+POST   /api/v1/auth/refresh           → تمدید توکن
+POST   /api/v1/auth/logout            → خروج
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش پروفایل
+POST   /api/v1/users/{id}/mfa/enable  → فعال‌سازی MFA
+DELETE /api/v1/users/{id}             → حذف حساب (GDPR)
+GET    /api/v1/users/search           → جستجوی کاربر
+۲. Chat Service
+مسئولیت: ارسال/دریافت پیام، ترتیب پیام‌ها، Idempotency
+
+تکنولوژی: Spring Boot، Cassandra، Kafka، Redis
+
+APIها:
+
+text
+POST   /api/v1/chats                  → ساخت چت
+GET    /api/v1/chats/{id}             → دریافت چت
+POST   /api/v1/chats/{id}/messages    → ارسال پیام
+GET    /api/v1/chats/{id}/messages    → دریافت پیام‌ها
+PATCH  /api/v1/messages/{id}          → ویرایش پیام
+DELETE /api/v1/messages/{id}          → حذف پیام
+POST   /api/v1/messages/{id}/read     → علامت خوانده‌شده
+WS     /ws/chat/{chatId}              → ارتباط بلادرنگ
+۳. Group Service
+مسئولیت: مدیریت گروه‌ها، اعضا، نقش‌ها، تنظیمات
+
+تکنولوژی: Spring Boot، PostgreSQL، Redis
+
+APIها:
+
+text
+POST   /api/v1/groups                 → ساخت گروه
+GET    /api/v1/groups/{id}            → دریافت گروه
+PATCH  /api/v1/groups/{id}            → ویرایش گروه
+DELETE /api/v1/groups/{id}            → حذف گروه
+POST   /api/v1/groups/{id}/members    → افزودن عضو
+DELETE /api/v1/groups/{id}/members/{userId} → حذف عضو
+POST   /api/v1/groups/{id}/admins     → ارتقا به ادمین
+GET    /api/v1/groups/{id}/members    → لیست اعضا
+POST   /api/v1/groups/{id}/invite     → لینک دعوت
+۴. Presence Service
+مسئولیت: وضعیت آنلاین/آفلاین، آخرین بازدید، Typing Indicator
+
+تکنولوژی: Spring Boot، Redis (Pub/Sub)، WebSocket
+
+APIها:
+
+text
+POST   /api/v1/presence/online        → آنلاین شدن
+POST   /api/v1/presence/offline       → آفلاین شدن
+GET    /api/v1/presence/{userId}      → وضعیت کاربر
+GET    /api/v1/presence/last-seen/{userId} → آخرین بازدید
+POST   /api/v1/presence/typing        → Typing Indicator
+WS     /ws/presence                   → ارتباط بلادرنگ
+۵. Notification Service
+مسئولیت: Push، Email، SMS، اعلان‌های درون‌برنامه‌ای
+
+تکنولوژی: Spring Boot، Kafka، Firebase، SendGrid
+
+APIها:
+
+text
+POST   /api/v1/notifications/send     → ارسال اعلان
+GET    /api/v1/notifications          → لیست اعلان‌ها
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings → تنظیمات
+PATCH  /api/v1/notifications/settings → ویرایش تنظیمات
+POST   /api/v1/notifications/mute     → بی‌صدا کردن چت
+۶. Media Service
+مسئولیت: آپلود/دانلود فایل، تصویر، ویدیو، Voice Message
+
+تکنولوژی: Spring Boot، S3، CDN، FFmpeg
+
+APIها:
+
+text
+POST   /api/v1/media/upload/initiate  → شروع آپلود (Presigned URL)
+POST   /api/v1/media/upload/complete  → تکمیل آپلود
+GET    /api/v1/media/{id}             → دریافت فایل
+GET    /api/v1/media/{id}/thumbnail   → تصویر بندانگشتی
+DELETE /api/v1/media/{id}             → حذف فایل
+POST   /api/v1/media/voice            → ارسال Voice Message
+۷. Encryption Service
+مسئولیت: مدیریت کلیدها، E2EE، امضای دیجیتال
+
+تکنولوژی: Spring Boot، HSM، KMS، Signal Protocol
+
+APIها:
+
+text
+POST   /api/v1/keys/identity          → ثبت Identity Key
+POST   /api/v1/keys/pre-keys          → ثبت Pre-keys
+GET    /api/v1/keys/bundle/{userId}   → دریافت PreKeyBundle
+POST   /api/v1/keys/backup            → بکاپ کلیدها (با PIN)
+POST   /api/v1/keys/restore           → بازیابی کلیدها
+DELETE /api/v1/keys/{userId}          → حذف کلیدها (GDPR)
+POST   /api/v1/encrypt                → رمزنگاری (Server-side)
+POST   /api/v1/decrypt                → رمزگشایی (Server-side)
+۸. Session Service
+مسئولیت: مدیریت Session، JWT، Refresh Token، Rate Limiting
+
+تکنولوژی: Spring Boot، Redis، JWT
+
+APIها:
+
+text
+POST   /api/v1/sessions               → ساخت Session
+GET    /api/v1/sessions               → لیست Sessionهای فعال
+DELETE /api/v1/sessions/{id}          → بستن Session
+DELETE /api/v1/sessions/all           → بستن همه Sessionها
+POST   /api/v1/sessions/refresh       → تمدید توکن
+GET    /api/v1/rate-limit/status      → وضعیت Rate Limit
+۹. Search Service
+مسئولیت: جستجوی پیام، کاربر، گروه (Client-side Index + Server-side)
+
+تکنولوژی: Spring Boot، Elasticsearch، Kafka (CDC)
+
+APIها:
+
+text
+GET    /api/v1/search/messages        → جستجوی پیام
+GET    /api/v1/search/users           → جستجوی کاربر
+GET    /api/v1/search/groups          → جستجوی گروه
+GET    /api/v1/search/suggest         → Auto-complete
+POST   /api/v1/search/index           → Index کردن (Client-side)
+۱۰. Archive Service
+مسئولیت: چرخه حیات داده، Tiered Storage، GDPR
+
+تکنولوژی: Spring Boot، S3، Glacier، Cassandra، Kafka
+
+APIها:
+
+text
+POST   /api/v1/archive/request        → درخواست آرشیو
+POST   /api/v1/archive/restore        → درخواست بازیابی
+GET    /api/v1/archive/status/{id}    → وضعیت
+POST   /api/v1/gdpr/export            → خروجی داده کاربر
+DELETE /api/v1/gdpr/delete/{userId}   → حذف حساب (GDPR)
+GET    /api/v1/gdpr/audit             → لاگ GDPR
+۱۱. Moderation Service
+مسئولیت: بررسی محتوا، گزارش تخلف، مسدودسازی
+
+تکنولوژی: Spring Boot، AI (TensorFlow)، Kafka، Elasticsearch
+
+APIها:
+
+text
+POST   /api/v1/moderation/report      → گزارش محتوا
+GET    /api/v1/moderation/queue       → صف بررسی
+POST   /api/v1/moderation/approve/{id} → تأیید
+POST   /api/v1/moderation/reject/{id}  → رد
+POST   /api/v1/moderation/block       → مسدودسازی کاربر
+DELETE /api/v1/moderation/block/{userId} → رفع مسدودی
+GET    /api/v1/moderation/logs        → لاگ‌ها
+۱۲. Audit Service
+مسئولیت: ثبت همه عملیات حساس، Audit Trail، Compliance
+
+تکنولوژی: Spring Boot، Kafka، Elasticsearch، S3
+
+APIها:
+
+text
+POST   /api/v1/audit/events           → ثبت رویداد
+GET    /api/v1/audit/events           → دریافت رویدادها
+GET    /api/v1/audit/users/{id}       → رویدادهای کاربر
+GET    /api/v1/audit/export           → خروجی Audit Log
+GET    /api/v1/audit/compliance       → گزارش Compliance

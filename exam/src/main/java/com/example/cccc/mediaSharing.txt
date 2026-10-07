@@ -1,0 +1,1224 @@
+ADR-001: انتخاب مکانیزم برای ذخیره و توزیع مدیا
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا ویدیو، عکس و صدا آپلود می‌کنن. این فایل‌ها حجم زیادی دارن (تا چند گیگابایت). اگه تو دیتابیس ذخیره بشن، DB منفجر می‌شه.
+اگه از سرور خودمون توزیع کنیم، Bandwidth نجومی می‌شه.
+
+تصمیم:
+از S3 برای ذخیره‌سازی و CDN (CloudFront) برای توزیع استفاده می‌کنیم.
+
+دلیل تصمیم:
+S3 مقیاس‌پذیری نامحدود داره و برای فایل‌های حجیم ساخته شده. CDN هم فایل‌ها رو از نزدیک‌ترین سرور به کاربر می‌رسونه. اینطوری هم هزینه‌ی Bandwidth کم می‌شه هم سرعت بالا می‌ره.
+
+مزایا:
+
+مقیاس‌پذیری نامحدود (S3)
+
+توزیع سریع (CDN)
+
+Durability ۹۹.۹۹۹۹۹۹۹۹۹٪
+
+کاهش بار سرورهای ما
+
+معایب:
+
+هزینه‌ی S3 و CDN برای حجم بالا
+
+تأخیر در آپلود از طریق Presigned URL
+
+نیاز به مدیریت Lifecycle
+
+وابستگی به AWS
+
+موارد دیگر بررسی‌شده:
+
+الف) ذخیره در دیتابیس:
+مزایا:
+
+یکپارچگی
+
+Backup ساده
+معایب:
+
+DB منفجر می‌شه
+
+Query کند
+
+هزینه‌ی نجومی
+
+ب) فایل‌سیستم محلی:
+مزایا:
+
+سرعت بالا
+
+سادگی
+معایب:
+
+مقیاس‌پذیری محدود
+
+Backup سخت
+
+بدون CDN
+
+ج) Object Storage دیگه (GCS, Azure Blob):
+مزایا:
+
+مشابه S3
+
+گزینه‌های بیشتر
+معایب:
+
+Vendor Lock-in
+
+تفاوت API
+
+پیامدها:
+
+مثبت: مقیاس‌پذیری، سرعت، Durability
+
+منفی: هزینه، وابستگی به AWS
+
+ریسک: اگه S3 Down بشه → Multi-Region Replication
+
+ADR-002: انتخاب مکانیزم برای Transcoding ویدیو
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا ویدیو با فرمت‌ها و کیفیت‌های مختلف آپلود می‌کنن. برای اینکه همه بتونن ببینن (از موبایل ضعیف تا 4K)، باید ویدیو به چند کیفیت تبدیل بشه. این کار CPU و GPU زیادی می‌خواد.
+
+تصمیم:
+از FFmpeg + Kafka + Kubernetes Job + GPU Node Pool استفاده می‌کنیم.
+
+دلیل تصمیم:
+FFmpeg استاندارد صنعتی برای Transcoding هست. Kafka برای صف‌بندی Jobها. Kubernetes برای Spawn کردن Workerها. GPU برای کیفیت‌های بالا (4K). این ترکیب مقیاس‌پذیری و کارایی رو با هم داره.
+
+مزایا:
+
+پشتیبانی از همه‌ی فرمت‌ها
+
+مقیاس‌پذیری خودکار (K8s HPA)
+
+موازی‌سازی (چند کیفیت همزمان)
+
+GPU برای 4K
+
+معایب:
+
+هزینه‌ی GPU
+
+پیچیدگی Pipeline
+
+زمان پردازش (چند دقیقه)
+
+نیاز به Monitoring
+
+موارد دیگر بررسی‌شده:
+
+الف) Transcoding روی سرور واحد:
+مزایا:
+
+سادگی
+
+هزینه‌ی کم
+معایب:
+
+کندی (۳۰ تا ۶۰ دقیقه)
+
+غیرقابل مقیاس
+
+تک‌نقطه‌ای
+
+ب) سرویس ابری (AWS Elemental):
+مزایا:
+
+مدیریت‌شده
+
+مقیاس‌پذیری خودکار
+معایب:
+
+هزینه‌ی بالا
+
+وابستگی به AWS
+
+کنترل کم
+
+ج) بدون Transcoding (فقط فرمت اصلی):
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+کاربر با اینترنت ضعیف نمی‌تونه ببینه
+
+تجربه‌ی ضعیف
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: پشتیبانی از همه، مقیاس‌پذیری، GPU
+
+منفی: هزینه، پیچیدگی، زمان
+
+ریسک: اگه Transcoding خطا کنه → DLQ و Retry و Alert
+
+ADR-003: انتخاب مکانیزم برای Adaptive Bitrate Streaming
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر با اینترنت ۴G شروع می‌کنه، وسط ویدیو اینترنتش ضعیف می‌شه. اگه فقط یه کیفیت باشه، ویدیو قطع می‌شه یا Buffer می‌خوره. باید کیفیت خودکار تغییر کنه.
+
+تصمیم:
+از HLS + DASH + Master Playlist استفاده می‌کنیم.
+
+دلیل تصمیم:
+HLS (Apple) و DASH (استاندارد باز) ویدیو رو به قطعات ۶ ثانیه‌ای تقسیم می‌کنن. Master Playlist لیست کیفیت‌ها رو داره. کلاینت (hls.js / ExoPlayer) خودکار کیفیت رو بر اساس سرعت اینترنت سوییچ می‌کنه.
+
+مزایا:
+
+Adaptive Bitrate (سوییچ خودکار کیفیت)
+
+پشتیبانی از همه‌ی پلتفرم‌ها
+
+کاهش Buffer
+
+تجربه‌ی روان
+
+معایب:
+
+پیچیدگی تولید HLS/DASH
+
+حجم ذخیره‌سازی بیشتر (چند کیفیت)
+
+نیاز به CDN برای قطعات
+
+تأخیر اولیه
+
+موارد دیگر بررسی‌شده:
+
+الف) MP4 تک‌کیفیت:
+مزایا:
+
+سادگی
+
+سازگاری بالا
+معایب:
+
+بدون Adaptive Bitrate
+
+Buffer در اینترنت ضعیف
+
+تجربه‌ی ضعیف
+
+ب) WebRTC:
+مزایا:
+
+تأخیر بسیار کم
+
+مناسب Live
+معایب:
+
+برای VOD مناسب نیست
+
+پیچیدگی
+
+مقیاس‌پذیری محدود
+
+ج) Smooth Streaming (Microsoft):
+مزایا:
+
+Adaptive Bitrate
+
+پشتیبانی از Microsoft
+معایب:
+
+کمتر رایجه
+
+پشتیبانی محدود
+
+پیامدها:
+
+مثبت: Adaptive Bitrate، پشتیبانی جهانی، تجربه‌ی روان
+
+منفی: پیچیدگی، حجم بیشتر، CDN
+
+ریسک: اگه Master Playlist خراب بشه → Health Check و Alert
+
+ADR-004: انتخاب مکانیزم برای ذخیره‌سازی Metadata و جستجو
+وضعیت: پذیرفته شده
+
+زمینه:
+میلیون‌ها ویدیو داریم. کاربرا می‌خوان بر اساس عنوان، توضیحات، تگ، سازنده و... جستجو کنن. اگه از دیتابیس رابطه‌ای استفاده کنیم، Full-Text Search کند می‌شه.
+
+تصمیم:
+از PostgreSQL برای Metadata و Elasticsearch برای جستجو استفاده می‌کنیم. Sync با CDC (Debezium).
+
+دلیل تصمیم:
+PostgreSQL برای ذخیره‌ی Metadata (عنوان، توضیحات، تگ، سازنده). Elasticsearch برای Full-Text Search و Faceted Search. CDC (Debezium) تغییرات PostgreSQL رو به Kafka می‌فرسته و Elasticsearch Index می‌شه.
+
+مزایا:
+
+جستجوی سریع (زیر ۱۰۰ میلی‌ثانیه)
+
+Full-Text Search با تحلیلگر زبان
+
+Faceted Search
+
+Sync خودکار
+
+معایب:
+
+پیچیدگی CDC
+
+تأخیر Sync (چند صد میلی‌ثانیه)
+
+هزینه Elasticsearch
+
+مدیریت دو دیتابیس
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+سادگی
+
+یکپارچگی
+معایب:
+
+Full-Text Search ضعیف
+
+کندی با میلیون‌ها رکورد
+
+بدون Faceted Search
+
+ب) فقط Elasticsearch:
+مزایا:
+
+جستجوی سریع
+
+Faceted Search
+معایب:
+
+برای Transaction مناسب نیست
+
+داده‌ها ممکنه از دست برن
+
+بدون ACID
+
+ج) MongoDB Text Index:
+مزایا:
+
+سادگی
+
+یکپارچگی
+معایب:
+
+Full-Text Search ضعیف‌تر از Elasticsearch
+
+بدون Faceted Search پیشرفته
+
+پیامدها:
+
+مثبت: جستجوی سریع، Faceted Search، Sync خودکار
+
+منفی: پیچیدگی CDC، هزینه Elasticsearch
+
+ریسک: اگه CDC خطا کنه → Retry و Alert
+
+ADR-005: انتخاب مکانیزم برای Recommendation
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان ویدیوهای جدید کشف کنن. اگه فقط بر اساس Subscription باشه، تنوع کم می‌شه. باید بر اساس رفتار کاربر (Watch History، Like، Comment) پیشنهاد بدیم.
+
+تصمیم:
+از Hybrid Recommendation (Collaborative Filtering + Content-Based) با Matrix Factorization استفاده می‌کنیم.
+
+دلیل تصمیم:
+Collaborative Filtering بر اساس رفتار کاربران مشابه پیشنهاد می‌ده. Content-Based بر اساس ویژگی‌های ویدیو (تگ، دسته‌بندی). ترکیب این دو، هم دقت رو بالا می‌بره هم Cold Start رو حل می‌کنه.
+
+مزایا:
+
+دقت بالا
+
+کشف ویدیوهای جدید
+
+شخصی‌سازی
+
+حل Cold Start
+
+معایب:
+
+پیچیدگی ML
+
+نیاز به Data Pipeline
+
+زمان آموزش
+
+نیاز به تیم Data Science
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Trending:
+مزایا:
+
+سادگی
+
+بدون ML
+معایب:
+
+شخصی‌سازی نداره
+
+برای همه یه چیز
+
+تجربه‌ی ضعیف
+
+ب) فقط Subscription:
+مزایا:
+
+سادگی
+
+مرتبط با علایق
+معایب:
+
+تنوع کم
+
+بدون کشف جدید
+
+کاربر ناراضی
+
+ج) فقط Content-Based:
+مزایا:
+
+Cold Start خوب
+
+شفافیت
+معایب:
+
+محدود به ویژگی‌ها
+
+عدم کشف علایق جدید
+
+دقت کمتر
+
+پیامدها:
+
+مثبت: دقت بالا، کشف جدید، شخصی‌سازی
+
+منفی: پیچیدگی، نیاز به ML، زمان آموزش
+
+ریسک: مدل قدیمی بشه → Retraining دوره‌ای
+
+ADR-006: انتخاب مکانیزم برای Live Streaming
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان Live Stream کنن. تأخیر باید زیر ۵ ثانیه باشه. اگه از HLS معمولی استفاده کنیم، تأخیر ۳۰ ثانیه می‌شه که برای Live مناسب نیست.
+
+تصمیم:
+از RTMP (Ingest) + LL-HLS (Low-Latency HLS) + WebRTC (برای تأخیر بسیار کم) استفاده می‌کنیم.
+
+دلیل تصمیم:
+RTMP استاندارد Ingest برای Live هست. LL-HLS تأخیر رو به ۲ تا ۵ ثانیه کاهش می‌ده. WebRTC برای تأخیر زیر ۱ ثانیه (برای مکالمه). ترکیب اینا بسته به نوع Live انتخاب می‌شه.
+
+مزایا:
+
+تأخیر پایین (۲ تا ۵ ثانیه با LL-HLS)
+
+پشتیبانی از همه‌ی پلتفرم‌ها
+
+مقیاس‌پذیری با CDN
+
+کیفیت بالا
+
+معایب:
+
+پیچیدگی LL-HLS
+
+نیاز به CDN مخصوص
+
+هزینه‌ی بالا
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) RTMP + HLS معمولی:
+مزایا:
+
+سادگی
+
+پشتیبانی جهانی
+معایب:
+
+تأخیر ۳۰ ثانیه
+
+برای Live تعاملی مناسب نیست
+
+تجربه‌ی ضعیف
+
+ب) WebRTC برای همه:
+مزایا:
+
+تأخیر زیر ۱ ثانیه
+
+تعاملی
+معایب:
+
+مقیاس‌پذیری محدود
+
+پیچیدگی SFU
+
+هزینه‌ی بالا
+
+ج) RTMP + DASH:
+مزایا:
+
+استاندارد باز
+
+Adaptive Bitrate
+معایب:
+
+تأخیر ۱۰ تا ۳۰ ثانیه
+
+پشتیبانی محدودتر از HLS
+
+پیامدها:
+
+مثبت: تأخیر پایین، پشتیبانی جهانی، مقیاس‌پذیری
+
+منفی: پیچیدگی، هزینه، Debugging
+
+ریسک: اگه CDN کند باشه → Multi-CDN و Health Check
+
+ADR-007: انتخاب مکانیزم برای Comment و Interaction
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان زیر ویدیو کامنت بذارن، لایک کنن، ریپلای بدن. تعداد کامنت‌ها ممکنه میلیونی بشه. باید Query سریع باشه و Real-time Update.
+
+تصمیم:
+از Cassandra برای Comments + Redis برای Cache + Kafka برای Real-time Update استفاده می‌کنیم.
+
+دلیل تصمیم:
+Cassandra برای Write سنگین (میلیون‌ها کامنت) و Query سریع بر اساس Video ID. Redis برای Cache کامنت‌های پرطرفدار. Kafka برای انتشار رویدادهای جدید (Real-time).
+
+مزایا:
+
+Write سریع (Cassandra)
+
+Query سریع (Redis Cache)
+
+Real-time Update (Kafka)
+
+مقیاس‌پذیری خطی
+
+معایب:
+
+پیچیدگی سه‌گانه
+
+Eventual Consistency
+
+نیاز به Cache Invalidation
+
+هزینه‌ی Redis
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+ACID
+
+Query پیچیده
+معایب:
+
+Write کند برای میلیون‌ها کامنت
+
+مقیاس‌پذیری محدود
+
+هزینه‌ی بالا
+
+ب) فقط MongoDB:
+مزایا:
+
+Schema انعطاف‌پذیر
+
+Sharding خودکار
+معایب:
+
+ACID محدود
+
+Query پیچیده سخت
+
+حجم زیاد
+
+ج) فقط Redis:
+مزایا:
+
+سرعت بالا
+
+Real-time
+معایب:
+
+محدودیت حافظه
+
+بدون Persistence قوی
+
+از دست رفتن داده
+
+پیامدها:
+
+مثبت: Write سریع، Query سریع، Real-time
+
+منفی: پیچیدگی، Eventual Consistency
+
+ریسک: اگه Cassandra Down بشه → Multi-Node و Replication
+
+ADR-008: انتخاب مکانیزم برای مقابله با محتوای نامناسب (Content Moderation)
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا ممکنه محتوای نامناسب (خشونت، محتوای بزرگسال، کپی‌رایت) آپلود کنن. روزانه هزاران ساعت ویدیو آپلود می‌شه. نمی‌تونیم همه رو دستی بررسی کنیم.
+
+تصمیم:
+از AI Moderation (TensorFlow) + Human Review Queue + Copyright Detection (Audio Fingerprint) استفاده می‌کنیم.
+
+دلیل تصمیم:
+AI محتوای نامناسب رو خودکار تشخیص می‌ده. موارد مشکوک به صف بررسی انسانی می‌ره. Audio Fingerprint هم کپی‌رایت رو تشخیص می‌ده. این ترکیب هم سرعت داره هم دقت.
+
+مزایا:
+
+تشخیص خودکار (سرعت بالا)
+
+کاهش بار بررسی انسانی
+
+تشخیص کپی‌رایت
+
+مقیاس‌پذیری
+
+معایب:
+
+هزینه‌ی AI
+
+False Positive
+
+نیاز به تیم انسانی
+
+پیچیدگی Pipeline
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط بررسی انسانی:
+مزایا:
+
+دقت بالا
+
+کنترل کامل
+معایب:
+
+کندی
+
+هزینه‌ی بالا
+
+غیرقابل مقیاس
+
+ب) فقط AI:
+مزایا:
+
+سرعت بالا
+
+هزینه‌ی کمتر
+معایب:
+
+False Positive
+
+False Negative
+
+بدون کنترل انسانی
+
+ج) Crowdsourcing:
+مزایا:
+
+هزینه‌ی کم
+
+مقیاس‌پذیری
+معایب:
+
+کیفیت پایین
+
+کندی
+
+نیاز به مدیریت
+
+پیامدها:
+
+مثبت: سرعت، دقت، مقیاس‌پذیری
+
+منفی: هزینه‌ی AI، False Positive، تیم انسانی
+
+ریسک: اگه AI اشتباه کنه → Human Review و Appeal
+
+ADR-009: انتخاب مکانیزم برای Monetization
+وضعیت: پذیرفته شده
+
+زمینه:
+سازنده‌ها می‌خوان از ویدیوهاشون درآمد داشته باشن. پلتفرم هم می‌خواد از تبلیغات و اشتراک درآمد داشته باشه. باید یه سیستم پرداخت امن و شفاف داشته باشیم.
+
+تصمیم:
+از Ads (Pre-roll, Mid-roll) + Subscription (Premium) + Donation + Escrow + Rule Engine (Drools) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Ads برای درآمد از تبلیغات. Subscription برای کاربران Premium (بدون تبلیغ). Donation برای حمایت مستقیم. Escrow برای نگه‌داری پول. Rule Engine برای تقسیم درآمد (مثلاً ۵۵٪ سازنده، ۴۵٪ پلتفرم).
+
+مزایا:
+
+چند منبع درآمد
+
+شفافیت (Rule Engine)
+
+امنیت مالی (Escrow)
+
+انگیزه برای سازنده‌ها
+
+معایب:
+
+پیچیدگی مالی
+
+نیاز به تیم مالی
+
+هزینه‌ی KYC
+
+زمان تسویه
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Ads:
+مزایا:
+
+سادگی
+
+درآمد بالا
+معایب:
+
+کاربرا ناراضی (تبلیغات)
+
+بدون درآمد مستقیم برای سازنده
+
+تجربه‌ی ضعیف
+
+ب) فقط Subscription:
+مزایا:
+
+درآمد پایدار
+
+بدون تبلیغ
+معایب:
+
+کاربرا کمتری پول می‌دن
+
+نیاز به محتوای Premium
+
+درآمد کمتر
+
+ج) فقط Donation:
+مزایا:
+
+سادگی
+
+حمایت مستقیم
+معایب:
+
+درآمد نامنظم
+
+وابسته به محبوبیت
+
+بدون درآمد برای پلتفرم
+
+پیامدها:
+
+مثبت: چند منبع، شفافیت، امنیت
+
+منفی: پیچیدگی، هزینه، زمان تسویه
+
+ریسک: اگه Rule Engine اشتباه کنه → Audit و Rollback
+
+ADR-010: انتخاب مکانیزم برای تحمل خطا و High Availability
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم باید ۲۴/۷ فعال باشه. اگه یه Region از کار بیفته، کاربرا نباید قطعی حس کنن. اگه یه سرویس خراب بشه، کل سیستم نباید Down بشه.
+
+تصمیم:
+از Multi-Region Active-Active + Circuit Breaker + Chaos Engineering استفاده می‌کنیم.
+
+دلیل تصمیم:
+Multi-Region یعنی اگه یه Region Down بشه، ترافیک به Region دیگه می‌ره. Circuit Breaker جلوی Cascading Failure رو می‌گیره. Chaos Engineering هم یعنی قبل از کاربرا، خودمون خرابی رو تست می‌کنیم.
+
+مزایا:
+
+Downtime صفر
+
+SLA 99.99%
+
+آمادگی تیم
+
+تحمل خرابی‌های بزرگ
+
+معایب:
+
+هزینه‌ی زیرساخت دو برابر
+
+پیچیدگی عملیاتی
+
+نیاز به تیم SRE
+
+Sync داده بین Regionها
+
+موارد دیگر بررسی‌شده:
+
+الف) Single Region با Backup:
+مزایا:
+
+سادگی
+
+هزینه‌ی کم
+معایب:
+
+Downtime طولانی
+
+کاربرای دور، Latency بالا
+
+نقض SLA
+
+ب) Active-Passive:
+مزایا:
+
+هزینه‌ی کمتر
+
+پیاده‌سازی ساده‌تر
+معایب:
+
+Downtime در Failover
+
+Region دوم بیکار
+
+RTO بالا
+
+ج) بدون Chaos Engineering:
+مزایا:
+
+هزینه‌ی کمتر
+
+بدون ریسک تست
+معایب:
+
+نقاط ضعف پنهان
+
+تیم آماده نیست
+
+Failover ممکنه کار نکنه
+
+پیامدها:
+
+مثبت: SLA 99.99%، Downtime صفر، آمادگی
+
+منفی: هزینه‌ی بالا، پیچیدگی، SRE
+
+ریسک: اگه Chaos Test اشتباه کنه → Canary و Blast Radius محدود
+************************************************************************************************************************
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، مدیریت کاربران و کانال‌ها
+
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Argon2
+
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود
+POST   /api/v1/auth/refresh           → تمدید توکن
+POST   /api/v1/auth/logout            → خروج
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش پروفایل
+DELETE /api/v1/users/{id}             → حذف حساب (GDPR)
+GET    /api/v1/users/{id}/channels    → کانال‌های کاربر
+POST   /api/v1/users/{id}/subscribe/{channelId} → اشتراک
+DELETE /api/v1/users/{id}/subscribe/{channelId} → لغو اشتراک
+
+
+
+۲. Media Service
+مسئولیت: آپلود مدیا، Presigned URL، متادیتا
+تکنولوژی: Spring Boot، S3، PostgreSQL، Kafka
+APIها:
+text
+POST   /api/v1/media/upload/initiate  → شروع آپلود (Presigned URL)
+POST   /api/v1/media/upload/complete  → تکمیل آپلود
+GET    /api/v1/media/{id}             → دریافت مدیا
+GET    /api/v1/media/{id}/metadata    → متادیتا
+PATCH  /api/v1/media/{id}             → ویرایش متادیتا
+DELETE /api/v1/media/{id}             → حذف مدیا
+GET    /api/v1/media/{id}/download    → دانلود
+POST   /api/v1/media/{id}/thumbnail   → تنظیم تصویر بندانگشتی
+
+
+۳. Transcoding Service
+مسئولیت: تبدیل ویدیو به چند کیفیت، HLS/DASH
+
+تکنولوژی: Spring Boot، FFmpeg، Kafka، Kubernetes، GPU
+
+APIها:
+
+text
+POST   /api/v1/transcoding/jobs        → شروع Job
+GET    /api/v1/transcoding/jobs/{id}   → وضعیت Job
+DELETE /api/v1/transcoding/jobs/{id}   → لغو Job
+GET    /api/v1/transcoding/qualities   → کیفیت‌های موجود
+POST   /api/v1/transcoding/retry/{id}  → Retry
+GET    /api/v1/transcoding/stats       → آمار
+
+
+۴. Streaming Service
+مسئولیت: پخش Adaptive Bitrate، HLS/DASH، CDN
+تکنولوژی: Spring Boot، HLS، DASH، CDN
+
+APIها:
+
+text
+GET    /api/v1/stream/{mediaId}/master.m3u8     → Master Playlist
+GET    /api/v1/stream/{mediaId}/{quality}/index.m3u8 → Media Playlist
+GET    /api/v1/stream/{mediaId}/{quality}/{segment}.ts → Segment
+GET    /api/v1/stream/{mediaId}/manifest.mpd    → DASH Manifest
+GET    /api/v1/stream/{mediaId}/signed-url      → Signed URL
+POST   /api/v1/stream/{mediaId}/analytics       → آمار پخش
+
+
+۵. Live Streaming Service
+مسئولیت: Live Stream، RTMP Ingest، LL-HLS
+تکنولوژی: Spring Boot، RTMP، LL-HLS، WebRTC، CDN
+
+APIها:
+
+text
+POST   /api/v1/live/streams            → ساخت Live Stream
+GET    /api/v1/live/streams/{id}       → جزئیات
+POST   /api/v1/live/streams/{id}/start → شروع
+POST   /api/v1/live/streams/{id}/stop  → توقف
+GET    /api/v1/live/streams/{id}/status → وضعیت
+POST   /api/v1/live/streams/{id}/rtmp  → دریافت RTMP URL
+WS     /ws/live/{streamId}             → ارتباط بلادرنگ
+
+
+۶. Search Service
+مسئولیت: جستجوی مدیا، Full-Text Search
+
+تکنولوژی: Spring Boot، Elasticsearch، Kafka (CDC)
+
+APIها:
+
+text
+GET    /api/v1/search/media            → جستجوی مدیا
+GET    /api/v1/search/channels         → جستجوی کانال
+GET    /api/v1/search/users            → جستجوی کاربر
+GET    /api/v1/search/suggest          → Auto-complete
+GET    /api/v1/search/trending         → Trendها
+POST   /api/v1/search/reindex          → Reindex (Admin)
+۷. Recommendation Service
+مسئولیت: پیشنهاد مدیا بر اساس رفتار کاربر
+
+تکنولوژی: Python، TensorFlow، Feature Store (Feast)، Redis
+
+APIها:
+
+text
+GET    /api/v1/recommendations/{userId}  → پیشنهادها
+GET    /api/v1/recommendations/similar/{mediaId} → مشابه
+GET    /api/v1/recommendations/trending  → Trendها
+POST   /api/v1/recommendations/train     → آموزش مدل (Admin)
+GET    /api/v1/recommendations/health    → وضعیت مدل
+۸. Comment Service
+مسئولیت: کامنت، لایک، ریپلای
+
+تکنولوژی: Spring Boot، Cassandra، Redis، Kafka
+
+APIها:
+
+text
+POST   /api/v1/comments                → ثبت کامنت
+GET    /api/v1/comments/{mediaId}      → کامنت‌های مدیا
+PATCH  /api/v1/comments/{id}           → ویرایش
+DELETE /api/v1/comments/{id}           → حذف
+POST   /api/v1/comments/{id}/like      → لایک
+DELETE /api/v1/comments/{id}/like      → لغو لایک
+POST   /api/v1/comments/{id}/reply     → ریپلای
+GET    /api/v1/comments/{id}/replies   → ریپلای‌ها
+۹. Moderation Service
+مسئولیت: بررسی محتوا، AI Moderation، Copyright Detection
+
+تکنولوژی: Spring Boot، TensorFlow، Kafka، Elasticsearch
+
+APIها:
+
+text
+POST   /api/v1/moderation/report       → گزارش محتوا
+GET    /api/v1/moderation/queue        → صف بررسی
+POST   /api/v1/moderation/approve/{id} → تأیید
+POST   /api/v1/moderation/reject/{id}  → رد
+POST   /api/v1/moderation/block        → مسدودسازی
+GET    /api/v1/moderation/copyright/{mediaId} → بررسی کپی‌رایت
+GET    /api/v1/moderation/logs         → لاگ‌ها
+۱۰. Monetization Service
+مسئولیت: Ads، Subscription، Donation، Payout
+
+تکنولوژی: Spring Boot، PostgreSQL، Kafka، Stripe، Drools
+
+APIها:
+
+text
+POST   /api/v1/monetization/ads/start  → شروع تبلیغ
+POST   /api/v1/monetization/ads/complete → تکمیل تبلیغ
+POST   /api/v1/monetization/subscribe  → اشتراک Premium
+DELETE /api/v1/monetization/subscribe  → لغو اشتراک
+POST   /api/v1/monetization/donate     → دونیت
+GET    /api/v1/monetization/earnings/{creatorId} → درآمد
+POST   /api/v1/monetization/payout     → درخواست تسویه
+GET    /api/v1/monetization/payout/{id} → وضعیت تسویه
+۱۱. Notification Service
+مسئولیت: Push، Email، SMS، اعلان‌های درون‌برنامه‌ای
+
+تکنولوژی: Spring Boot، Kafka، Firebase، SendGrid
+
+APIها:
+
+text
+POST   /api/v1/notifications/send      → ارسال اعلان
+GET    /api/v1/notifications           → لیست اعلان‌ها
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings  → تنظیمات
+PATCH  /api/v1/notifications/settings  → ویرایش تنظیمات
+POST   /api/v1/notifications/subscribe → اشتراک کانال
+۱۲. Archive Service
+مسئولیت: چرخه حیات داده، Tiered Storage، GDPR
+
+تکنولوژی: Spring Boot، S3، Glacier، Cassandra، Kafka
+
+APIها:
+
+text
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/archive/restore         → درخواست بازیابی
+GET    /api/v1/archive/status/{id}     → وضعیت
+POST   /api/v1/gdpr/export             → خروجی داده کاربر
+DELETE /api/v1/gdpr/delete/{userId}    → حذف حساب (GDPR)
+GET    /api/v1/gdpr/audit              → لاگ GDPR
+۱۳. Analytics Service
+مسئولیت: آمار پخش، بیننده، درآمد
+
+تکنولوژی: Spring Boot، ClickHouse، Kafka، Grafana
+
+APIها:
+
+text
+GET    /api/v1/analytics/media/{id}    → آمار مدیا
+GET    /api/v1/analytics/channel/{id}  → آمار کانال
+GET    /api/v1/analytics/revenue       → آمار درآمد
+GET    /api/v1/analytics/viewers       → آمار بیننده
+POST   /api/v1/analytics/events        → ثبت رویداد
+GET    /api/v1/analytics/reports       → گزارش‌ها
+۱۴. Subscription Service
+مسئولیت: مدیریت اشتراک کانال، اعلان
+
+تکنولوژی: Spring Boot، Cassandra، Redis، Kafka
+
+APIها:
+
+text
+POST   /api/v1/subscriptions           → اشتراک
+DELETE /api/v1/subscriptions/{channelId} → لغو اشتراک
+GET    /api/v1/subscriptions           → لیست اشتراک‌ها
+GET    /api/v1/subscriptions/{channelId}/count → تعداد مشترکین
+PATCH  /api/v1/subscriptions/{channelId}/notify → تنظیم اعلان
+🔧 لایه Component (برای هر سرویس)
+۱. User Service
+Component	نوع	مسئولیت
+AuthController	@RestController	ثبت‌نام، ورود
+UserController	@RestController	پروفایل
+ChannelController	@RestController	مدیریت کانال
+AuthService	@Service	احراز هویت
+UserService	@Service	منطق کاربر
+ChannelService	@Service	منطق کانال
+UserRepository	@Repository	PostgreSQL
+ChannelRepository	@Repository	PostgreSQL
+JwtProvider	@Component	JWT
+PasswordEncoder	@Component	Argon2
+EventPublisher	@Component	Kafka
+۲. Media Service
+Component	نوع	مسئولیت
+MediaController	@RestController	مدیریت مدیا
+UploadController	@RestController	آپلود
+MediaService	@Service	منطق مدیا
+PresignedUrlGenerator	@Component	S3 Presigned URL
+MetadataExtractor	@Component	استخراج متادیتا
+MediaRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+KafkaProducer	@Component	Kafka
+۳. Transcoding Service
+Component	نوع	مسئولیت
+TranscodingController	@RestController	مدیریت Job
+TranscodingOrchestrator	@Service	هماهنگی
+FfmpegService	@Service	FFmpeg
+KubernetesJobManager	@Component	K8s Job
+HlsPlaylistBuilder	@Component	HLS
+DashManifestBuilder	@Component	DASH
+GpuAllocator	@Component	GPU
+KafkaConsumer	@Component	Kafka
+۴. Streaming Service
+Component	نوع	مسئولیت
+StreamController	@RestController	پخش
+StreamService	@Service	منطق پخش
+HlsHandler	@Component	HLS
+DashHandler	@Component	DASH
+CdnSigner	@Component	CDN Signed URL
+SegmentCache	@Component	Redis
+AnalyticsPublisher	@Component	Kafka
+۵. Live Streaming Service
+Component	نوع	مسئولیت
+LiveController	@RestController	مدیریت Live
+LiveStreamService	@Service	منطق Live
+RtmpIngestHandler	@Component	RTMP
+LlHlsPackager	@Component	LL-HLS
+WebRtcHandler	@Component	WebRTC
+StreamRegistry	@Component	Redis
+WebSocketHandler	@Component	WebSocket
+۶. Search Service
+Component	نوع	مسئولیت
+SearchController	@RestController	جستجو
+MediaSearchService	@Service	جستجوی مدیا
+ChannelSearchService	@Service	جستجوی کانال
+SuggestService	@Service	Auto-complete
+IndexManager	@Component	ES Index
+KafkaConsumer	@Component	CDC
+ElasticsearchClient	@Component	ES SDK
+۷. Recommendation Service
+Component	نوع	مسئولیت
+RecommendationController	@RestController	پیشنهادها
+RecommendationEngine	@Service	Hybrid CF
+FeatureStoreClient	@Component	Feast
+ModelServer	@Component	TensorFlow Serving
+CacheManager	@Component	Redis
+KafkaConsumer	@Component	رفتار کاربر
+۸. Comment Service
+Component	نوع	مسئولیت
+CommentController	@RestController	مدیریت کامنت
+LikeController	@RestController	لایک
+CommentService	@Service	منطق کامنت
+LikeService	@Service	منطق لایک
+CommentRepository	@Repository	Cassandra
+CacheManager	@Component	Redis
+KafkaProducer	@Component	Kafka
+۹. Moderation Service
+Component	نوع	مسئولیت
+ModerationController	@RestController	گزارش محتوا
+ModerationService	@Service	منطق Moderation
+AiModerationClient	@Component	TensorFlow
+CopyrightDetector	@Component	Audio Fingerprint
+HumanReviewQueue	@Component	صف بررسی
+ModerationRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	Kafka
+۱۰. Monetization Service
+Component	نوع	مسئولیت
+MonetizationController	@RestController	مدیریت درآمد
+AdsService	@Service	تبلیغات
+SubscriptionService	@Service	اشتراک
+DonationService	@Service	دونیت
+RuleEngine	@Component	Drools
+EscrowService	@Service	Escrow
+StripeClient	@Component	Stripe API
+MonetizationRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	Kafka
+۱۱. Notification Service
+Component	نوع	مسئولیت
+NotificationController	@RestController	ارسال اعلان
+NotificationService	@Service	منطق اعلان
+KafkaConsumer	@Component	مصرف رویدادها
+PushSender	@Component	FCM/APNs
+EmailSender	@Component	SendGrid
+SmsSender	@Component	Kavenegar
+NotificationRepository	@Repository	PostgreSQL
+۱۲. Archive Service
+Component	نوع	مسئولیت
+ArchiveController	@RestController	درخواست آرشیو
+ArchiveService	@Service	منطق آرشیو
+TieredStorageManager	@Service	Hot/Warm/Cold
+GdprAnonymizer	@Service	Anonymize
+RestoreJob	@Component	بازیابی
+ArchiveRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+GlacierClient	@Component	Glacier SDK
+۱۳. Analytics Service
+Component	نوع	مسئولیت
+AnalyticsController	@RestController	دریافت آمار
+AnalyticsService	@Service	منطق Analytics
+KafkaConsumer	@Component	مصرف رویدادها
+ClickHouseClient	@Component	ClickHouse SDK
+ReportGenerator	@Service	گزارش‌گیری
+DashboardService	@Service	داشبورد
+۱۴. Subscription Service
+Component	نوع	مسئولیت
+SubscriptionController	@RestController	مدیریت اشتراک
+SubscriptionService	@Service	منطق اشتراک
+NotificationService	@Service	اعلان
+SubscriptionRepository	@Repository	Cassandra
+CacheManager	@Component	Redis
+KafkaProducer	@Component	Kafka
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	ارتباط بلادرنگ
+Service Discovery	Eureka/Consul	ثبت و کشف سرویس‌ها
+Config Server	Spring Cloud Config	تنظیمات مرکزی
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Session + Presence
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	کامنت، اشتراک
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	Media + Backup
+Glacier	AWS Glacier	Cold Archive
+CDN	CloudFront	توزیع Media
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Media Service ──→ S3 + PostgreSQL + Kafka
+       ├──→ Transcoding Service ──→ FFmpeg + K8s + GPU
+       ├──→ Streaming Service ──→ HLS + DASH + CDN
+       ├──→ Live Streaming Service ──→ RTMP + LL-HLS
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Recommendation Service ──→ TensorFlow + Feast
+       ├──→ Comment Service ──→ Cassandra + Redis + Kafka
+       ├──→ Moderation Service ──→ AI + Elasticsearch
+       ├──→ Monetization Service ──→ PostgreSQL + Stripe
+       ├──→ Notification Service ──→ Kafka + Firebase
+       ├──→ Archive Service ──→ S3 + Glacier
+       ├──→ Analytics Service ──→ ClickHouse
+       └──→ Subscription Service ──→ Cassandra + Redis
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus بین سرویس‌ها
+└──────────────┘
