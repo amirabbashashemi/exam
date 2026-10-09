@@ -1,0 +1,1053 @@
+ADR-001: انتخاب معماری کلی سیستم
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم مزایده باید میلیون‌ها کاربر و میلیون‌ها آیتم رو مدیریت کنه. Bidها باید Real-time پردازش بشن و Countdown دقیق باشه. تیم‌های مختلف باید مستقل کار کنن و خرابی یه بخش، کل سیستم رو از کار نندازه.
+
+تصمیم:
+معماری میکروسرویس با تفکیک بر اساس Bounded Context (DDD) و Database per Service.
+
+دلیل تصمیم:
+هر دامنه (آیتم، Bid، Escrow، Rating) داده و منطق خودش رو داره. میکروسرویس یعنی هر تیم مستقل Deploy می‌کنه. Database per Service یعنی هر سرویس دیتابیس مناسب خودش رو داره.
+
+مزایا:
+
+تیم‌ها مستقل کار می‌کنن
+
+هر سرویس با تکنولوژی مناسب
+
+خرابی یه بخش، بقیه رو از کار نمی‌ندازه
+
+مقیاس‌پذیری خطی
+
+معایب:
+
+پیچیدگی عملیاتی
+
+Debugging سخت‌تر
+
+نیاز به تیم Platform
+
+تست End-to-End سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Monolith:
+مزایا:
+
+سادگی Deploy
+
+Debugging راحت
+
+توسعه سریع اولیه
+معایب:
+
+تیم‌ها نمی‌تونن مستقل Deploy کنن
+
+وابستگی کد زیاد
+
+مقیاس‌پذیری محدود
+
+ب) Modular Monolith:
+مزایا:
+
+تعادل بین سادگی و ماژولاریتی
+
+Deploy یکپارچه
+معایب:
+
+همچنان وابستگی در Deploy
+
+مقیاس‌پذیری محدود
+
+ج) Serverless:
+مزایا:
+
+هزینه فقط به ازای مصرف
+
+مقیاس‌پذیری خودکار
+معایب:
+
+Cold Start
+
+Debugging سخت
+
+Vendor Lock-in
+
+پیامدها:
+
+مثبت: استقلال تیم‌ها، مقیاس‌پذیری، تحمل خطا
+
+منفی: پیچیدگی، نیاز به تیم Platform
+
+ریسک: مرز Domain اشتباه → Event Storming
+
+ADR-002: انتخاب مکانیزم برای Bid همزمان
+وضعیت: پذیرفته شده
+
+زمینه:
+وقتی دو خریدار همزمان Bid می‌ذارن، باید فقط یکی برنده بشه. اگه از Lock استفاده نکنیم، ممکنه دو Bid با قیمت یکسان ثبت بشه. Bid باید Real-time و Atomic باشه.
+
+تصمیم:
+از Redis (Atomic Increment + Redlock) + PostgreSQL (Optimistic Locking) + Kafka (Event Publishing) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Redis Atomic برای ثبت Bid سریع. Redlock برای جلوگیری از Race Condition. PostgreSQL برای ذخیره نهایی با ACID. Kafka برای انتشار رویداد (Bid جدید، برنده شدن).
+
+مزایا:
+
+Atomic (بدون Race Condition)
+
+سرعت بالا (Redis)
+
+ACID نهایی (PostgreSQL)
+
+Real-time Notification (Kafka)
+
+معایب:
+
+Redlock پیچیده
+
+نیاز به Redis HA
+
+پیچیدگی TTL
+
+اگه Redis Down بشه، Bid متوقف می‌شه
+
+موارد دیگر بررسی‌شده:
+
+الف) Pessimistic Locking (SELECT FOR UPDATE):
+مزایا:
+
+امنیت بالا
+
+Consistency کامل
+معایب:
+
+Deadlock در مقیاس بالا
+
+کندی
+
+Blocking طولانی
+
+ب) Database Unique Constraint:
+مزایا:
+
+سادگی
+
+امنیت
+معایب:
+
+inflexible
+
+خطای زیاد در Race
+
+بدون TTL
+
+ج) بدون Lock:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+دو Bid همزمان
+
+کاربر ناراضی
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: Atomic، سرعت بالا، Real-time
+
+منفی: Redlock پیچیده
+
+ریسک: Redis Down → Fallback به Optimistic Locking
+
+ADR-003: انتخاب مکانیزم Countdown و Sniping
+وضعیت: پذیرفته شده
+
+زمینه:
+هر مزایده یه زمان پایان داره. Sniping (Bid در ثانیه‌های آخر) باید مدیریت بشه. اگه Bid در ۱۰ ثانیه آخر بیاد، زمان تمدید بشه تا همه فرصت داشته باشن. Countdown باید دقیق باشه.
+
+تصمیم:
+از Redis (TTL + Pub/Sub) + Kafka (Scheduled Event) + WebSocket (Real-time Countdown) + Anti-Sniping Rule (۱۰ ثانیه آخر → ۲ دقیقه تمدید) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Redis TTL برای زمان پایان. Pub/Sub برای انتشار Countdown. Kafka برای Scheduled Event (اتمام مزایده). WebSocket برای نمایش Real-time. Anti-Sniping برای عدالت.
+
+مزایا:
+
+Countdown دقیق (Redis TTL)
+
+Anti-Sniping (فرصت برابر)
+
+Real-time نمایش
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی Redis + Kafka
+
+نیاز به WebSocket
+
+ممکنه مزایده بی‌نهایت تمدید بشه
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Database Timer:
+مزایا:
+
+سادگی
+
+ACID
+معایب:
+
+کندی
+
+بار روی DB
+
+بدون Real-time
+
+ب) فقط Redis TTL:
+مزایا:
+
+سرعت بالا
+
+سادگی
+معایب:
+
+بدون Persistence قوی
+
+اگه Redis Restart بشه، TTL از دست می‌ره
+
+ج) بدون Anti-Sniping:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+Sniping زیاد
+
+کاربر ناراضی
+
+نقض عدالت
+
+پیامدها:
+
+مثبت: Countdown دقیق، Anti-Sniping، Real-time
+
+منفی: پیچیدگی، هزینه
+
+ریسک: TTL از دست بره → Persistence + Backup
+
+ADR-004: انتخاب مکانیزم Escrow و پرداخت
+وضعیت: پذیرفته شده
+
+زمینه:
+وقتی خریدار برنده مزایده می‌شه، پول باید در Escrow بمونه تا کالا تحویل داده بشه. اگه کالا تحویل داده نشه، پول برگرده. باید مطمئن باشیم پول درست تقسیم می‌شه و کلاهبرداری نمی‌شه.
+
+تصمیم:
+از Escrow + Rule Engine (Drools) + KYC + Idempotency Key + Kafka (Event) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Escrow پول رو نگه می‌داره. Rule Engine تقسیم درآمد (مثلاً ۹۰٪ فروشنده، ۱۰٪ پلتفرم). KYC هویت فروشنده. Idempotency Key جلوگیری از پرداخت دوبار. Kafka برای انتشار رویداد.
+
+مزایا:
+
+امنیت مالی (Escrow)
+
+قوانین پویا (Rule Engine)
+
+جلوگیری از کلاهبرداری (KYC)
+
+جلوگیری از پرداخت دوبار
+
+معایب:
+
+پیچیدگی پیاده‌سازی
+
+هزینه KYC
+
+زمان تسویه
+
+نیاز به تیم مالی
+
+موارد دیگر بررسی‌شده:
+
+الف) پرداخت مستقیم:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+ریسک کلاهبرداری
+
+بدون محافظت
+
+نقض قوانین
+
+ب) پرداخت با کریپتو:
+مزایا:
+
+سرعت بالا
+
+هزینه کم
+معایب:
+
+نوسان قیمت
+
+پیچیدگی قانونی
+
+کاربرا آشنا نیستن
+
+ج) بدون Escrow:
+مزایا:
+
+سادگی
+
+بدون پیچیدگی مالی
+معایب:
+
+ریسک کلاهبرداری
+
+کاربر ناراضی
+
+نقض قوانین
+
+پیامدها:
+
+مثبت: امنیت مالی، قوانین پویا
+
+منفی: پیچیدگی، هزینه KYC
+
+ریسک: KYC خطا → Manual Review
+
+ADR-005: انتخاب مکانیزم Rating دوطرفه
+وضعیت: پذیرفته شده
+
+زمینه:
+بعد از هر مزایده، خریدار به فروشنده امتیاز می‌ده و فروشنده به خریدار. این امتیازا برای اعتماد مهمه. باید از تقلب و امتیازای جعلی جلوگیری کنیم.
+
+تصمیم:
+از Cassandra (Write سنگین) + Redis (Cache) + Anomaly Detection (ML) + Kafka (Event) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Cassandra برای ذخیره میلیون‌ها Rating. Redis برای Cache امتیاز فروشنده. Anomaly Detection برای تشخیص تقلب (مثلاً یه کاربر تو ۱ دقیقه ۱۰۰ امتیاز بده). Kafka برای انتشار رویداد.
+
+مزایا:
+
+Write سریع (Cassandra)
+
+Query سریع (Redis)
+
+تشخیص تقلب (ML)
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی سه‌گانه
+
+نیاز به ML
+
+Eventual Consistency
+
+هزینه Redis
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+ACID
+
+Query پیچیده
+معایب:
+
+Write کند
+
+مقیاس‌پذیری محدود
+
+هزینه بالا
+
+ب) فقط Redis:
+مزایا:
+
+سرعت بالا
+
+Real-time
+معایب:
+
+محدودیت حافظه
+
+بدون Persistence
+
+از دست رفتن داده
+
+ج) بدون Anomaly Detection:
+مزایا:
+
+سادگی
+
+هزینه کمتر
+معایب:
+
+امتیازای جعلی
+
+تقلب
+
+اعتماد پایین
+
+پیامدها:
+
+مثبت: Write سریع، تشخیص تقلب
+
+منفی: پیچیدگی، نیاز به ML
+
+ریسک: ML اشتباه → Human Review
+
+ADR-006: انتخاب مکانیزم Fraud Detection
+وضعیت: پذیرفته شده
+
+زمینه:
+مزایده آنلاین هدف خوبی برای تقلب هست: Bid جعلی، Shill Bidding (فروشنده خودش Bid می‌ده)، Fake Item، Payment Fraud. باید اینا رو تشخیص بدیم.
+
+تصمیم:
+از ML Model (XGBoost) + Rule Engine (Drools) + Kafka (Event Stream) + Redis (Real-time Score) + Human Review استفاده می‌کنیم.
+
+دلیل تصمیم:
+ML Model برای تشخیص الگوهای پیچیده. Rule Engine برای قوانین ساده (مثلاً IP یکسان). Kafka برای Event Stream. Redis برای Score Real-time. Human Review برای موارد مشکوک.
+
+مزایا:
+
+تشخیص الگوهای پیچیده (ML)
+
+قوانین ساده (Rule Engine)
+
+Real-time Score
+
+Human Review
+
+معایب:
+
+پیچیدگی ML
+
+نیاز به Data Pipeline
+
+False Positive
+
+نیاز به تیم Data Science
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Rule Engine:
+مزایا:
+
+سادگی
+
+شفافیت
+معایب:
+
+الگوهای پیچیده رو نمی‌گیره
+
+False Negative زیاد
+
+ب) فقط ML:
+مزایا:
+
+تشخیص الگوهای پیچیده
+معایب:
+
+نیاز به داده زیاد
+
+Cold Start
+
+نیاز به تیم ML
+
+ج) بدون Fraud Detection:
+مزایا:
+
+سادگی
+
+هزینه کمتر
+معایب:
+
+تقلب زیاد
+
+اعتماد پایین
+
+درآمد از دست می‌ره
+
+پیامدها:
+
+مثبت: تشخیص تقلب، اعتماد بالا
+
+منفی: پیچیدگی، هزینه
+
+ریسک: ML اشتباه → Human Review
+
+ADR-007: انتخاب مکانیزم Search آیتم
+وضعیت: پذیرفته شده
+
+زمینه:
+میلیون‌ها آیتم در پلتفرم. کاربرا می‌خوان بر اساس عنوان، دسته‌بندی، قیمت، موقعیت مکانی جستجو کنن. Search باید سریع باشه و Faceted Search داشته باشه.
+
+تصمیم:
+از Elasticsearch + PostgreSQL (Metadata) + CDC (Debezium) + Kafka استفاده می‌کنیم.
+
+دلیل تصمیم:
+Elasticsearch برای Full-Text Search و Faceted Search. PostgreSQL برای Metadata (ACID). CDC تغییرات PostgreSQL رو به Elasticsearch Sync می‌کنه.
+
+مزایا:
+
+جستجوی سریع (زیر ۱۰۰ms)
+
+Full-Text Search
+
+Faceted Search
+
+Sync خودکار
+
+معایب:
+
+پیچیدگی CDC
+
+تأخیر Sync
+
+هزینه Elasticsearch
+
+مدیریت دو دیتابیس
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+سادگی
+
+ACID
+معایب:
+
+Full-Text Search ضعیف
+
+کندی با میلیون‌ها رکورد
+
+بدون Faceted Search
+
+ب) فقط Elasticsearch:
+مزایا:
+
+جستجوی سریع
+
+Faceted Search
+معایب:
+
+برای Transaction مناسب نیست
+
+داده‌ها ممکنه از دست برن
+
+بدون ACID
+
+ج) MongoDB Text Index:
+مزایا:
+
+سادگی
+
+یکپارچگی
+معایب:
+
+Full-Text Search ضعیف‌تر
+
+بدون Faceted Search
+
+پیامدها:
+
+مثبت: جستجوی سریع، Faceted Search
+
+منفی: پیچیدگی CDC، هزینه
+
+ریسک: CDC خطا → Retry + Alert
+
+ADR-008: انتخاب مکانیزم Notification Real-time
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا باید از Bid جدید، برنده شدن، اتمام مزایده، و تغییر وضعیت Escrow مطلع بشن. این Notification باید Real-time باشه (زیر ۵۰۰ms).
+
+تصمیم:
+از WebSocket + Redis Pub/Sub + Kafka + Push (FCM/APNs) + SMS استفاده می‌کنیم.
+
+دلیل تصمیم:
+WebSocket برای ارتباط دوطرفه. Redis Pub/Sub برای انتشار. Kafka برای Event Stream. Push برای موبایل. SMS برای موارد مهم.
+
+مزایا:
+
+Real-time (زیر ۱۰۰ms)
+
+چند کانال (Web، Push، SMS)
+
+مقیاس‌پذیری
+
+قابل اعتماد
+
+معایب:
+
+پیچیدگی WebSocket
+
+Redis SPOF
+
+هزینه SMS
+
+نیاز به Connection Registry
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Push:
+مزایا:
+
+سادگی
+
+Real-time
+معایب:
+
+نیاز به اپ موبایل
+
+بدون Web
+
+کاربرا وب رو ترجیح می‌دن
+
+ب) فقط REST Polling:
+مزایا:
+
+سادگی
+
+Stateless
+معایب:
+
+تأخیر بالا
+
+بار روی سرور
+
+بدون Real-time
+
+ج) فقط SMS:
+مزایا:
+
+قابل اعتماد
+
+بدون اینترنت
+معایب:
+
+کندی
+
+هزینه بالا
+
+بدون Real-time
+
+پیامدها:
+
+مثبت: Real-time، چند کانال
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-009: انتخاب مکانیزم چندزبانگی و چندارزی
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم تو کشورهای مختلف با زبان‌ها و ارزهای مختلف کار می‌کنه. کاربر باید رابط کاربری به زبان خودش ببینه و قیمت به ارز محلی. Bid باید به ارز اصلی مزایده ثبت بشه.
+
+تصمیم:
+از i18next + Currency API (بانک مرکزی) + Redis Cache + RTL/LTR Support + Elasticsearch Analyzer مجزا استفاده می‌کنیم.
+
+دلیل تصمیم:
+i18next برای چندزبانگی. Currency API برای نرخ ارز لحظه‌ای. Redis Cache برای سرعت. RTL/LTR برای زبان‌های راست‌به‌چپ. Elasticsearch Analyzer مجزا برای جستجوی دقیق.
+
+مزایا:
+
+پشتیبانی چندزبانه
+
+نرخ ارز لحظه‌ای
+
+RTL/LTR خودکار
+
+جستجوی دقیق
+
+معایب:
+
+وابستگی به API خارجی
+
+نیاز به بازبینی ترجمه
+
+کارمزد تبدیل ارز
+
+پیچیدگی RTL
+
+موارد دیگر بررسی‌شده:
+
+الف) Hardcode زبان‌ها:
+مزایا:
+
+سادگی
+
+Performance بالا
+معایب:
+
+نیاز به نسخه‌گذاری
+
+نگهداری فاجعه
+
+ب) مترجم آنلاین:
+مزایا:
+
+پوشش خودکار
+
+بدون فایل JSON
+معایب:
+
+وابستگی به خارج
+
+حریم خصوصی
+
+هزینه بالا
+
+ج) فقط انگلیسی:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+بازار محدود
+
+کاربرا ناراضی
+
+پیامدها:
+
+مثبت: پشتیبانی جهانی، نرخ لحظه‌ای
+
+منفی: وابستگی، هزینه
+
+ریسک: API ارز Down → Fallback به Cache
+
+ADR-010: انتخاب مکانیزم چرخه حیات داده و GDPR
+وضعیت: پذیرفته شده
+
+زمینه:
+داده‌های مزایده (Bid، Rating، Escrow) باید برای Audit نگه‌داری بشن. ولی GDPR حق فراموشی رو الزامی کرده. باید تعادل برقرار بشه.
+
+تصمیم:
+از Tiered Storage + Soft Delete + Anonymization + Key Deletion + Audit Log استفاده می‌کنیم:
+
+Hot (۶ ماه): PostgreSQL
+
+Warm (۶ ماه تا ۲ سال): Elasticsearch
+
+Cold (> ۲ سال): S3 Glacier
+
+GDPR: Soft Delete فوری + Anonymize بعد از ۳۰ روز
+
+دلیل تصمیم:
+هر داده تو دیتابیس مناسب سنش. Soft Delete Foreign Keyها رو سالم نگه می‌داره. Anonymize حریم خصوصی. Job شبانه انتقال‌ها رو انجام می‌ده.
+
+مزایا:
+
+Compliance با GDPR
+
+کاهش هزینه Storage
+
+Foreign Keyها سالم
+
+Audit Trail حفظ
+
+معایب:
+
+تأخیر Restore از Glacier
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring
+
+حجم دیتابیس بیشتر
+
+موارد دیگر بررسی‌شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص
+
+Audit از بین می‌ره
+
+ب) نگه‌داری همه در PostgreSQL:
+مزایا:
+
+سادگی
+
+Query یکپارچه
+معایب:
+
+هزینه نجومی
+
+کندی با حجم زیاد
+
+ج) فقط S3:
+مزایا:
+
+هزینه کم
+
+سادگی
+معایب:
+
+کوئری کند
+
+بدون Index
+
+پیامدها:
+
+مثبت: Compliance، هزینه کم
+
+منفی: تأخیر Restore، پیچیدگی
+
+ریسک: Job خطا → DLQ + Retry + Alert
+
+************************************************************************************************************************
+
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، نقش‌ها (خریدار، فروشنده، ادمین)
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش
+GET    /api/v1/users/{id}/roles       → نقش‌ها
+DELETE /api/v1/users/{id}             → حذف (GDPR)
+۲. Item Service
+مسئولیت: مدیریت آیتم‌ها، دسته‌بندی، تصاویر
+APIها:
+
+text
+POST   /api/v1/items                   → ثبت آیتم (فروشنده)
+GET    /api/v1/items/{id}              → جزئیات
+PATCH  /api/v1/items/{id}              → ویرایش
+DELETE /api/v1/items/{id}              → حذف
+GET    /api/v1/items/seller/{id}       → آیتم‌های فروشنده
+۳. Auction Service
+مسئولیت: مدیریت مزایده، زمان‌بندی، وضعیت
+APIها:
+
+text
+POST   /api/v1/auctions                → ساخت مزایده
+GET    /api/v1/auctions/{id}           → جزئیات
+POST   /api/v1/auctions/{id}/start     → شروع
+POST   /api/v1/auctions/{id}/end       → پایان
+GET    /api/v1/auctions/{id}/status    → وضعیت
+DELETE /api/v1/auctions/{id}           → لغو
+۴. Bid Service
+مسئولیت: ثبت Bid، Real-time، Atomic
+APIها:
+
+text
+POST   /api/v1/bids                    → ثبت Bid
+GET    /api/v1/bids/{auctionId}        → Bidهای مزایده
+GET    /api/v1/bids/{auctionId}/highest → بالاترین Bid
+DELETE /api/v1/bids/{id}               → لغو (فقط قبل از Bid دیگه)
+WS     /ws/bids/{auctionId}            → ارتباط بلادرنگ
+۵. Escrow Service
+مسئولیت: نگه‌داری وجه، آزادسازی، بازگشت
+APIها:
+
+text
+POST   /api/v1/escrow/hold             → Hold وجه
+POST   /api/v1/escrow/release          → آزادسازی (بعد از تحویل)
+POST   /api/v1/escrow/refund           → بازگشت (اگه تحویل نشد)
+GET    /api/v1/escrow/{id}             → وضعیت
+GET    /api/v1/escrow/history          → تاریخچه
+۶. Payment Service
+مسئولیت: پرداخت، Payout، KYC
+APIها:
+
+text
+POST   /api/v1/payments/checkout       → پرداخت
+POST   /api/v1/payments/webhook        → Webhook
+GET    /api/v1/payments/{id}           → وضعیت
+GET    /api/v1/earnings/{sellerId}     → درآمد فروشنده
+POST   /api/v1/payouts                 → تسویه
+POST   /api/v1/kyc/submit              → ارسال مدارک
+GET    /api/v1/kyc/status              → وضعیت KYC
+۷. Rating Service
+مسئولیت: امتیازدهی دوطرفه، Anomaly Detection
+APIها:
+
+text
+POST   /api/v1/ratings                 → ثبت امتیاز
+GET    /api/v1/ratings/seller/{id}     → امتیاز فروشنده
+GET    /api/v1/ratings/buyer/{id}      → امتیاز خریدار
+GET    /api/v1/ratings/{auctionId}     → امتیاز مزایده
+POST   /api/v1/ratings/{id}/report     → گزارش امتیاز جعلی
+۸. Fraud Detection Service
+مسئولیت: تشخیص تقلب، Shill Bidding، Fake Item
+APIها:
+
+text
+POST   /api/v1/fraud/check             → بررسی تراکنش
+GET    /api/v1/fraud/score/{userId}    → Score کاربر
+POST   /api/v1/fraud/report            → گزارش تقلب
+GET    /api/v1/fraud/queue             → صف بررسی
+POST   /api/v1/fraud/review/{id}       → تصمیم (ادمین)
+۹. Search Service
+مسئولیت: جستجوی آیتم، Faceted Search
+APIها:
+
+text
+GET    /api/v1/search/items            → جستجوی آیتم
+GET    /api/v1/search/categories       → جستجوی دسته
+GET    /api/v1/search/suggest          → Auto-complete
+GET    /api/v1/search/faceted          → Faceted Search
+POST   /api/v1/search/reindex          → Reindex (Admin)
+۱۰. Notification Service
+مسئولیت: Push، SMS، Email
+APIها:
+
+text
+POST   /api/v1/notifications/send      → ارسال
+GET    /api/v1/notifications           → لیست
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings  → تنظیمات
+۱۱. Currency Service
+مسئولیت: نرخ ارز، تبدیل ارز
+APIها:
+
+text
+GET    /api/v1/currency/rates          → نرخ‌های ارز
+GET    /api/v1/currency/convert        → تبدیل
+GET    /api/v1/currency/supported      → ارزهای پشتیبانی
+POST   /api/v1/currency/refresh        → بروزرسانی (Admin)
+۱۲. Archive Service
+مسئولیت: Tiered Storage، GDPR
+APIها:
+
+text
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/archive/restore         → بازیابی
+POST   /api/v1/gdpr/export             → خروجی
+DELETE /api/v1/gdpr/delete/{userId}    → حذف (GDPR)
+۱۳. Analytics Service
+مسئولیت: آمار مزایده، درآمد، کاربر
+APIها:
+
+text
+GET    /api/v1/analytics/auctions      → آمار مزایده
+GET    /api/v1/analytics/revenue       → آمار درآمد
+GET    /api/v1/analytics/users         → آمار کاربران
+POST   /api/v1/analytics/events        → ثبت رویداد
+۱۴. Admin Service
+مسئولیت: مدیریت سیستم، گزارش، تنظیمات
+APIها:
+
+text
+GET    /api/v1/admin/dashboard         → داشبورد
+GET    /api/v1/admin/reports/auctions  → گزارش مزایده
+GET    /api/v1/admin/reports/revenue   → گزارش درآمد
+POST   /api/v1/admin/config            → تنظیمات
+POST   /api/v1/admin/users/{id}/ban    → مسدودسازی
+🔧 لایه Component (نمونه برای ۴ سرویس)
+Auction Service
+Component	نوع	مسئولیت
+AuctionController	@RestController	مدیریت مزایده
+AuctionService	@Service	منطق مزایده
+CountdownManager	@Component	Countdown
+AntiSnipingRule	@Component	Anti-Sniping
+AuctionRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	Kafka
+Bid Service
+Component	نوع	مسئولیت
+BidController	@RestController	ثبت Bid
+BidService	@Service	منطق Bid
+AtomicBidManager	@Component	Redis Atomic
+LockManager	@Component	Redlock
+BidRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	Kafka
+Escrow Service
+Component	نوع	مسئولیت
+EscrowController	@RestController	مدیریت Escrow
+EscrowService	@Service	منطق Escrow
+RuleEngine	@Component	Drools
+PaymentClient	@Component	Payment Service
+EscrowRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	Kafka
+Fraud Detection Service
+Component	نوع	مسئولیت
+FraudController	@RestController	بررسی تقلب
+FraudService	@Service	منطق تقلب
+MlModelClient	@Component	XGBoost
+RuleEngine	@Component	Drools
+ScoreCache	@Component	Redis
+KafkaConsumer	@Component	Event Stream
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	Bid Real-time
+Service Discovery	Eureka/Consul	ثبت و کشف
+Config Server	Spring Cloud Config	تنظیمات
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Lock + TTL
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	Rating
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	تصاویر + Archive
+Glacier	AWS Glacier	Cold Archive
+CDN	CloudFront	توزیع تصاویر
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Item Service ──→ PostgreSQL + S3
+       ├──→ Auction Service ──→ PostgreSQL + Redis
+       ├──→ Bid Service ──→ PostgreSQL + Redis + Kafka
+       ├──→ Escrow Service ──→ PostgreSQL + Drools
+       ├──→ Payment Service ──→ PostgreSQL + Stripe
+       ├──→ Rating Service ──→ Cassandra + Redis
+       ├──→ Fraud Detection ──→ ML + Drools
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Notification Service ──→ Kafka + Firebase
+       ├──→ Currency Service ──→ Redis + Central Bank
+       ├──→ Archive Service ──→ S3 + Glacier
+       ├──→ Analytics Service ──→ ClickHouse
+       └──→ Admin Service ──→ ClickHouse + PostgreSQL
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus
+└──────────────┘

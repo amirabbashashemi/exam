@@ -1,0 +1,972 @@
+ADR-001: انتخاب مکانیزم Geospatial برای Matching
+وضعیت: پذیرفته شده
+
+زمینه:
+وقتی مسافری درخواست می دهد، باید نزدیک ترین راننده های در دسترس پیدا شوند.
+اگه از Query معمولی (مثلاً BETWEEN lat AND lng) استفاده کنیم، با میلیون ها راننده جواب این Query بسیار کند می شود.
+در نتیجه باید یه مکانیزم سریع برای جستجوی مکانی داشته باشیم.
+
+تصمیم:
+استفاده از Redis GEO (GEOADD + GEOSEARCH) به همراه Geohashing.
+
+دلیل تصمیم:
+مفهموم Redis GEO یک ساختار داده خاص In-Memory هست که برای جستجوی مکانی بکار می رود.
+دو تا دستور اصلی دارد:
+GEOADD برای اضافه کردن یه نقطه با مختصات (longitude و latitude).
+GEOSEARCH برای پیدا کردن نقاط تو یه شعاع مشخص از یه نقطه مرکزی.
+و GEOSEARCH می تونه تو چند میلی ثانیه، راننده های تو شعاع مشخص (مثلا ۵ کیلومتر) را پیدا کند.
+و Geohashing هم برای ذخیره سازی مکانی رستوران ها و راننده ها تو Elasticsearch استفاده می شه.
+
+مزایا:
+جستجوی مکانی سریع (زیر ۱۰ میلی ثانیه)
+مقیاس پذیری بالا (In-Memory)
+پشتیبانی از شعاع و محدوده
+ادغام آسان با Redis Cluster
+معایب:
+Redis ممکنه Single Point of Failure بشه
+حافظه ی محدود (نیاز به Cluster)
+دقت Geohashing محدود (سطح ۹ = ~۵ متر)
+نیاز به Sync با دیتابیس اصلی
+
+موارد دیگر بررسی شده:
+الف) Query معمولی در PostgreSQL :
+مزایا:
+یکپارچگی با داده های اصلی
+دقت بالا
+معایب:
+کندی با میلیون ها راننده
+بار زیاد روی DB
+نیاز به Index پیچیده
+
+ب) Elasticsearch Geo-Point:
+مزایا:
+جستجوی سریع
+ادغام با جستجو
+معایب:
+کندتر از Redis
+برای Real-time مناسب نیست
+هزینه ی بالا
+
+ج) QuadTree در حافظه:
+مزایا:
+کنترل کامل
+Performance بالا
+معایب:
+پیچیدگی پیاده سازی
+بدون Persistence
+نیاز به Sync دستی
+
+پیامدها:
+مثبت: سرعت بالا، مقیاس پذیری، دقت مناسب
+منفی: Single Point of Failure، حافظه محدود
+ریسک: اگه Redis Down بشه → Redis Cluster با Sentinel
+
+------------------------------------------------------------------------------------------------------------------------
+
+ADR-002: انتخاب مکانیزم برای تخصیص راننده (Driver Assignment)
+وضعیت: پذیرفته شده
+
+زمینه:
+وقتی دو یا چند مسافر به راننده نزدیک همزمان درخواست می دهند،
+نباید هر دو به یک راننده تخصیص داده شوند. باید مطمئن باشیم یک راننده فقط به یک سفر تخصیص داده می شود.
+
+تصمیم:
+از Distributed Lock (Redis Redlock) + Optimistic Locking (PostgreSQL) استفاده می کنیم.
+
+دلیل تصمیم:
+مفهوم Redlock یه قفل توزیع شده ست که با SETNX و TTL کار می کنه.
+وقتی چند مسافر همزمان درخواست می دهند، دستور SETNX  برای همه آنها در ردیس اجرا می شود
+و جواب این دستور فقط برای یک درخواست 1 است در نتیجه راننده به یک مسافر اختصاص پیدا می کند
+و همچنین از Optimistic Locking هم تو دیتابیس برای lock نهایی استفاده می کنیم.
+
+مزایا:
+جلوگیری از تخصیص دوگانه (Race Condition)
+سرعت بالا (Redis In-Memory)
+TTL خودکار (اگه مسافر منصرف شد، قفل آزاد می شه)
+مقیاس پذیری
+معایب:
+Redlock تو شرایط Split-Brain ممکنه مشکل داشته باشه
+نیاز به Redis Cluster با HA
+پیچیدگی مدیریت TTL
+اگه Redis Down بشه، تخصیص متوقف می شه
+
+موارد دیگر بررسی شده:
+الف) Pessimistic Locking (SELECT FOR UPDATE):
+مزایا:
+امنیت بالا
+Consistency کامل
+معایب:
+Deadlock در مقیاس بالا
+کندی
+Blocking طولانی
+
+ب) Database Unique Constraint:
+مزایا:
+سادگی
+امنیت بالا
+معایب:
+inflexible
+خطای زیاد در Race
+بدون TTL
+
+ج) بدون Lock (Best Effort):
+مزایا:
+سادگی
+سرعت
+معایب:
+تخصیص دوگانه
+کاربر ناراضی
+نقض نیازمندی
+پیامدها:
+مثبت: جلوگیری از Race، سرعت بالا، TTL خودکار
+منفی: Redlock پیچیده، نیاز به Redis HA
+ریسک: اگه Redlock خطا کنه → Fallback به Optimistic Locking
+------------------------------------------------------------------------------------------------------------------------
+ADR-003: انتخاب مکانیزم برای Real-time Location Tracking
+وضعیت: پذیرفته شده
+
+زمینه:
+مسافر می خواد موقعیت راننده رو روی نقشه ببینه. راننده هر چند ثانیه موقعیتش رو می فرسته. این داده باید Real-time به مسافر برسه و تأخیرش زیر ۵۰۰ میلی ثانیه باشه.
+
+تصمیم:
+از WebSocket + Redis Pub/Sub + TimescaleDB استفاده می کنیم.
+
+دلیل تصمیم:
+با WebSocket می توان یک ارتباط دوطرفه و امن (WSS) و با تاخیر بسیار کم ایجاد نمود.
+و با استفاده از Redis می توان در بازه های 5 ثانیه ای موقعیت راننده را در ردیس ذخیره کرد
+و تمام کسانی که آنرا track می کنند هم با زمان بسیار پایین آخرین موقعیت را از ردیس با تاخیر کم استخراج و مشاهده نمایند
+و برای دخیره نهایی مسیر از دیتابیس TimescaleDB استفاده می کنیم زیرا
+داده های GPS ذاتاً زمان محور هستن ( برای هر راننده، یه دنباله از نقاط با زمان ذخیره می شود)
+. اگه اینا رو تو یه دیتابیس معمولی مثل PostgreSQL ذخیره کنیم، بعد از مدتی حجمشون نجومی میشه و کوئری ها کند میشن.
+در نتیجه در TimescaleDB ذخیره می کنیم زیرا هم بر اساس زمان پارتیشن می شوند و هم امکان Compression دارد.
+
+مزایا:
+Real-time (تأخیر زیر ۱۰۰ میلی ثانیه)
+مقیاس پذیری بالا با Redis Cluster
+ذخیره ی GPS Trail برای تحلیل
+Compression در TimescaleDB (۹۰٪ کاهش حجم)
+معایب:
+پیچیدگی WebSocket (Reconnection، Keep-alive)
+Redis ممکنه Single Point of Failure بشه
+هزینه ی TimescaleDB
+نیاز به Connection Registry
+
+موارد دیگر بررسی شده:
+
+الف) REST Polling:
+مزایا:
+سادگی
+Stateless
+معایب:
+تأخیر بالا (بیشتر از ۱ ثانیه)
+بار زیاد روی سرور
+مصرف باتری زیاد
+
+ب) Kafka:
+مزایا:
+مقیاس پذیری بالا
+Decoupling
+معایب:
+تأخیر بیشتر از Redis
+Overhead Kafka
+برای Real-time مناسب نیست
+
+ج) MQTT:
+مزایا:
+سبک
+مناسب IoT
+معایب:
+کمتر رایجه
+نیاز به Broker جدا
+ادغام سخت تر
+
+
+پیامدها:
+مثبت: Real-time، مقیاس پذیری، ذخیره ی GPS
+منفی: پیچیدگی WebSocket، هزینه TimescaleDB
+ریسک: اگه Redis Down بشه → Redis Cluster با Sentinel
+------------------------------------------------------------------------------------------------------------------------
+ADR-004: انتخاب مکانیزم برای Surge Pricing
+وضعیت: پذیرفته شده
+
+زمینه:
+ساعت شلوغی یا بارانی، تقاضا بیشتر از عرضه می شود.
+اگه قیمت ثابت باشه، راننده ها انگیزه کار کردن ندارند و مسافرها منتظر می مانند.
+ در نتیجه بهتر است قیمت پویا باشند.
+
+تصمیم:
+استفاده از Rule Engine (Drools) + Geohash Zones + Real-time Metrics (Redis) .
+
+دلیل تصمیم:
+برای محاسبه نسبت تقاضا به عرضه تعداد مسافران و رانندگان فعال(که از قبل در ردیس ذخیره شده اند) را می شماریم.
+و با استفاده از Geohash Zones مناطق مختلف جغرافیایی را تعریف می کنیم.
+اکنون با داشتن عرضه و تقاضا و با استفاده از Rule Engine (Drools) می توانیم قوانین خود را بصورت پویا اعمال نماییم.
+مثلاً اگه تقاضا/عرضه > ۲، مبلغ سفر در ۱.۵ ضرب شود
+
+
+مزایا:
+قیمت پویا بر اساس تقاضا
+انگیزه برای راننده ها
+تعادل عرضه و تقاضا
+قوانین قابل تنظیم (Rule Engine)
+معایب:
+پیچیدگی Rule Engine (Drools)
+ممکنه کاربرا ناراضی بشن (قیمت بالا)
+نیاز به Real-time Metrics
+Debugging سخت
+
+موارد دیگر بررسی شده:
+الف) قیمت ثابت:
+مزایا:
+سادگی
+کاربرا ناراضی نمی شن
+معایب:
+عدم تعادل عرضه و تقاضا
+راننده ها انگیزه ندارن
+مسافرها منتظر می مونن
+
+ب) قیمت بر اساس مسافت فقط:
+مزایا:
+سادگی
+شفافیت
+معایب:
+بدون توجه به تقاضا
+عدم تعادل
+نارضایتی در پیک
+
+ج) Auction-based Pricing:
+مزایا:
+بهینه سازی دقیق
+درآمد بالا
+معایب:
+پیچیدگی بسیار بالا
+کاربرا گیج می شن
+نیاز به ML
+
+پیامدها:
+مثبت: تعادل عرضه و تقاضا، انگیزه، درآمد
+منفی: پیچیدگی، نارضایتی کاربر، نیاز به Metrics
+ریسک: اگه Rule اشتباه باشه → Canary Release و بازبینی
+------------------------------------------------------------------------------------------------------------------------
+ADR-005: انتخاب مکانیزم Saga Orchestration برای Trip Lifecycle
+وضعیت: پذیرفته شده
+
+زمینه:
+یک سفر مراحل مختلفی داره: درخواست، تخصیص راننده، رسیدن راننده، شروع سفر، پایان سفر، پرداخت.
+اگه یه مرحله شکست بخوره (مثلاً پرداخت)، باید مراحل قبلی جبران بشن. این یه تراکنش توزیع شده ست.
+
+تصمیم:
+استفاده از Saga Orchestration .
+
+دلیل تصمیم:
+با Saga Orchestration می توان مراحل رو با یه Orchestrator مرکزی هماهنگ کرد و
+اگه مرحله ای شکست بخورد یا درست انجام نشود، روند جبران تراکنش (Compensating Transaction) اجرا می شود.
+و State Machine هم وضعیت سفر رو نگهداری می کند.
+
+مزایا:
+Compensating Transaction خودکار
+شفافیت کامل مراحل
+Audit Trail
+جداسازی منطق کسب وکار
+معایب:
+Orchestrator ممکنه Single Point of Failure بشه
+پیچیدگی پیاده سازی
+نیاز به State Machine و Persistence
+Debugging سناریوهای شکست سخت
+
+موارد دیگر بررسی شده:
+الف) Saga Choreography:
+مزایا:
+بدون Orchestrator مرکزی
+Decoupling
+معایب:
+پیچیدگی Tracking
+Debugging سخت
+بدون شفافیت کامل
+
+ب) Two-Phase Commit (2PC):
+مزایا:
+ACID کامل
+Consistency بالا
+معایب:
+Availability پایین
+برای Microservice مناسب نیست
+Blocking
+
+ج) Best Effort:
+مزایا:
+سادگی
+سرعت
+معایب:
+بدون Compensating Transaction
+از دست رفتن پول
+کاربر ناراضی
+
+پیامدها:
+مثبت: Compensating Transaction، شفافیت، Audit
+منفی: پیچیدگی، Single Point of Failure
+ریسک: اگه Orchestrator Down بشه → HA و State Recovery
+------------------------------------------------------------------------------------------------------------------------
+ADR-006: انتخاب مکانیزم برای ETA (Estimated Time of Arrival)
+وضعیت: پذیرفته شده
+
+زمینه:
+مسافر می خواد بدونه راننده کِی به مقصد می رسد.
+با ETA دقیق (نه فقط فاصله ÷ سرعت) و با در نظر گرفتن ترافیک ، مسیر، و سرعت راننده می توان زمان رسیدن را تخمین زد.
+
+تصمیم:
+از Google Maps API + Historical Traffic Data + ML Model (XGBoost) استفاده می کنیم.
+
+دلیل تصمیم:
+با Google Maps API می توان مسیر و ترافیک لحظه ای را بدست آورد.
+ و با Historical Traffic Data از روی داده های گذشته می توان یک الگو ترافیکی (مثلاً ساعت ۵ عصر همیشه شلوغه) در نظر گرفت.
+
+
+مزایا:
+ETA دقیق (خطای کمتر از ۱۰٪)
+ترافیک لحظه ای
+یادگیری از داده های تاریخی
+بهبود مستمر
+
+معایب:
+هزینه ی Google Maps API
+وابستگی به سرویس خارجی
+نیاز به Data Pipeline
+
+موارد دیگر بررسی شده:
+
+الف) محاسبه ی ساده (فاصله ÷ سرعت):
+مزایا:
+سادگی
+بدون هزینه
+معایب:
+دقت پایین
+بدون ترافیک
+کاربر ناراضی
+
+ب) فقط Google Maps API:
+مزایا:
+دقت خوب
+سادگی
+معایب:
+هزینه ی بالا
+بدون یادگیری
+وابستگی
+
+ج) استفاه از هوش مصنوعی و یادگیری ماشین:
+مزایا:
+دقت بالا
+یادگیری
+معایب:
+نیاز به داده ی زیاد
+پیچیدگی
+Cold Start
+
+پیامدها:
+مثبت: دقت بالا، ترافیک لحظه ای، بهبود مستمر
+منفی: هزینه، وابستگی، پیچیدگی
+
+------------------------------------------------------------------------------------------------------------------------
+ADR-007: انتخاب مکانیزم برای Payment و Payout
+وضعیت: پذیرفته شده
+
+زمینه:
+مسافر باید بتوانند هزینه سفر را بصورت نقدی، آنلاین، یا با کیف پول پرداخت نمایند.
+راننده هم باید کرایه سفر را دریافت نماید.
+باید مطمئن باشیم پرداخت پول و هزینه سفر به درستی پرداخت شده است.
+
+تصمیم:
+استفاده از ترکیب حساب امانی و موتور قوانین (Drools)
+
+دلیل تصمیم:
+پول مسافر اول توی یه حساب امانی می ماند تا سفر کامل بشود.
+اگه سفر نیمه کاره ماند یا لغو شد، پول به حساب کاربر برمیگردد.
+پس از اتمام صفر، با استفاده از قوانین تعریف شده در Drool سهم هر کدام از راننده و پلتفرم (مانند اسنپ) حساب شده
+.و عمل تسویه با راننده با حسابی که موقع ثبت نام (و احراز هویت شده با ثبت احوال) داده شده انجام می شود.
+و برای جلوگیری از تسویه مجدد از Idempotency Key استفاده می شود.
+
+مزایا:
+امنیت مالی مسافر و راننده با حساب امانی
+قوانین قابل تغییر بدون نیاز به کدنویسی (Drools)
+جلوگیری از کلاهبرداری با احراز هویت کد ملی و شبا
+جلوگیری از کسر دوبار پول (Idempotency Key)
+شفافیت مالیاتی و تطابق با سامانه مؤدیان
+معایب:
+پیادهسازی حساب امانی نیاز به قرارداد با بانک داره
+احراز هویت شاهکار هزینه و زمان داره (به ازای هر راننده)
+تسویه با پایا یا ساتنا معمولاً یه روز کاری طول میکشه (مگر با پل که لحظهایه)
+نیاز به تیم مالی آشنا به قوانین بانک مرکزی و مالیات
+
+
+الف) پرداخت مستقیم:
+مزایا:
+سادگی
+سرعت
+معایب:
+ریسک کلاهبرداری
+بدون محافظت
+نقض قوانین
+
+ب) پرداخت نقدی فقط:
+مزایا:
+سادگی
+بدون پیچیدگی مالی
+معایب:
+ناامنی
+بدون رهگیری
+کاربرا کارت می خوان
+
+ج) پرداخت با کریپتو:
+مزایا:
+سرعت بالا
+هزینه ی کم
+معایب:
+نوسان قیمت
+پیچیدگی قانونی
+کاربرا آشنا نیستن
+
+پیامدها:
+مثبت: امنیت مالی، قوانین پویا، جلوگیری از کلاهبرداری
+منفی: پیچیدگی، هزینه ی KYC، زمان تسویه
+ریسک: اگه KYC خطا کنه → Manual Review و Alert
+------------------------------------------------------------------------------------------------------------------------
+ADR-008: انتخاب مکانیزم برای Rating دوطرفه
+وضعیت: پذیرفته شده
+
+زمینه:
+بعد از سفر، مسافر به راننده و راننده به مسافر  امتیاز می دهد.
+این امتیازا برای کیفیت سرویس و اعتماد و تصمیم گیری های آینده بسیار مهم هستند.
+باید از تقلب و امتیازای جعلی جلوگیری کنیم.
+
+تصمیم:
+از Cassandra و کش کردن امتیازها در Redis استفاده می کنیم.
+داده ها در Cassandra باید Persist شوند و همزمان در Redis کش شوند
+تا بتوان برای زمان هایی مانند تخصیص راننده به مسافر از این پارامتر اسفاده کرد.
+
+دلیل تصمیم:
+حجم امتیازات بسیار زیاد است. هر سفر دو تا امتیاز تولید میکنه (یکی از مسافر، یکی از راننده).
+.با هزاران یا میلیونها سفر در روز، روزانه چند میلیون Rating ثبت می شود. این داده ها ذاتاً Write-heavy هستن و اکثر وقتا فقط نوشته می  شوند
+این داده ها ذاتاً Write-heavy هستن و اکثر وقتا فقط نوشته میشوند و خواندن آنها بسیار کمتر از نوشتن آنهاست.
+و دیتابیس Cassandra برای همین الگو ساخته شده Write سریع، مقیاس پذیری خطی، و بدون Single Point of Failure.
+اگه از PostgreSQL استفاده میکردیم، بعد از مدتی Write هاش گلوگاه میشد و باید میرفتیم سمت Sharding که دردسر زیادی دارد.
+
+مزایا:
+Write سریع (Cassandra)
+Query سریع (Redis Cache)
+مقیاس پذیری
+معایب:
+پیچیدگی سه گانه
+نیاز به ML
+Eventual Consistency
+هزینه ی Redis
+
+موارد دیگر بررسی شده:
+الف) فقط PostgreSQL:
+مزایا:
+ACID
+Query پیچیده
+معایب:
+Write کند
+مقیاس پذیری محدود
+هزینه ی بالا
+
+ب) فقط Redis:
+مزایا:
+سرعت بالا
+Real-time
+معایب:
+محدودیت حافظه
+بدون Persistence
+از دست رفتن داده
+
+پیامدها:
+مثبت: Write سریع، تشخیص تقلب، مقیاس پذیری
+منفی: پیچیدگی، نیاز به Eventual Consistency
+
+------------------------------------------------------------------------------------------------------------------------
+
+ADR-009: انتخاب مکانیزم برای Safety (SOS + Share Trip)
+وضعیت: پذیرفته شده
+
+زمینه:
+مسافر باید بتونه موقع اضطراری SOS بزنه و موقعیتش رو با خانواده یا پلیس به اشتراک بذاره. این باید Real-time و قابل اعتماد باشه.
+
+تصمیم:
+استفاده از ترکیب WebSocket و ترکیب Kafka + Notification Service در موارد اضطراری.
+
+دلیل تصمیم:
+با استفاده از Websocket لحظه ای که کاربر دکمه Share رو می زند،
+پیام روی همون کانال باز ارسال می شود و سرور فوراً پیام را دریافت می کند و تأخیرش زیر ۱۰۰ میلی ثانیه است
+.و همچنین می توان موقعیت زندهٔ سفر را روی همان Websocket پوش کنیم تا خانواده و پلیس یا SOS لحظه به لحظه مسیر رو ببیند
+از طرفی با استفاده از WSS پیام رمزنگاری می شود تا کسی نتواند وسط راه پیام رو بخواند یا دستکاری کند.
+اگر سرویس های پلیس یا traching پایین باشد از ترکیب Kafka + Notification Service برای ارسال پیام
+به خانواده یا پلیس استفاده می شود.
+
+مزایا:
+Real-time (تأخیر زیر ۱۰۰ میلی ثانیه)
+قابل اعتماد (Kafka Persistence)
+اطلاع رسانی چندگانه
+ادغام با پلیس
+معایب:
+پیچیدگی Integration
+وابستگی به WebSocket و Kafka
+نیاز به تیم امنیت
+هزینه ی SMS/Call
+
+موارد دیگر بررسی شده:
+
+الف) فقط SMS:
+مزایا:
+سادگی
+بدون اینترنت
+معایب:
+کندی
+بدون موقعیت دقیق
+بدون Real-time
+ب) فقط Call:
+مزایا:
+مستقیم
+قابل اعتماد
+معایب:
+بدون موقعیت دقیق
+بدون رهگیری
+نیاز به اپراتور
+
+ج) بدون Integration با پلیس:
+مزایا:
+سادگی
+بدون وابستگی
+معایب:
+تأخیر در کمک
+بدون رهگیری رسمی
+کاربر ناراضی
+
+پیامدها:
+مثبت: Real-time، قابل اعتماد، ادغام با پلیس
+منفی: پیچیدگی، هزینه، نیاز به تیم امنیت
+ریسک: اگه WebSocket Down بشه → Fallback به SMS
+------------------------------------------------------------------------------------------------------------------------
+
+ADR-010: انتخاب مکانیزم برای چندزبانگی و چندارزی
+
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم تو کشورهای مختلف با زبان ها و ارزهای مختلف کار می کند.
+کاربر باید بتواند رابط کاربری به زبان خودشرا ببیند و قیمت به ارز محلی خودش را ببیند.
+
+تصمیم:
+استفاده از Currency API بانک مرکزی و کش کردن در Redis واستفاده از i18next و استفاده از CSS dir جهت RTL/LTR
+
+دلیل تصمیم:
+استفاده از i18next برای پیاده سازی چندزبانگی.
+و Currency API برای دریافت و کش کردن نرخ ارز لحظه ای در Redis برای کاهش Query به دیتابیس اصلی و برای RTL/LTR برای زبان های راست به چپ و چپ به راست.
+
+مزایا:
+پشتیبانی از چند زبان
+نرخ ارز لحظه ای
+RTL/LTR خودکار
+Cache برای سرعت
+
+معایب:
+وابستگی به API خارجی
+نیاز به بازبینی ترجمه
+کارمزد تبدیل ارز
+پیچیدگی RTL
+موارد دیگر بررسی شده:
+
+الف) Hardcode زبان ها:
+مزایا:
+سادگی
+Performance بالا
+معایب:
+نیاز به نسخه گذاری
+نگهداری فاجعه
+پشتیبانی سخت
+
+ب) مترجم آنلاین:
+مزایا:
+پوشش خودکار
+بدون فایل JSON
+معایب:
+وابستگی به خارج
+حریم خصوصی
+هزینه ی بالا
+
+ج) فقط انگلیسی:
+مزایا:
+سادگی
+هزینه ی کم
+معایب:
+بازار محدود
+کاربرا ناراضی
+نقض نیازمندی
+
+پیامدها:
+مثبت: پشتیبانی جهانی، نرخ لحظه ای، RTL/LTR
+منفی: وابستگی، هزینه، پیچیدگی
+ریسک: اگه API ارز Down بشه → Fallback به آخرین نرخ Cache شده
+
+************************************************************************************************************************
+
+۱. User Service
+مسئولیت: ثبت نام مسافر و راننده، پروفایل، مدیریت کاربران
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Argon2
+
+POST   /api/v1/auth/register          → ثبت نام
+POST   /api/v1/auth/login             → ورود
+POST   /api/v1/auth/refresh           → تمدید توکن
+POST   /api/v1/auth/logout            → خروج
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش پروفایل
+DELETE /api/v1/users/{id}             → حذف حساب (GDPR)
+GET    /api/v1/users/{id}/roles       → نقش (مسافر/راننده)
+POST   /api/v1/users/{id}/roles       → تخصیص نقش
+------------------------------------------------------------------------------------------------------------------------
+۲. Driver Service
+مسئولیت: مدیریت راننده ها، وضعیت آنلاین/آفلاین، مدارک، KYC
+تکنولوژی: Spring Boot، PostgreSQL، Redis، Kafka
+
+POST   /api/v1/drivers/register        → ثبت نام راننده
+GET    /api/v1/drivers/{id}            → پروفایل راننده
+PATCH  /api/v1/drivers/{id}            → ویرایش
+POST   /api/v1/drivers/{id}/online     → آنلاین شدن
+POST   /api/v1/drivers/{id}/offline    → آفلاین شدن
+POST   /api/v1/drivers/{id}/location   → ارسال موقعیت
+GET    /api/v1/drivers/{id}/status     → وضعیت
+POST   /api/v1/drivers/{id}/documents  → آپلود مدارک
+GET    /api/v1/drivers/{id}/kyc        → وضعیت KYC
+------------------------------------------------------------------------------------------------------------------------
+۳. Matching Service
+مسئولیت: تخصیص راننده به مسافر (Redis GEO + Redlock)
+تکنولوژی: Spring Boot، Redis (GEO + Redlock)، Kafka
+
+POST   /api/v1/matching/request        → درخواست راننده
+GET    /api/v1/matching/{id}           → وضعیت درخواست
+DELETE /api/v1/matching/{id}           → لغو درخواست
+GET    /api/v1/matching/nearby-drivers → راننده های نزدیک
+POST   /api/v1/matching/{id}/assign    → تخصیص راننده
+POST   /api/v1/matching/{id}/reassign  → تخصیص مجدد
+GET    /api/v1/matching/queue          → صف درخواست ها
+------------------------------------------------------------------------------------------------------------------------
+۴. Trip Service
+مسئولیت: مدیریت سفر (Saga Orchestration)
+تکنولوژی: Spring Boot، PostgreSQL (State)، Kafka، State Machine
+
+POST   /api/v1/trips                   → شروع سفر
+GET    /api/v1/trips/{id}              → جزئیات سفر
+PATCH  /api/v1/trips/{id}              → به روزرسانی
+POST   /api/v1/trips/{id}/start        → شروع سفر
+POST   /api/v1/trips/{id}/complete     → پایان سفر
+POST   /api/v1/trips/{id}/cancel       → لغو سفر
+GET    /api/v1/trips/{id}/status       → وضعیت
+GET    /api/v1/trips/history           → تاریخچه سفرها
+------------------------------------------------------------------------------------------------------------------------
+۵. Tracking Service
+مسئولیت: Real-time Location Tracking، GPS Trail
+تکنولوژی: Spring Boot، WebSocket، Redis Pub/Sub، TimescaleDB
+
+POST   /api/v1/tracking/location       → ثبت موقعیت
+GET    /api/v1/tracking/{tripId}       → موقعیت فعلی
+GET    /api/v1/tracking/{tripId}/history → تاریخچه GPS
+WS     /ws/tracking/{tripId}           → ارتباط بلادرنگ
+POST   /api/v1/tracking/share          → اشتراک سفر
+GET    /api/v1/tracking/share/{token}  → مشاهده اشتراک
+------------------------------------------------------------------------------------------------------------------------
+۶. Pricing Service
+مسئولیت: Surge Pricing، محاسبه کرایه
+تکنولوژی: Spring Boot، Redis، Drools (Rule Engine)
+
+POST   /api/v1/pricing/estimate        → تخمین کرایه
+POST   /api/v1/pricing/calculate       → محاسبه نهایی
+GET    /api/v1/pricing/surge           → وضعیت Surge
+GET    /api/v1/pricing/rules           → قوانین
+POST   /api/v1/pricing/rules           → افزودن قانون (Admin)
+POST   /api/v1/pricing/surge/override  → تنظیم دستی (Admin)
+------------------------------------------------------------------------------------------------------------------------
+۷. Payment Service
+مسئولیت: پرداخت، Payout، Escrow، KYC
+تکنولوژی: Spring Boot، PostgreSQL، Kafka، Stripe API
+
+POST   /api/v1/payments/checkout       → شروع پرداخت
+POST   /api/v1/payments/webhook        → Webhook درگاه
+GET    /api/v1/payments/{id}           → وضعیت
+POST   /api/v1/payments/{id}/refund    → بازگشت
+GET    /api/v1/payments/history        → تاریخچه
+POST   /api/v1/payouts                 → درخواست تسویه راننده
+GET    /api/v1/payouts/{id}            → وضعیت تسویه
+POST   /api/v1/kyc/submit              → ارسال مدارک
+GET    /api/v1/kyc/status              → وضعیت KYC
+------------------------------------------------------------------------------------------------------------------------
+۸. Rating Service
+مسئولیت: امتیازدهی دوطرفه، Anomaly Detection
+تکنولوژی: Spring Boot، Cassandra، Redis، ML
+
+POST   /api/v1/ratings                 → ثبت امتیاز
+GET    /api/v1/ratings/driver/{id}     → امتیاز راننده
+GET    /api/v1/ratings/passenger/{id}  → امتیاز مسافر
+GET    /api/v1/ratings/{tripId}        → امتیاز سفر
+POST   /api/v1/ratings/{id}/report     → گزارش امتیاز جعلی
+GET    /api/v1/ratings/stats/{id}      → آمار
+------------------------------------------------------------------------------------------------------------------------
+۹. Safety Service
+مسئولیت: SOS، Share Trip، Integration با پلیس
+تکنولوژی: Spring Boot، WebSocket، Kafka، Notification
+
+POST   /api/v1/safety/sos              → ارسال SOS
+POST   /api/v1/safety/share-trip       → اشتراک سفر
+GET    /api/v1/safety/share/{token}    → مشاهده اشتراک
+POST   /api/v1/safety/contacts         → مخاطبین اضطراری
+GET    /api/v1/safety/contacts         → لیست مخاطبین
+POST   /api/v1/safety/report           → گزارش تخلف
+GET    /api/v1/safety/history          → تاریخچه
+------------------------------------------------------------------------------------------------------------------------
+۱۰. Search Service
+مسئولیت: جستجوی آدرس، مکان، راننده
+تکنولوژی: Spring Boot، Elasticsearch، Kafka (CDC)
+
+GET    /api/v1/search/places           → جستجوی مکان
+GET    /api/v1/search/address          → جستجوی آدرس
+GET    /api/v1/search/suggest          → Auto-complete
+GET    /api/v1/search/nearby           → مکان های نزدیک
+POST   /api/v1/search/reindex          → Reindex (Admin)
+------------------------------------------------------------------------------------------------------------------------
+۱۱. Notification Service
+مسئولیت: Push، SMS، Email، اعلان های درون برنامه ای
+تکنولوژی: Spring Boot، Kafka، Firebase، Kavenegar
+
+POST   /api/v1/notifications/send      → ارسال اعلان
+GET    /api/v1/notifications           → لیست اعلان ها
+PATCH  /api/v1/notifications/{id}/read → خوانده شده
+GET    /api/v1/notifications/settings  → تنظیمات
+PATCH  /api/v1/notifications/settings  → ویرایش تنظیمات
+POST   /api/v1/notifications/trip-update → به روزرسانی سفر
+------------------------------------------------------------------------------------------------------------------------
+۱۲. ETA Service
+مسئولیت: محاسبه زمان رسیدن (Google Maps + ML)
+تکنولوژی: Spring Boot، Python (ML)، Redis، Google Maps API
+
+POST   /api/v1/eta/calculate           → محاسبه ETA
+GET    /api/v1/eta/{tripId}            → ETA سفر
+POST   /api/v1/eta/train               → آموزش مدل (Admin)
+GET    /api/v1/eta/health              → وضعیت مدل
+GET    /api/v1/eta/fallback            → Fallback
+------------------------------------------------------------------------------------------------------------------------
+۱۳. Archive Service
+مسئولیت: چرخه حیات داده، Tiered Storage، GDPR
+تکنولوژی: Spring Boot، PostgreSQL، S3، Glacier
+
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/archive/restore         → درخواست بازیابی
+GET    /api/v1/archive/status/{id}     → وضعیت
+POST   /api/v1/gdpr/export             → خروجی داده کاربر
+DELETE /api/v1/gdpr/delete/{userId}    → حذف حساب (GDPR)
+GET    /api/v1/gdpr/audit              → لاگ GDPR
+------------------------------------------------------------------------------------------------------------------------
+۱۴. Currency Service
+مسئولیت: نرخ ارز، تبدیل ارز
+تکنولوژی: Spring Boot، Redis، Central Bank API
+
+GET    /api/v1/currency/rates          → نرخ های ارز
+GET    /api/v1/currency/convert        → تبدیل ارز
+GET    /api/v1/currency/supported      → ارزهای پشتیبانی شده
+POST   /api/v1/currency/refresh        → بروزرسانی (Admin)
+------------------------------------------------------------------------------------------------------------------------
+۱۵. Admin Service
+مسئولیت: مدیریت سیستم، گزارش، تنظیمات
+تکنولوژی: Spring Boot، PostgreSQL، ClickHouse
+
+GET    /api/v1/admin/dashboard         → داشبورد
+GET    /api/v1/admin/reports/trips     → گزارش سفرها
+GET    /api/v1/admin/reports/revenue   → گزارش درآمد
+POST   /api/v1/admin/config            → تنظیمات
+GET    /api/v1/admin/logs              → لاگ ها
+POST   /api/v1/admin/users/{id}/ban    → مسدودسازی
+POST   /api/v1/admin/drivers/{id}/suspend → تعلیق راننده
+------------------------------------------------------------------------------------------------------------------------
+
+🔧 لایه Component (برای هر سرویس)
+۱. User Service
+Component	نوع	مسئولیت
+AuthController	@RestController	ثبت نام، ورود
+UserController	@RestController	پروفایل
+AuthService	@Service	احراز هویت
+UserService	@Service	منطق کاربر
+UserRepository	@Repository	PostgreSQL
+JwtProvider	@Component	JWT
+PasswordEncoder	@Component	Argon2
+EventPublisher	@Component	Kafka
+۲. Driver Service
+Component	نوع	مسئولیت
+DriverController	@RestController	مدیریت راننده
+DriverService	@Service	منطق راننده
+StatusManager	@Component	آنلاین/آفلاین
+KycService	@Service	احراز هویت
+DocumentManager	@Component	مدارک
+DriverRepository	@Repository	PostgreSQL
+RedisClient	@Component	Redis
+KafkaProducer	@Component	Kafka
+۳. Matching Service
+Component	نوع	مسئولیت
+MatchingController	@RestController	مدیریت Matching
+MatchingService	@Service	منطق Matching
+GeoSearch	@Component	Redis GEO
+LockManager	@Component	Redlock
+DriverSelector	@Component	انتخاب راننده
+ScoreCalculator	@Component	امتیازدهی
+KafkaProducer	@Component	Kafka
+۴. Trip Service
+Component	نوع	مسئولیت
+TripController	@RestController	مدیریت سفر
+TripOrchestrator	@Service	Saga
+StateMachine	@Component	State Machine
+CompensatingHandler	@Component	جبران
+TripRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	Kafka
+KafkaConsumer	@Component	Kafka
+۵. Tracking Service
+Component	نوع	مسئولیت
+TrackingController	@RestController	مدیریت Tracking
+TrackingService	@Service	منطق Tracking
+LocationPublisher	@Component	Redis Pub/Sub
+WebSocketHandler	@Component	WebSocket
+GpsTrailRepository	@Repository	TimescaleDB
+TripCache	@Component	Redis
+۶. Pricing Service
+Component	نوع	مسئولیت
+PricingController	@RestController	قیمت گذاری
+PricingService	@Service	منطق قیمت
+SurgeCalculator	@Component	محاسبه Surge
+RuleEngine	@Component	Drools
+MetricsCollector	@Component	Redis
+PricingRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	Kafka
+۷. Payment Service
+Component	نوع	مسئولیت
+PaymentController	@RestController	پرداخت
+PayoutController	@RestController	تسویه
+KycController	@RestController	KYC
+PaymentService	@Service	منطق پرداخت
+EscrowService	@Service	Escrow
+RuleEngine	@Component	Drools
+StripeClient	@Component	Stripe API
+PaymentRepository	@Repository	PostgreSQL
+IdempotencyGuard	@Component	Redis
+۸. Rating Service
+Component	نوع	مسئولیت
+RatingController	@RestController	مدیریت امتیاز
+RatingService	@Service	منطق امتیاز
+AnomalyDetector	@Component	ML
+RatingRepository	@Repository	Cassandra
+CacheManager	@Component	Redis
+KafkaProducer	@Component	Kafka
+۹. Safety Service
+Component	نوع	مسئولیت
+SafetyController	@RestController	مدیریت Safety
+SosService	@Service	SOS
+ShareTripService	@Service	اشتراک سفر
+PoliceIntegration	@Component	API پلیس
+EmergencyContactManager	@Service	مخاطبین
+WebSocketHandler	@Component	WebSocket
+KafkaProducer	@Component	Kafka
+۱۰. Search Service
+Component	نوع	مسئولیت
+SearchController	@RestController	جستجو
+PlaceSearchService	@Service	جستجوی مکان
+AddressSearchService	@Service	جستجوی آدرس
+SuggestService	@Service	Auto-complete
+IndexManager	@Component	ES Index
+ElasticsearchClient	@Component	ES SDK
+KafkaConsumer	@Component	CDC
+۱۱. Notification Service
+Component	نوع	مسئولیت
+NotificationController	@RestController	ارسال اعلان
+NotificationService	@Service	منطق اعلان
+KafkaConsumer	@Component	مصرف رویدادها
+PushSender	@Component	FCM/APNs
+SmsSender	@Component	Kavenegar
+EmailSender	@Component	SendGrid
+NotificationRepository	@Repository	PostgreSQL
+۱۲. ETA Service
+Component	نوع	مسئولیت
+EtaController	@RestController	محاسبه ETA
+EtaService	@Service	منطق ETA
+MapsApiClient	@Component	Google Maps API
+MlModelClient	@Component	ML Model
+TrafficDataCollector	@Component	Historical Data
+CacheManager	@Component	Redis
+FallbackHandler	@Component	Fallback
+۱۳. Archive Service
+Component	نوع	مسئولیت
+ArchiveController	@RestController	درخواست آرشیو
+ArchiveService	@Service	منطق آرشیو
+TieredStorageManager	@Service	Hot/Warm/Cold
+GdprAnonymizer	@Service	Anonymize
+RestoreJob	@Component	بازیابی
+ArchiveRepository	@Repository	PostgreSQL
+S3Client	@Component	S3 SDK
+GlacierClient	@Component	Glacier SDK
+۱۴. Currency Service
+Component	نوع	مسئولیت
+CurrencyController	@RestController	مدیریت ارز
+CurrencyService	@Service	منطق تبدیل
+RateProvider	@Component	Central Bank API
+CurrencyCache	@Component	Redis
+FallbackHandler	@Component	Fallback
+۱۵. Admin Service
+Component	نوع	مسئولیت
+AdminController	@RestController	داشبورد
+ReportController	@RestController	گزارش ها
+ConfigController	@RestController	تنظیمات
+DashboardService	@Service	داشبورد
+ReportService	@Service	گزارش گیری
+ConfigService	@Service	تنظیمات
+ClickHouseClient	@Component	ClickHouse
+AuditLogger	@Component	Audit
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	ارتباط بلادرنگ
+Service Discovery	Eureka/Consul	ثبت و کشف سرویس ها
+Config Server	Spring Cloud Config	تنظیمات مرکزی
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + GEO + Lock
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	Rating
+TimescaleDB	TimescaleDB	GPS Trail
+Elasticsearch	ES 8	جستجوی مکان
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	Archive + Backup
+Glacier	AWS Glacier	Cold Archive
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Driver Service ──→ PostgreSQL + Redis
+       ├──→ Matching Service ──→ Redis GEO + Redlock
+       ├──→ Trip Service ──→ PostgreSQL + Kafka
+       ├──→ Tracking Service ──→ WebSocket + Redis + TimescaleDB
+       ├──→ Pricing Service ──→ Redis + Drools
+       ├──→ Payment Service ──→ PostgreSQL + Stripe
+       ├──→ Rating Service ──→ Cassandra + Redis
+       ├──→ Safety Service ──→ WebSocket + Kafka
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Notification Service ──→ Kafka + Firebase
+       ├──→ ETA Service ──→ Google Maps + ML
+       ├──→ Archive Service ──→ S3 + Glacier
+       ├──→ Currency Service ──→ Redis + Central Bank
+       └──→ Admin Service ──→ ClickHouse + PostgreSQL
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus بین سرویس ها
+└──────────────┘

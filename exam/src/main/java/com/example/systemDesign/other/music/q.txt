@@ -1,0 +1,35 @@
+📝 صورت سوال
+طراحی یک پلتفرم استریم موسیقی (مشابه Spotify / SoundCloud / نوا) که:
+
+میلیون‌ها کاربر و میلیون‌ها آهنگ در آن موجود باشد.
+
+کاربران بتوانند آهنگ گوش دهند (Audio Streaming).
+
+Playlist بسازند و با دیگران به اشتراک بگذارند.
+
+Recommendation بر اساس سلیقه و رفتار کاربر.
+
+Offline Mode برای گوش دادن بدون اینترنت.
+
+Copyright و مدیریت حق‌الامتیاز (Royalty) رعایت شود.
+
+Royalty Payment به هنرمندان و ناشران.
+
+Search پیشرفته برای جستجوی آهنگ، آلبوم، هنرمند.
+
+Social Features: Follow هنرمند، Like، Share.
+
+GDPR و حذف حساب کاربر.
+
+Multi-language و Multi-currency.
+
+Notification برای آهنگ جدید، Playlist جدید.
+
+🎯 چالش‌های ۶گانه (هر کدام ۱۰ نمره)
+#	چالش	توضیح
+۱	مقیاس‌پذیری و عملکرد در Audio Streaming و Search	۱۰
+۲	سازگاری (Consistency) در Playlist، Like، و Royalty	۱۰
+۳	پیکربندی آسان برای هنرمند (آپلود، Metadata، Pricing)	۱۰
+۴	پشتیبانی از چندزبانگی، ارز، و Audio Format	۱۰
+۵	مدیریت چرخه حیات داده (Copyright، Royalty، GDPR، Archive)	۱۰
+۶	کاربردپذیری (UX) برای شنونده، هنرمند، و ادمین	۱۰

@@ -1,0 +1,1075 @@
+ADR-001: انتخاب معماری کلی سیستم
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم سفارش غذا باید میلیون‌ها کاربر، هزاران رستوران، و صدها هزار پیک رو مدیریت کنه. هر بخش (رستوران، سفارش، Matching، Tracking) داده و منطق خودش رو داره. تیم‌های مختلف باید مستقل کار کنن و خرابی یه بخش، کل سیستم رو از کار نندازه.
+
+تصمیم:
+معماری میکروسرویس با تفکیک بر اساس Bounded Context (DDD) و Database per Service.
+
+دلیل تصمیم:
+هر دامنه (رستوران، سفارش، پیک) داده و منطق خودش رو داره. میکروسرویس یعنی هر تیم مستقل Deploy می‌کنه. Database per Service یعنی هر سرویس دیتابیس مناسب خودش رو داره.
+
+مزایا:
+
+تیم‌ها مستقل کار می‌کنن
+
+هر سرویس با تکنولوژی مناسب
+
+خرابی یه بخش، بقیه رو از کار نمی‌ندازه
+
+مقیاس‌پذیری خطی
+
+معایب:
+
+پیچیدگی عملیاتی
+
+Debugging سخت‌تر
+
+نیاز به تیم Platform
+
+تست End-to-End سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Monolith:
+مزایا:
+
+سادگی Deploy
+
+Debugging راحت
+
+توسعه سریع اولیه
+معایب:
+
+تیم‌ها نمی‌تونن مستقل Deploy کنن
+
+وابستگی کد زیاد
+
+مقیاس‌پذیری محدود
+
+ب) Modular Monolith:
+مزایا:
+
+تعادل بین سادگی و ماژولاریتی
+
+Deploy یکپارچه
+معایب:
+
+همچنان وابستگی در Deploy
+
+مقیاس‌پذیری محدود
+
+ج) Serverless:
+مزایا:
+
+هزینه فقط به ازای مصرف
+
+مقیاس‌پذیری خودکار
+معایب:
+
+Cold Start
+
+Debugging سخت
+
+Vendor Lock-in
+
+پیامدها:
+
+مثبت: استقلال تیم‌ها، مقیاس‌پذیری، تحمل خطا
+
+منفی: پیچیدگی، نیاز به تیم Platform
+
+ریسک: مرز Domain اشتباه → Event Storming
+
+ADR-002: انتخاب مکانیزم Matching پیک
+وضعیت: پذیرفته شده
+
+زمینه:
+وقتی سفارش ثبت می‌شه، باید نزدیک‌ترین پیک در دسترس پیدا بشه. اگه دو سفارش همزمان ثبت بشه، نباید یه پیک به هر دو تخصیص داده بشه. Matching باید زیر ۵۰۰ms باشه.
+
+تصمیم:
+از Redis GEO (GEOADD + GEOSEARCH) + Redlock (Distributed Lock) + Kafka (Event) + Score-based Selection استفاده می‌کنیم.
+
+دلیل تصمیم:
+Redis GEO برای جستجوی مکانی سریع. Redlock جلوگیری از تخصیص دوگانه. Kafka برای Event Stream. Score-based Selection بر اساس فاصله، امتیاز، و ظرفیت.
+
+مزایا:
+
+جستجوی مکانی سریع (زیر ۱۰ms)
+
+جلوگیری از تخصیص دوگانه
+
+Score-based (بهترین پیک)
+
+مقیاس‌پذیری
+
+معایب:
+
+Redlock پیچیده
+
+Redis SPOF
+
+نیاز به Redis HA
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Pessimistic Locking (SELECT FOR UPDATE):
+مزایا:
+
+امنیت بالا
+
+Consistency کامل
+معایب:
+
+Deadlock در مقیاس بالا
+
+کندی
+
+Blocking طولانی
+
+ب) Database Unique Constraint:
+مزایا:
+
+سادگی
+
+امنیت
+معایب:
+
+inflexible
+
+خطای زیاد در Race
+
+بدون TTL
+
+ج) بدون Lock:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+تخصیص دوگانه
+
+کاربر ناراضی
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: سریع، جلوگیری از Race، Score-based
+
+منفی: Redlock پیچیده
+
+ریسک: Redis Down → Redis Cluster + Fallback
+
+ADR-003: انتخاب مکانیزم Real-time Tracking
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر می‌خواد موقعیت پیک رو روی نقشه ببینه. پیک هر ۳ تا ۵ ثانیه موقعیتش رو می‌فرسته. تأخیر باید زیر ۵۰۰ms باشه.
+
+تصمیم:
+از WebSocket + Redis Pub/Sub + TimescaleDB (GPS Trail) + Compression (Gorilla) استفاده می‌کنیم.
+
+دلیل تصمیم:
+WebSocket برای ارتباط Real-time. Redis Pub/Sub برای انتشار. TimescaleDB برای ذخیره GPS Trail. Gorilla برای فشرده‌سازی (۹۰٪ کاهش).
+
+مزایا:
+
+Real-time (زیر ۱۰۰ms)
+
+ذخیره GPS Trail
+
+Compression (۹۰٪)
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی WebSocket
+
+Redis SPOF
+
+هزینه TimescaleDB
+
+نیاز به Connection Registry
+
+موارد دیگر بررسی‌شده:
+
+الف) REST Polling:
+مزایا:
+
+سادگی
+
+Stateless
+معایب:
+
+تأخیر بالا
+
+بار روی سرور
+
+برای Real-time مناسب نیست
+
+ب) MQTT:
+مزایا:
+
+سبک
+
+مناسب IoT
+معایب:
+
+کمتر رایجه
+
+نیاز به Broker جدا
+
+ادغام سخت
+
+ج) Kafka:
+مزایا:
+
+مقیاس‌پذیری
+
+Decoupling
+معایب:
+
+تأخیر بیشتر از Redis
+
+Overhead Kafka
+
+برای Real-time مناسب نیست
+
+پیامدها:
+
+مثبت: Real-time، Compression
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-004: انتخاب مکانیزم Surge Pricing
+وضعیت: پذیرفته شده
+
+زمینه:
+ساعت شلوغی یا بارونی، تقاضا بیشتر از عرضه می‌شه. اگه قیمت ثابت باشه، پیک‌ها انگیزه ندارن کار کنن و کاربرا منتظر می‌مونن. باید قیمت پویا باشه.
+
+تصمیم:
+از Rule Engine (Drools) + Geohash Zones + Real-time Metrics (Redis) + Kafka (Event) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Drools برای قوانین Surge (مثلاً اگه تقاضا/عرضه > ۲، ضریب ۱.۵). Geohash Zones برای مناطق. Redis برای Metrics. Kafka برای Event.
+
+مزایا:
+
+قیمت پویا
+
+انگیزه برای پیک‌ها
+
+تعادل عرضه و تقاضا
+
+قوانین قابل تنظیم
+
+معایب:
+
+پیچیدگی Drools
+
+ممکنه کاربرا ناراضی بشن
+
+نیاز به Real-time Metrics
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) قیمت ثابت:
+مزایا:
+
+سادگی
+
+کاربرا ناراضی نمی‌شن
+معایب:
+
+عدم تعادل عرضه و تقاضا
+
+پیک‌ها انگیزه ندارن
+
+کاربرا منتظر می‌مونن
+
+ب) قیمت بر اساس مسافت فقط:
+مزایا:
+
+سادگی
+
+شفافیت
+معایب:
+
+بدون توجه به تقاضا
+
+عدم تعادل
+
+نارضایتی در پیک
+
+ج) Auction-based Pricing:
+مزایا:
+
+بهینه‌سازی دقیق
+
+درآمد بالا
+معایب:
+
+پیچیدگی بسیار بالا
+
+کاربرا گیج می‌شن
+
+نیاز به ML
+
+پیامدها:
+
+مثبت: تعادل، انگیزه، درآمد
+
+منفی: پیچیدگی، نارضایتی
+
+ریسک: Rule اشتباه → Canary Release
+
+ADR-005: انتخاب مکانیزم Inventory غذا
+وضعیت: پذیرفته شده
+
+زمینه:
+هر رستوران یه موجودی غذا داره. اگه غذا تموم بشه، نباید سفارش ثبت بشه. اگه دو کاربر همزمان آخرین پرس رو سفارش بدن، فقط یکی باید برنده بشه.
+
+تصمیم:
+از Redis Atomic Decrement + PostgreSQL (Optimistic Locking) + Kafka (Event) + TTL (Auto-reset) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Redis Atomic برای Decrement سریع. PostgreSQL برای ذخیره نهایی. Kafka برای انتشار رویداد (تمام شدن موجودی). TTL برای Auto-reset (مثلاً هر روز صبح).
+
+مزایا:
+
+Atomic (بدون Race Condition)
+
+سرعت بالا
+
+Auto-reset
+
+Real-time
+
+معایب:
+
+Redis SPOF
+
+نیاز به Sync با DB
+
+TTL ممکنه اشتباه باشه
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+ACID
+
+یکپارچگی
+معایب:
+
+کندی در Decrement
+
+مقیاس‌پذیری محدود
+
+بار روی DB
+
+ب) بدون Inventory:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+Overselling
+
+کاربر ناراضی
+
+نقض نیازمندی
+
+ج) Pessimistic Locking:
+مزایا:
+
+امنیت بالا
+
+Consistency
+معایب:
+
+Deadlock
+
+کندی
+
+Blocking
+
+پیامدها:
+
+مثبت: Atomic، سرعت
+
+منفی: Redis SPOF
+
+ریسک: Redis Down → Fallback به PostgreSQL
+
+ADR-006: انتخاب مکانیزم Search رستوران و غذا
+وضعیت: پذیرفته شده
+
+زمینه:
+میلیون‌ها رستوران و غذا. کاربرا می‌خوان بر اساس نام، نوع غذا، موقعیت مکانی، امتیاز، زمان تحویل جستجو کنن. Search باید سریع و Faceted باشه.
+
+تصمیم:
+از Elasticsearch + PostgreSQL (Metadata) + CDC (Debezium) + Geo-Point + Kafka استفاده می‌کنیم.
+
+دلیل تصمیم:
+Elasticsearch برای Full-Text Search و Faceted Search. PostgreSQL برای Metadata (ACID). CDC برای Sync. Geo-Point برای جستجوی مکانی.
+
+مزایا:
+
+جستجوی سریع (زیر ۱۰۰ms)
+
+Full-Text Search
+
+Faceted Search
+
+Geo-Search
+
+معایب:
+
+پیچیدگی CDC
+
+تأخیر Sync
+
+هزینه Elasticsearch
+
+مدیریت دو دیتابیس
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+سادگی
+
+ACID
+معایب:
+
+Full-Text Search ضعیف
+
+کندی با میلیون‌ها رکورد
+
+بدون Faceted Search
+
+ب) فقط Elasticsearch:
+مزایا:
+
+جستجوی سریع
+
+Faceted Search
+معایب:
+
+برای Transaction مناسب نیست
+
+بدون ACID
+
+ج) MongoDB Text Index:
+مزایا:
+
+سادگی
+
+یکپارچگی
+معایب:
+
+Full-Text Search ضعیف‌تر
+
+بدون Faceted Search
+
+پیامدها:
+
+مثبت: جستجوی سریع، Faceted Search
+
+منفی: پیچیدگی CDC، هزینه
+
+ریسک: CDC خطا → Retry + Alert
+
+ADR-007: انتخاب مکانیزم Rating دوطرفه
+وضعیت: پذیرفته شده
+
+زمینه:
+بعد از هر سفارش، کاربر به رستوران و پیک امتیاز می‌ده. رستوران و پیک هم به کاربر امتیاز می‌دن. این امتیازا برای کیفیت سرویس مهمه. باید از تقلب جلوگیری بشه.
+
+تصمیم:
+از Cassandra (Write سنگین) + Redis (Cache) + Anomaly Detection (ML) + Kafka (Event) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Cassandra برای ذخیره میلیون‌ها Rating. Redis برای Cache. Anomaly Detection برای تشخیص تقلب (مثلاً یه کاربر تو ۱ دقیقه ۱۰۰ امتیاز بده). Kafka برای Event.
+
+مزایا:
+
+Write سریع (Cassandra)
+
+Query سریع (Redis)
+
+تشخیص تقلب (ML)
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی سه‌گانه
+
+نیاز به ML
+
+Eventual Consistency
+
+هزینه Redis
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+ACID
+
+Query پیچیده
+معایب:
+
+Write کند
+
+مقیاس‌پذیری محدود
+
+هزینه بالا
+
+ب) فقط Redis:
+مزایا:
+
+سرعت بالا
+
+Real-time
+معایب:
+
+محدودیت حافظه
+
+بدون Persistence
+
+از دست رفتن داده
+
+ج) بدون Anomaly Detection:
+مزایا:
+
+سادگی
+
+هزینه کمتر
+معایب:
+
+امتیازای جعلی
+
+تقلب
+
+اعتماد پایین
+
+پیامدها:
+
+مثبت: Write سریع، تشخیص تقلب
+
+منفی: پیچیدگی، نیاز به ML
+
+ریسک: ML اشتباه → Human Review
+
+ADR-008: انتخاب مکانیزم Order Saga
+وضعیت: پذیرفته شده
+
+زمینه:
+یه سفارش مراحل مختلفی داره: ثبت، تأیید رستوران، تخصیص پیک، آماده‌سازی، تحویل، پرداخت. اگه یه مرحله شکست بخوره (مثلاً رستوران سفارش رو رد کنه)، باید مراحل قبلی جبران بشن.
+
+تصمیم:
+از Saga Orchestration (State Machine) + Kafka (Event) + PostgreSQL (State) + Idempotency Key استفاده می‌کنیم.
+
+دلیل تصمیم:
+Saga Orchestration مراحل رو با یه Orchestrator مرکزی هماهنگ می‌کنه. اگه مرحله‌ای شکست بخوره، Compensating Transaction اجرا می‌شه. State Machine وضعیت سفارش رو نگه‌می‌داره.
+
+مزایا:
+
+Compensating Transaction خودکار
+
+شفافیت کامل مراحل
+
+Audit Trail
+
+جداسازی منطق
+
+معایب:
+
+Orchestrator ممکنه SPOF بشه
+
+پیچیدگی پیاده‌سازی
+
+نیاز به State Machine
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Saga Choreography:
+مزایا:
+
+بدون Orchestrator
+
+Decoupling
+معایب:
+
+پیچیدگی Tracking
+
+Debugging سخت
+
+بدون شفافیت کامل
+
+ب) Two-Phase Commit (2PC):
+مزایا:
+
+ACID کامل
+
+Consistency بالا
+معایب:
+
+Availability پایین
+
+برای Microservice مناسب نیست
+
+Blocking
+
+ج) Best Effort:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+بدون Compensating
+
+از دست رفتن پول
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: Compensating، شفافیت، Audit
+
+منفی: پیچیدگی، SPOF
+
+ریسک: Orchestrator Down → HA + State Recovery
+
+ADR-009: انتخاب مکانیزم Notification
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا باید از وضعیت سفارش مطلع بشن (ثبت شد، تأیید شد، پیک تخصیص یافت، در راه، تحویل شد). این Notification باید Real-time و قابل اعتماد باشه.
+
+تصمیم:
+از Kafka + Firebase (Push) + SMS (Kavenegar) + WebSocket (In-app) + Redis (Dedup) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Kafka برای Event Stream. Firebase برای Push. SMS برای موارد مهم. WebSocket برای In-app. Redis برای جلوگیری از تکرار.
+
+مزایا:
+
+Real-time
+
+چند کانال (Push، SMS، In-app)
+
+Dedup
+
+قابل اعتماد
+
+معایب:
+
+پیچیدگی Kafka
+
+هزینه Firebase + SMS
+
+نیاز به تنظیمات کاربر
+
+Redis SPOF
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Push:
+مزایا:
+
+سادگی
+
+Real-time
+معایب:
+
+نیاز به اپ موبایل
+
+بدون SMS (برای کاربرای بدون اپ)
+
+کاربرا SMS رو ترجیح می‌دن
+
+ب) فقط SMS:
+مزایا:
+
+قابل اعتماد
+
+بدون اینترنت
+معایب:
+
+کندی
+
+هزینه بالا
+
+بدون Real-time
+
+ج) فقط In-app:
+مزایا:
+
+سادگی
+
+بدون هزینه خارجی
+معایب:
+
+نیاز به باز کردن اپ
+
+بدون Real-time
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: Real-time، چند کانال
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-010: انتخاب مکانیزم چرخه حیات داده و GDPR
+وضعیت: پذیرفته شده
+
+زمینه:
+داده‌های سفارش، GPS Trail، Rating باید برای Audit نگه‌داری بشن. ولی GDPR حق فراموشی رو الزامی کرده. باید تعادل برقرار بشه.
+
+تصمیم:
+از Tiered Storage + Soft Delete + Anonymization + Key Deletion + Audit Log + GPS Compaction استفاده می‌کنیم:
+
+Hot (۳ ماه): PostgreSQL + TimescaleDB
+
+Warm (۳ ماه تا ۲ سال): S3 Infrequent Access
+
+Cold (> ۲ سال): S3 Glacier
+
+GDPR: Soft Delete فوری + Anonymize بعد از ۳۰ روز
+
+GPS Trail: Compaction (حذف نقاط تکراری)
+
+دلیل تصمیم:
+هر داده تو دیتابیس مناسب سنش. Soft Delete Foreign Keyها رو سالم نگه می‌داره. Anonymize حریم خصوصی. GPS Compaction برای کاهش حجم.
+
+مزایا:
+
+Compliance با GDPR
+
+کاهش هزینه Storage
+
+Foreign Keyها سالم
+
+GPS Compaction (۹۰٪ کاهش)
+
+معایب:
+
+تأخیر Restore از Glacier
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring
+
+حجم دیتابیس بیشتر
+
+موارد دیگر بررسی‌شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص
+
+Audit از بین می‌ره
+
+ب) نگه‌داری همه در PostgreSQL:
+مزایا:
+
+سادگی
+
+Query یکپارچه
+معایب:
+
+هزینه نجومی
+
+کندی با حجم زیاد
+
+ج) فقط S3:
+مزایا:
+
+هزینه کم
+
+سادگی
+معایب:
+
+کوئری کند
+
+بدون Index
+
+پیامدها:
+
+مثبت: Compliance، هزینه کم
+
+منفی: تأخیر Restore، پیچیدگی
+
+ریسک: Job خطا → DLQ + Retry + Alert
+
+📦 لایه Container (۱۵ سرویس)
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، نقش‌ها (کاربر، رستوران‌دار، پیک، ادمین)
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش
+DELETE /api/v1/users/{id}             → حذف (GDPR)
+۲. Restaurant Service
+مسئولیت: مدیریت رستوران، منو، ساعات کاری
+APIها:
+
+text
+POST   /api/v1/restaurants             → ثبت رستوران
+GET    /api/v1/restaurants/{id}        → جزئیات
+PATCH  /api/v1/restaurants/{id}        → ویرایش
+DELETE /api/v1/restaurants/{id}        → حذف
+GET    /api/v1/restaurants/{id}/menu   → منو
+POST   /api/v1/restaurants/{id}/menu   → افزودن غذا
+PATCH  /api/v1/restaurants/{id}/hours  → ساعات کاری
+۳. Menu Service
+مسئولیت: مدیریت منو، غذا، قیمت
+APIها:
+
+text
+GET    /api/v1/menu/{restaurantId}     → منو
+POST   /api/v1/menu/items              → افزودن غذا
+PATCH  /api/v1/menu/items/{id}         → ویرایش
+DELETE /api/v1/menu/items/{id}         → حذف
+POST   /api/v1/menu/items/{id}/price   → تغییر قیمت
+POST   /api/v1/menu/items/{id}/stock   → تغییر موجودی
+۴. Order Service
+مسئولیت: ثبت سفارش، Saga
+APIها:
+
+text
+POST   /api/v1/orders                  → ثبت سفارش
+GET    /api/v1/orders/{id}             → جزئیات
+PATCH  /api/v1/orders/{id}             → ویرایش
+DELETE /api/v1/orders/{id}             → لغو
+GET    /api/v1/orders/my               → سفارش‌های من
+GET    /api/v1/orders/{id}/status      → وضعیت
+۵. Matching Service
+مسئولیت: تخصیص پیک به سفارش
+APIها:
+
+text
+POST   /api/v1/matching/assign         → تخصیص پیک
+GET    /api/v1/matching/{id}           → وضعیت
+POST   /api/v1/matching/{id}/reassign  → تخصیص مجدد
+GET    /api/v1/matching/nearby-couriers → پیک‌های نزدیک
+۶. Tracking Service
+مسئولیت: Real-time Tracking پیک
+APIها:
+
+text
+POST   /api/v1/tracking/location       → ثبت موقعیت
+GET    /api/v1/tracking/{orderId}      → موقعیت فعلی
+GET    /api/v1/tracking/{orderId}/history → تاریخچه
+WS     /ws/tracking/{orderId}          → Real-time
+POST   /api/v1/tracking/share          → اشتراک
+۷. Pricing Service
+مسئولیت: Surge Pricing، محاسبه کرایه
+APIها:
+
+text
+POST   /api/v1/pricing/estimate        → تخمین
+POST   /api/v1/pricing/calculate       → محاسبه نهایی
+GET    /api/v1/pricing/surge           → وضعیت Surge
+GET    /api/v1/pricing/rules           → قوانین
+POST   /api/v1/pricing/rules           → افزودن (Admin)
+۸. Payment Service
+مسئولیت: پرداخت، Refund، Payout
+APIها:
+
+text
+POST   /api/v1/payments/checkout       → پرداخت
+POST   /api/v1/payments/webhook        → Webhook
+GET    /api/v1/payments/{id}           → وضعیت
+POST   /api/v1/payments/{id}/refund    → بازگشت
+GET    /api/v1/earnings/{restaurantId} → درآمد رستوران
+POST   /api/v1/payouts                 → تسویه
+۹. Search Service
+مسئولیت: جستجوی رستوران و غذا
+APIها:
+
+text
+GET    /api/v1/search/restaurants      → جستجوی رستوران
+GET    /api/v1/search/foods            → جستجوی غذا
+GET    /api/v1/search/suggest          → Auto-complete
+GET    /api/v1/search/geo              → جستجوی مکانی
+POST   /api/v1/search/reindex          → Reindex (Admin)
+۱۰. Rating Service
+مسئولیت: Rating دوطرفه، Anomaly Detection
+APIها:
+
+text
+POST   /api/v1/ratings                 → ثبت امتیاز
+GET    /api/v1/ratings/restaurant/{id} → امتیاز رستوران
+GET    /api/v1/ratings/courier/{id}    → امتیاز پیک
+GET    /api/v1/ratings/{orderId}       → امتیاز سفارش
+POST   /api/v1/ratings/{id}/report     → گزارش جعلی
+۱۱. Notification Service
+مسئولیت: Push، SMS، In-app
+APIها:
+
+text
+POST   /api/v1/notifications/send      → ارسال
+GET    /api/v1/notifications           → لیست
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings  → تنظیمات
+۱۲. Currency Service
+مسئولیت: نرخ ارز، تبدیل
+APIها:
+
+text
+GET    /api/v1/currency/rates          → نرخ‌ها
+GET    /api/v1/currency/convert        → تبدیل
+GET    /api/v1/currency/supported      → ارزها
+POST   /api/v1/currency/refresh        → بروزرسانی (Admin)
+۱۳. Archive Service
+مسئولیت: Tiered Storage، GDPR
+APIها:
+
+text
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/archive/restore         → بازیابی
+POST   /api/v1/gdpr/export             → خروجی
+DELETE /api/v1/gdpr/delete/{userId}    → حذف (GDPR)
+۱۴. Analytics Service
+مسئولیت: آمار سفارش، درآمد، کاربر
+APIها:
+
+text
+GET    /api/v1/analytics/orders        → آمار سفارش
+GET    /api/v1/analytics/revenue       → آمار درآمد
+GET    /api/v1/analytics/users         → آمار کاربران
+POST   /api/v1/analytics/events        → ثبت رویداد
+۱۵. Admin Service
+مسئولیت: مدیریت سیستم، گزارش، تنظیمات
+APIها:
+
+text
+GET    /api/v1/admin/dashboard         → داشبورد
+GET    /api/v1/admin/reports/orders    → گزارش سفارش
+GET    /api/v1/admin/reports/revenue   → گزارش درآمد
+POST   /api/v1/admin/config            → تنظیمات
+POST   /api/v1/admin/users/{id}/ban    → مسدودسازی
+🔧 لایه Component (نمونه برای ۴ سرویس)
+Restaurant Service
+Component	نوع	مسئولیت
+RestaurantController	@RestController	مدیریت رستوران
+RestaurantService	@Service	منطق رستوران
+MenuManager	@Component	مدیریت منو
+HoursManager	@Component	ساعات کاری
+RestaurantRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+EventPublisher	@Component	Kafka
+Order Service
+Component	نوع	مسئولیت
+OrderController	@RestController	مدیریت سفارش
+OrderOrchestrator	@Service	Saga
+StateMachine	@Component	State Machine
+CompensatingHandler	@Component	جبران
+OrderRepository	@Repository	PostgreSQL
+KafkaProducer	@Component	Kafka
+KafkaConsumer	@Component	Kafka
+Matching Service
+Component	نوع	مسئولیت
+MatchingController	@RestController	مدیریت Matching
+MatchingService	@Service	منطق Matching
+GeoSearch	@Component	Redis GEO
+LockManager	@Component	Redlock
+ScoreCalculator	@Component	امتیازدهی
+KafkaProducer	@Component	Kafka
+Tracking Service
+Component	نوع	مسئولیت
+TrackingController	@RestController	مدیریت Tracking
+TrackingService	@Service	منطق Tracking
+LocationPublisher	@Component	Redis Pub/Sub
+WebSocketHandler	@Component	WebSocket
+GpsTrailRepository	@Repository	TimescaleDB
+TripCache	@Component	Redis
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	Tracking
+Service Discovery	Eureka/Consul	ثبت و کشف
+Config Server	Spring Cloud Config	تنظیمات
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + GEO + Lock
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	Rating
+TimescaleDB	TimescaleDB	GPS Trail
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	Archive + Backup
+Glacier	AWS Glacier	Cold Archive
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Restaurant Service ──→ PostgreSQL + Redis
+       ├──→ Menu Service ──→ PostgreSQL + Redis
+       ├──→ Order Service ──→ PostgreSQL + Kafka
+       ├──→ Matching Service ──→ Redis GEO + Redlock
+       ├──→ Tracking Service ──→ WebSocket + TimescaleDB
+       ├──→ Pricing Service ──→ Redis + Drools
+       ├──→ Payment Service ──→ PostgreSQL + Stripe
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Rating Service ──→ Cassandra + Redis
+       ├──→ Notification Service ──→ Kafka + Firebase
+       ├──→ Currency Service ──→ Redis + Central Bank
+       ├──→ Archive Service ──→ S3 + Glacier
+       ├──→ Analytics Service ──→ ClickHouse
+       └──→ Admin Service ──→ ClickHouse + PostgreSQL
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus
+└──────────────┘

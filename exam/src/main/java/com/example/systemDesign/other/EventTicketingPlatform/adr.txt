@@ -1,0 +1,1065 @@
+ADR-001: انتخاب معماری کلی سیستم
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم فروش بلیط باید میلیون‌ها کاربر، هزاران رویداد، و میلیون‌ها بلیط رو مدیریت کنه. هر بخش (رویداد، بلیط، Payment، QR) داده و منطق خودش رو داره. تیم‌های مختلف باید مستقل کار کنن و خرابی یه بخش، کل سیستم رو از کار نندازه.
+
+تصمیم:
+معماری میکروسرویس با تفکیک بر اساس Bounded Context (DDD) و Database per Service.
+
+دلیل تصمیم:
+هر دامنه (رویداد، بلیط، Payment) داده و منطق خودش رو داره. میکروسرویس یعنی هر تیم مستقل Deploy می‌کنه. Database per Service یعنی هر سرویس دیتابیس مناسب خودش رو داره.
+
+مزایا:
+
+تیم‌ها مستقل کار می‌کنن
+
+هر سرویس با تکنولوژی مناسب
+
+خرابی یه بخش، بقیه رو از کار نمی‌ندازه
+
+مقیاس‌پذیری خطی
+
+معایب:
+
+پیچیدگی عملیاتی
+
+Debugging سخت‌تر
+
+نیاز به تیم Platform
+
+تست End-to-End سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Monolith:
+مزایا:
+
+سادگی Deploy
+
+Debugging راحت
+
+توسعه سریع اولیه
+معایب:
+
+تیم‌ها نمی‌تونن مستقل Deploy کنن
+
+وابستگی کد زیاد
+
+مقیاس‌پذیری محدود
+
+ب) Modular Monolith:
+مزایا:
+
+تعادل بین سادگی و ماژولاریتی
+
+Deploy یکپارچه
+معایب:
+
+همچنان وابستگی در Deploy
+
+مقیاس‌پذیری محدود
+
+ج) Serverless:
+مزایا:
+
+هزینه فقط به ازای مصرف
+
+مقیاس‌پذیری خودکار
+معایب:
+
+Cold Start
+
+Debugging سخت
+
+Vendor Lock-in
+
+پیامدها:
+
+مثبت: استقلال تیم‌ها، مقیاس‌پذیری، تحمل خطا
+
+منفی: پیچیدگی، نیاز به تیم Platform
+
+ریسک: مرز Domain اشتباه → Event Storming
+
+ADR-002: انتخاب مکانیزم Seat Selection
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر می‌خواد صندلی انتخاب کنه. صندلی‌ها نباید دوبار فروخته بشن. Seat Selection باید Real-time باشه و Lock موقت داشته باشه.
+
+تصمیم:
+از Redis (Seat Lock با TTL) + WebSocket (Real-time Update) + PostgreSQL (Final Booking) + Optimistic Locking + Kafka (Event) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Redis برای Lock موقت (TTL=۱۰ دقیقه). WebSocket برای نمایش Real-time. PostgreSQL برای ذخیره نهایی. Optimistic Locking برای هماهنگی. Kafka برای Event.
+
+مزایا:
+
+Lock موقت (TTL)
+
+Real-time Update
+
+جلوگیری از Double Booking
+
+مقیاس‌پذیری
+
+معایب:
+
+Redis SPOF
+
+پیچیدگی TTL
+
+نیاز به WebSocket
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Pessimistic Locking (SELECT FOR UPDATE):
+مزایا:
+
+امنیت بالا
+
+Consistency کامل
+معایب:
+
+Deadlock در مقیاس بالا
+
+کندی
+
+Blocking طولانی
+
+ب) Database Unique Constraint:
+مزایا:
+
+سادگی
+
+امنیت
+معایب:
+
+inflexible
+
+خطای زیاد در Race
+
+بدون TTL
+
+ج) بدون Lock:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+Double Booking
+
+کاربر ناراضی
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: Lock موقت، Real-time، جلوگیری از Double Booking
+
+منفی: Redis SPOF، پیچیدگی TTL
+
+ریسک: Redis Down → Redis Cluster + Fallback
+
+ADR-003: انتخاب مکانیزم Flash Sale
+وضعیت: پذیرفته شده
+
+زمینه:
+برای رویدادهای پرطرفدار (مثل کنسرت)، میلیون‌ها کاربر همزمان تلاش می‌کنن بلیط بخرن. اگه سیستم عادی باشه، از پا می‌افته. باید تحمل پیک بار بالا باشه.
+
+تصمیم:
+از Queue (Kafka) + Virtual Waiting Room (Redis) + Rate Limiting + Pre-reservation (Redis) + Load Shedding استفاده می‌کنیم.
+
+دلیل تصمیم:
+Kafka برای صف‌بندی درخواست‌ها. Redis برای Waiting Room (کاربرا به صف می‌رن). Rate Limiting برای جلوگیری از DDoS. Pre-reservation برای Hold بلیط. Load Shedding برای حذف درخواست‌های اضافی.
+
+مزایا:
+
+تحمل پیک بار
+
+عدالت (صف)
+
+جلوگیری از DDoS
+
+مقیاس‌پذیری
+
+معایب:
+
+پیچیدگی Queue
+
+تجربه کاربری (صف)
+
+نیاز به Redis
+
+Load Shedding ممکنه کاربر ناراضی کنه
+
+موارد دیگر بررسی‌شده:
+
+الف) بدون Queue:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+سیستم از پا می‌افته
+
+کاربر ناراضی
+
+نقض نیازمندی
+
+ب) Lottery (قرعه‌کشی):
+مزایا:
+
+عدالت کامل
+
+سادگی
+معایب:
+
+تجربه کاربری (انتظار)
+
+بدون کنترل
+
+کاربر ناراضی
+
+ج) Auction (مزایده):
+مزایا:
+
+درآمد بالا
+
+بهینه‌سازی
+معایب:
+
+پیچیدگی
+
+کاربرا گیج می‌شن
+
+نیاز به ML
+
+پیامدها:
+
+مثبت: تحمل پیک، عدالت، Anti-DDoS
+
+منفی: پیچیدگی، تجربه صف
+
+ریسک: Queue Down → Fallback به Rate Limiting
+
+ADR-004: انتخاب مکانیزم Inventory بلیط
+وضعیت: پذیرفته شده
+
+زمینه:
+هر رویداد یه موجودی بلیط داره. اگه بلیط تموم بشه، نباید فروخته بشه. اگه دو کاربر همزمان آخرین بلیط رو بخوان، فقط یکی باید برنده بشه.
+
+تصمیم:
+از Redis Atomic Decrement + PostgreSQL (Optimistic Locking) + Kafka (Event) + TTL (Auto-reset) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Redis Atomic برای Decrement سریع. PostgreSQL برای ذخیره نهایی. Kafka برای Event. TTL برای Auto-reset (مثلاً برای رویدادهای دوره‌ای).
+
+مزایا:
+
+Atomic (بدون Race Condition)
+
+سرعت بالا
+
+Auto-reset
+
+Real-time
+
+معایب:
+
+Redis SPOF
+
+نیاز به Sync با DB
+
+TTL ممکنه اشتباه باشه
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+ACID
+
+یکپارچگی
+معایب:
+
+کندی در Decrement
+
+مقیاس‌پذیری محدود
+
+بار روی DB
+
+ب) بدون Inventory:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+Overselling
+
+کاربر ناراضی
+
+نقض نیازمندی
+
+ج) Pessimistic Locking:
+مزایا:
+
+امنیت بالا
+
+Consistency
+معایب:
+
+Deadlock
+
+کندی
+
+Blocking
+
+پیامدها:
+
+مثبت: Atomic، سرعت
+
+منفی: Redis SPOF
+
+ریسک: Redis Down → Fallback به PostgreSQL
+
+ADR-005: انتخاب مکانیزم QR Code
+وضعیت: پذیرفته شده
+
+زمینه:
+هر بلیط یه QR Code داره که برای ورود به رویداد اسکن می‌شه. QR باید یکتا باشه و از جعل جلوگیری کنه. اسکن باید سریع باشه (زیر ۱ ثانیه).
+
+تصمیم:
+از HMAC-signed QR + JWT (برای QR Data) + Redis (Validation Cache) + Offline Validation + Kafka (Event) استفاده می‌کنیم.
+
+دلیل تصمیم:
+HMAC برای امضای QR (جلوگیری از جعل). JWT برای داده QR. Redis برای Cache Validation. Offline Validation برای وقتی اینترنت قطع باشه. Kafka برای Event.
+
+مزایا:
+
+یکتا (HMAC)
+
+جلوگیری از جعل
+
+Offline Validation
+
+سرعت بالا
+
+معایب:
+
+پیچیدگی HMAC
+
+نیاز به Key Management
+
+Offline ممکنه Sync مشکل داشته باشه
+
+Redis SPOF
+
+موارد دیگر بررسی‌شده:
+
+الف) QR ساده (بدون امضا):
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+قابل جعل
+
+امنیت پایین
+
+نقض نیازمندی
+
+ب) Barcode:
+مزایا:
+
+سادگی
+
+ارزون
+معایب:
+
+ظرفیت کم
+
+قابل جعل
+
+بدون امضا
+
+ج) NFC:
+مزایا:
+
+امنیت بالا
+
+سرعت
+معایب:
+
+نیاز به سخت‌افزار
+
+هزینه بالا
+
+کاربرا آشنا نیستن
+
+پیامدها:
+
+مثبت: یکتا، Anti-jale، Offline
+
+منفی: پیچیدگی، Key Management
+
+ریسک: Key لو بره → Key Rotation
+
+ADR-006: انتخاب مکانیزم Anti-fraud
+وضعیت: پذیرفته شده
+
+زمینه:
+خرید عمده بلیط توسط ربات‌ها (Scalping) و تقلب در پرداخت. باید اینا رو تشخیص بدیم. کاربر واقعی نباید بلاک بشه.
+
+تصمیم:
+از ML Model (XGBoost) + Rule Engine (Drools) + CAPTCHA + Device Fingerprinting + Kafka (Event) + Human Review استفاده می‌کنیم.
+
+دلیل تصمیم:
+ML Model برای تشخیص الگوهای پیچیده. Rule Engine برای قوانین ساده (مثلاً IP یکسان). CAPTCHA برای چالش. Device Fingerprinting برای شناسایی. Kafka برای Event. Human Review برای موارد مشکوک.
+
+مزایا:
+
+تشخیص الگوهای پیچیده
+
+قوانین ساده
+
+CAPTCHA
+
+Human Review
+
+معایب:
+
+پیچیدگی ML
+
+False Positive
+
+نیاز به Data Pipeline
+
+هزینه CAPTCHA
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Rule Engine:
+مزایا:
+
+سادگی
+
+شفافیت
+معایب:
+
+الگوهای پیچیده رو نمی‌گیره
+
+False Negative زیاد
+
+ب) فقط ML:
+مزایا:
+
+تشخیص الگوهای پیچیده
+معایب:
+
+نیاز به داده زیاد
+
+Cold Start
+
+نیاز به تیم ML
+
+ج) بدون Anti-fraud:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+Scalping
+
+تقلب
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: تشخیص تقلب، عدالت
+
+منفی: پیچیدگی، هزینه
+
+ریسک: ML اشتباه → Human Review
+
+ADR-007: انتخاب مکانیزم Refund و Cancellation
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر ممکنه بخواد بلیطش رو کنسل کنه. برگزارکننده هم ممکنه رویداد رو لغو کنه. Refund باید طبق قوانین باشه و امن باشه.
+
+تصمیم:
+از Rule Engine (Drools) + Saga (Orchestration) + Escrow + Kafka (Event) + Idempotency Key استفاده می‌کنیم.
+
+دلیل تصمیم:
+Drools برای قوانین Refund (مثلاً تا ۷ روز قبل ۱۰۰٪، تا ۲۴ ساعت ۵۰٪). Saga برای Orchestration. Escrow برای نگه‌داری. Kafka برای Event. Idempotency Key برای جلوگیری از Refund دوبار.
+
+مزایا:
+
+قوانین پویا
+
+Saga Orchestration
+
+امنیت مالی (Escrow)
+
+جلوگیری از Refund دوبار
+
+معایب:
+
+پیچیدگی Saga
+
+هزینه Escrow
+
+نیاز به KYC
+
+زمان تسویه
+
+موارد دیگر بررسی‌شده:
+
+الف) بدون Refund:
+مزایا:
+
+سادگی
+
+درآمد بالا
+معایب:
+
+کاربر ناراضی
+
+نقض قوانین
+
+اعتماد پایین
+
+ب) Refund دستی:
+مزایا:
+
+کنترل کامل
+
+سادگی
+معایب:
+
+کندی
+
+خطای انسانی
+
+مقیاس‌پذیری محدود
+
+ج) Refund خودکار (بدون Rule):
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+بدون قوانین
+
+سوءاستفاده
+
+ضرر مالی
+
+پیامدها:
+
+مثبت: قوانین پویا، Saga، امنیت
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Rule اشتباه → Canary Release
+
+ADR-008: انتخاب مکانیزم Payment
+وضعیت: پذیرفته شده
+
+زمینه:
+پرداخت باید امن و سریع باشه. باید از پرداخت دوبار جلوگیری کنه. باید چند روش (کارت، کیف پول) پشتیبانی کنه.
+
+تصمیم:
+از Stripe + Idempotency Key + Escrow + Rule Engine (Drools) + Kafka (Event) + 3D Secure استفاده می‌کنیم.
+
+دلیل تصمیم:
+Stripe برای پرداخت. Idempotency Key برای جلوگیری از پرداخت دوبار. Escrow برای نگه‌داری. Drools برای تقسیم درآمد. Kafka برای Event. 3D Secure برای امنیت.
+
+مزایا:
+
+پرداخت امن (Stripe + 3D Secure)
+
+جلوگیری از پرداخت دوبار
+
+امنیت مالی (Escrow)
+
+چند روش پرداخت
+
+معایب:
+
+هزینه Stripe
+
+پیچیدگی Escrow
+
+نیاز به KYC
+
+3D Secure ممکنه تجربه کاربری رو کند کنه
+
+موارد دیگر بررسی‌شده:
+
+الف) پرداخت مستقیم:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+ریسک کلاهبرداری
+
+بدون محافظت
+
+نقض قوانین
+
+ب) پرداخت با کریپتو:
+مزایا:
+
+سرعت بالا
+
+هزینه کم
+معایب:
+
+نوسان قیمت
+
+پیچیدگی قانونی
+
+کاربرا آشنا نیستن
+
+ج) فقط کارت:
+مزایا:
+
+سادگی
+
+سازگاری
+معایب:
+
+بدون کیف پول
+
+محدودیت
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: امنیت، چند روش
+
+منفی: هزینه، پیچیدگی
+
+ریسک: Stripe خطا → Retry + Manual Review
+
+ADR-009: انتخاب مکانیزم Notification
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربر باید از خرید موفق، یادآوری رویداد، و تغییرات مطلع بشه. برگزارکننده باید از فروش بلیط مطلع بشه. Notification باید Real-time و قابل تنظیم باشه.
+
+تصمیم:
+از Kafka + Firebase (Push) + SendGrid (Email) + SMS (Kavenegar) + WebSocket (In-app) + Redis (Dedup) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Kafka برای Event Stream. Firebase برای Push. SendGrid برای Email. SMS برای یادآوری. WebSocket برای In-app. Redis برای Dedup.
+
+مزایا:
+
+Real-time
+
+چند کانال (Push، Email، SMS)
+
+Dedup
+
+قابل تنظیم
+
+معایب:
+
+پیچیدگی Kafka
+
+هزینه Firebase + SendGrid + SMS
+
+نیاز به User Preferences
+
+Redis SPOF
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Push:
+مزایا:
+
+سادگی
+
+Real-time
+معایب:
+
+نیاز به اپ موبایل
+
+بدون SMS (برای یادآوری)
+
+کاربرا SMS رو ترجیح می‌دن
+
+ب) فقط Email:
+مزایا:
+
+قابل اعتماد
+
+بدون نیاز به اپ
+معایب:
+
+کندی
+
+بدون Real-time
+
+Spam
+
+ج) فقط In-app:
+مزایا:
+
+سادگی
+
+بدون هزینه خارجی
+معایب:
+
+نیاز به باز کردن اپ
+
+بدون Real-time
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: Real-time، چند کانال
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-010: انتخاب مکانیزم چرخه حیات داده و GDPR
+وضعیت: پذیرفته شده
+
+زمینه:
+داده‌های بلیط، QR، Payment باید برای Audit نگه‌داری بشن. ولی GDPR حق فراموشی رو الزامی کرده. باید تعادل برقرار بشه.
+
+تصمیم:
+از Tiered Storage + Soft Delete + Anonymization + Key Deletion + Audit Log استفاده می‌کنیم:
+
+Hot (۶ ماه): PostgreSQL + Redis
+
+Warm (۶ ماه تا ۲ سال): S3 Infrequent Access
+
+Cold (> ۲ سال): S3 Glacier
+
+GDPR: Soft Delete فوری + Anonymize بعد از ۳۰ روز
+
+دلیل تصمیم:
+هر داده تو دیتابیس مناسب سنش. Soft Delete Foreign Keyها رو سالم نگه می‌داره. Anonymize حریم خصوصی. Job شبانه انتقال‌ها رو انجام می‌ده.
+
+مزایا:
+
+Compliance با GDPR
+
+کاهش هزینه Storage
+
+Foreign Keyها سالم
+
+Audit Trail حفظ
+
+معایب:
+
+تأخیر Restore از Glacier
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring
+
+حجم دیتابیس بیشتر
+
+موارد دیگر بررسی‌شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص
+
+Audit از بین می‌ره
+
+ب) نگه‌داری همه در PostgreSQL:
+مزایا:
+
+سادگی
+
+Query یکپارچه
+معایب:
+
+هزینه نجومی
+
+کندی با حجم زیاد
+
+ج) فقط S3:
+مزایا:
+
+هزینه کم
+
+سادگی
+معایب:
+
+کوئری کند
+
+بدون Index
+
+پیامدها:
+
+مثبت: Compliance، هزینه کم
+
+منفی: تأخیر Restore، پیچیدگی
+
+ریسک: Job خطا → DLQ + Retry + Alert
+
+📦 لایه Container (۱۵ سرویس)
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، نقش‌ها (خریدار، برگزارکننده، ادمین)
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش
+DELETE /api/v1/users/{id}             → حذف (GDPR)
+۲. Event Service
+مسئولیت: مدیریت رویداد
+APIها:
+
+text
+POST   /api/v1/events                  → ثبت رویداد
+GET    /api/v1/events/{id}             → جزئیات
+PATCH  /api/v1/events/{id}             → ویرایش
+DELETE /api/v1/events/{id}             → حذف
+POST   /api/v1/events/{id}/publish     → انتشار
+GET    /api/v1/events/my               → رویدادهای من
+۳. Venue Service
+مسئولیت: مدیریت مکان، Seat Map
+APIها:
+
+text
+POST   /api/v1/venues                  → ثبت مکان
+GET    /api/v1/venues/{id}             → جزئیات
+GET    /api/v1/venues/{id}/seat-map    → Seat Map
+POST   /api/v1/venues/{id}/seat-map    → افزودن Seat Map
+PATCH  /api/v1/venues/{id}/seat-map    → ویرایش
+۴. Ticket Service
+مسئولیت: مدیریت بلیط، Inventory
+APIها:
+
+text
+POST   /api/v1/tickets                 → صدور بلیط
+GET    /api/v1/tickets/{id}            → جزئیات
+DELETE /api/v1/tickets/{id}            → لغو
+GET    /api/v1/tickets/my              → بلیط‌های من
+GET    /api/v1/tickets/{eventId}/inventory → موجودی
+۵. Seat Selection Service
+مزیت: انتخاب صندلی، Lock
+APIها:
+
+text
+GET    /api/v1/seats/{eventId}         → صندلی‌ها
+POST   /api/v1/seats/{eventId}/lock    → Lock صندلی
+DELETE /api/v1/seats/{eventId}/lock    → آزادسازی
+WS     /ws/seats/{eventId}             → Real-time
+۶. Flash Sale Service
+مسئولیت: Queue، Waiting Room
+APIها:
+
+text
+POST   /api/v1/flash-sale/join         → ورود به صف
+GET    /api/v1/flash-sale/status       → وضعیت
+DELETE /api/v1/flash-sale/leave        → خروج
+GET    /api/v1/flash-sale/position     → موقعیت
+۷. QR Service
+مسئولیت: تولید و تأیید QR
+APIها:
+
+text
+POST   /api/v1/qr/generate             → تولید QR
+POST   /api/v1/qr/validate             → تأیید QR
+GET    /api/v1/qr/{ticketId}           → دریافت QR
+POST   /api/v1/qr/offline-sync         → Sync آفلاین
+۸. Payment Service
+مسئولیت: پرداخت، Refund، Payout
+APIها:
+
+text
+POST   /api/v1/payments/checkout       → پرداخت
+POST   /api/v1/payments/webhook        → Webhook
+GET    /api/v1/payments/{id}           → وضعیت
+POST   /api/v1/payments/{id}/refund    → بازگشت
+GET    /api/v1/earnings/{organizerId}  → درآمد
+POST   /api/v1/payouts                 → تسویه
+۹. Anti-fraud Service
+مسئولیت: تشخیص تقلب، Scalping
+APIها:
+
+text
+POST   /api/v1/fraud/check             → بررسی
+GET    /api/v1/fraud/score/{userId}    → Score
+POST   /api/v1/fraud/report            → گزارش
+GET    /api/v1/fraud/queue             → صف بررسی
+POST   /api/v1/fraud/review/{id}       → تصمیم (ادمین)
+۱۰. Search Service
+مسئولیت: جستجوی رویداد
+APIها:
+
+text
+GET    /api/v1/search/events           → جستجو
+GET    /api/v1/search/suggest          → Auto-complete
+GET    /api/v1/search/faceted          → Faceted
+GET    /api/v1/search/geo              → جستجوی مکانی
+POST   /api/v1/search/reindex          → Reindex (Admin)
+۱۱. Notification Service
+مسئولیت: Push، Email، SMS
+APIها:
+
+text
+POST   /api/v1/notifications/send      → ارسال
+GET    /api/v1/notifications           → لیست
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+POST   /api/v1/notifications/reminder  → یادآوری رویداد
+۱۲. Analytics Service
+مسئولیت: آمار فروش، رویداد، درآمد
+APIها:
+
+text
+GET    /api/v1/analytics/events/{id}   → آمار رویداد
+GET    /api/v1/analytics/sales         → آمار فروش
+GET    /api/v1/analytics/revenue       → آمار درآمد
+POST   /api/v1/analytics/events        → ثبت رویداد
+۱۳. Currency Service
+مسئولیت: نرخ ارز، تبدیل
+APIها:
+
+text
+GET    /api/v1/currency/rates          → نرخ‌ها
+GET    /api/v1/currency/convert        → تبدیل
+GET    /api/v1/currency/supported      → ارزها
+POST   /api/v1/currency/refresh        → بروزرسانی (Admin)
+۱۴. Archive Service
+مسئولیت: Tiered Storage، GDPR
+APIها:
+
+text
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/archive/restore         → بازیابی
+POST   /api/v1/gdpr/export             → خروجی
+DELETE /api/v1/gdpr/delete/{userId}    → حذف (GDPR)
+۱۵. Admin Service
+مسئولیت: مدیریت سیستم، گزارش، تنظیمات
+APIها:
+
+text
+GET    /api/v1/admin/dashboard         → داشبورد
+GET    /api/v1/admin/reports/events    → گزارش رویداد
+GET    /api/v1/admin/reports/revenue   → گزارش درآمد
+POST   /api/v1/admin/config            → تنظیمات
+POST   /api/v1/admin/users/{id}/ban    → مسدودسازی
+🔧 لایه Component (نمونه برای ۴ سرویس)
+Event Service
+Component	نوع	مسئولیت
+EventController	@RestController	مدیریت رویداد
+EventService	@Service	منطق رویداد
+PublishService	@Service	انتشار
+EventRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+EventPublisher	@Component	Kafka
+Ticket Service
+Component	نوع	مسئولیت
+TicketController	@RestController	مدیریت بلیط
+TicketService	@Service	منطق بلیط
+InventoryManager	@Component	Redis Atomic
+TicketRepository	@Repository	PostgreSQL
+QRGenerator	@Component	QR Code
+KafkaProducer	@Component	Kafka
+Seat Selection Service
+Component	نوع	مسئولیت
+SeatController	@RestController	مدیریت صندلی
+SeatService	@Service	منطق صندلی
+LockManager	@Component	Redis Lock
+WebSocketHandler	@Component	WebSocket
+SeatRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+Flash Sale Service
+Component	نوع	مسئولیت
+FlashSaleController	@RestController	مدیریت Flash Sale
+FlashSaleService	@Service	منطق Flash Sale
+QueueManager	@Component	Kafka
+WaitingRoom	@Component	Redis
+RateLimiter	@Component	Redis
+LoadShedder	@Component	Load Shedding
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	Seat Selection
+Service Discovery	Eureka/Consul	ثبت و کشف
+Config Server	Spring Cloud Config	تنظیمات
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Lock + Queue
+PostgreSQL	Postgres 16	داده ساختاریافته
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Analytics
+S3	AWS S3	QR + Backup
+Glacier	AWS Glacier	Cold Archive
+Stripe	Stripe	Payment
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Event Service ──→ PostgreSQL + Redis
+       ├──→ Venue Service ──→ PostgreSQL + Redis
+       ├──→ Ticket Service ──→ PostgreSQL + Redis
+       ├──→ Seat Selection ──→ WebSocket + Redis Lock
+       ├──→ Flash Sale ──→ Kafka + Redis Queue
+       ├──→ QR Service ──→ HMAC + Redis
+       ├──→ Payment Service ──→ PostgreSQL + Stripe
+       ├──→ Anti-fraud ──→ ML + Drools
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Notification ──→ Kafka + Firebase + SMS
+       ├──→ Analytics ──→ ClickHouse
+       ├──→ Currency Service ──→ Redis + Central Bank
+       ├──→ Archive Service ──→ S3 + Glacier
+       └──→ Admin Service ──→ ClickHouse + PostgreSQL
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus
+└──────────────┘

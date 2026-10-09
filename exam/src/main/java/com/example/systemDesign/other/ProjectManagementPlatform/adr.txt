@@ -1,0 +1,1073 @@
+ADR-001: انتخاب معماری کلی سیستم
+وضعیت: پذیرفته شده
+
+زمینه:
+پلتفرم مدیریت پروژه باید میلیون‌ها کاربر، پروژه، تسک و کامنت رو مدیریت کنه. هر بخش (پروژه، تسک، Permission، Integration) داده و منطق خودش رو داره. تیم‌های مختلف باید مستقل کار کنن و خرابی یه بخش، کل سیستم رو از کار نندازه.
+
+تصمیم:
+معماری میکروسرویس با تفکیک بر اساس Bounded Context (DDD) و Database per Service + Multi-tenant (Workspace Isolation).
+
+دلیل تصمیم:
+هر دامنه (پروژه، تسک، Permission) داده و منطق خودش رو داره. میکروسرویس یعنی هر تیم مستقل Deploy می‌کنه. Multi-tenant با Workspace Isolation یعنی هر Workspace داده‌هاش جدا.
+
+مزایا:
+
+تیم‌ها مستقل کار می‌کنن
+
+هر سرویس با تکنولوژی مناسب
+
+Multi-tenant با Isolation
+
+مقیاس‌پذیری خطی
+
+معایب:
+
+پیچیدگی عملیاتی
+
+Debugging سخت‌تر
+
+نیاز به تیم Platform
+
+تست End-to-End سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Monolith:
+مزایا:
+
+سادگی Deploy
+
+Debugging راحت
+
+توسعه سریع اولیه
+معایب:
+
+تیم‌ها نمی‌تونن مستقل Deploy کنن
+
+وابستگی کد زیاد
+
+مقیاس‌پذیری محدود
+
+ب) Modular Monolith:
+مزایا:
+
+تعادل بین سادگی و ماژولاریتی
+
+Deploy یکپارچه
+معایب:
+
+همچنان وابستگی در Deploy
+
+مقیاس‌پذیری محدود
+
+ج) Serverless:
+مزایا:
+
+هزینه فقط به ازای مصرف
+
+مقیاس‌پذیری خودکار
+معایب:
+
+Cold Start
+
+Debugging سخت
+
+Vendor Lock-in
+
+پیامدها:
+
+مثبت: استقلال تیم‌ها، مقیاس‌پذیری، Multi-tenant
+
+منفی: پیچیدگی، نیاز به تیم Platform
+
+ریسک: مرز Domain اشتباه → Event Storming
+
+ADR-002: انتخاب مکانیزم Real-time Collaboration
+وضعیت: پذیرفته شده
+
+زمینه:
+چند کاربر ممکنه همزمان روی یه تسک، کامنت، یا سند کار کنن. تغییرات باید Real-time بین همه Sync بشه. اگه دو نفر همزمان یه فیلد رو تغییر بدن، نباید Conflict پیش بیاد.
+
+تصمیم:
+از CRDT (Yjs) + WebSocket + Redis Pub/Sub + Presence (Live Cursor) استفاده می‌کنیم.
+
+دلیل تصمیم:
+CRDT تغییرات رو خودکار Merge می‌کنه، بدون Conflict. Yjs یه کتابخانه بالغ CRDT. WebSocket برای Real-time. Redis Pub/Sub برای انتشار. Presence برای Live Cursor.
+
+مزایا:
+
+Merge خودکار بدون Conflict
+
+Offline Support
+
+Real-time Collaboration
+
+Live Cursor (Presence)
+
+معایب:
+
+Memory Overhead (حدود ۱۰٪ حجم سند)
+
+CRDT Document Size رشد می‌کنه
+
+Debugging سخت‌تر
+
+نیاز به کتابخانه سنگین
+
+موارد دیگر بررسی‌شده:
+
+الف) OT (Operational Transformation):
+مزایا:
+
+استاندارد (Google Docs)
+
+Memory کمتر
+معایب:
+
+نیاز به Central Server
+
+پیچیدگی O(n²)
+
+Backward Transform سخت
+
+ب) Locking (Pessimistic):
+مزایا:
+
+بدون Conflict
+
+سادگی
+معایب:
+
+فقط یه نفر همزمان
+
+Lock Timeout
+
+UX بد
+
+ج) Versioning و Merge دستی:
+مزایا:
+
+سادگی
+
+کنترل کامل
+معایب:
+
+Conflict دستی
+
+UX فاجعه
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: Merge خودکار، Offline، Real-time
+
+منفی: Memory Overhead، پیچیدگی
+
+ریسک: CRDT Size رشد → Snapshot + GC
+
+ADR-003: انتخاب مکانیزم Notification
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا باید از تغییرات تسک، منشن، ددلاین، و کامنت جدید مطلع بشن. Notification باید Real-time و قابل تنظیم باشه. حجم Notification بالاست (میلیون‌ها در روز).
+
+تصمیم:
+از Kafka + Firebase (Push) + SendGrid (Email) + WebSocket (In-app) + Redis (Dedup) + User Preferences استفاده می‌کنیم.
+
+دلیل تصمیم:
+Kafka برای Event Stream. Firebase برای Push. SendGrid برای Email. WebSocket برای In-app. Redis برای جلوگیری از تکرار. User Preferences برای تنظیمات کاربر.
+
+مزایا:
+
+Real-time
+
+چند کانال (Web، Push، Email)
+
+Dedup (بدون تکرار)
+
+قابل تنظیم
+
+معایب:
+
+پیچیدگی Kafka
+
+هزینه Firebase
+
+نیاز به User Preferences
+
+Redis SPOF
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط Push:
+مزایا:
+
+سادگی
+
+Real-time
+معایب:
+
+نیاز به اپ موبایل
+
+بدون Web
+
+کاربرا وب رو ترجیح می‌دن
+
+ب) فقط Email:
+مزایا:
+
+قابل اعتماد
+
+بدون نیاز به اپ
+معایب:
+
+کندی
+
+بدون Real-time
+
+Spam
+
+ج) فقط In-app:
+مزایا:
+
+سادگی
+
+بدون هزینه خارجی
+معایب:
+
+نیاز به باز کردن اپ
+
+بدون Real-time
+
+کاربر ناراضی
+
+پیامدها:
+
+مثبت: Real-time، چند کانال
+
+منفی: پیچیدگی، هزینه
+
+ریسک: Redis Down → Redis Cluster
+
+ADR-004: انتخاب مکانیزم Search
+وضعیت: پذیرفته شده
+
+زمینه:
+میلیون‌ها تسک، کامنت، فایل. کاربرا می‌خوان بر اساس عنوان، متن، Assignee، Label، ددلاین جستجو کنن. Search باید سریع باشه و Faceted Search داشته باشه.
+
+تصمیم:
+از Elasticsearch + PostgreSQL (Metadata) + CDC (Debezium) + Kafka + Permission Filter استفاده می‌کنیم.
+
+دلیل تصمیم:
+Elasticsearch برای Full-Text Search و Faceted Search. PostgreSQL برای Metadata (ACID). CDC تغییرات PostgreSQL رو به Elasticsearch Sync می‌کنه. Permission Filter برای امنیت (فقط تسک‌های مجاز).
+
+مزایا:
+
+جستجوی سریع (زیر ۱۰۰ms)
+
+Full-Text Search
+
+Faceted Search
+
+Permission-aware
+
+معایب:
+
+پیچیدگی CDC
+
+تأخیر Sync
+
+هزینه Elasticsearch
+
+مدیریت دو دیتابیس
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+سادگی
+
+ACID
+معایب:
+
+Full-Text Search ضعیف
+
+کندی با میلیون‌ها رکورد
+
+بدون Faceted Search
+
+ب) فقط Elasticsearch:
+مزایا:
+
+جستجوی سریع
+
+Faceted Search
+معایب:
+
+برای Transaction مناسب نیست
+
+بدون ACID
+
+ج) MongoDB Text Index:
+مزایا:
+
+سادگی
+
+یکپارچگی
+معایب:
+
+Full-Text Search ضعیف‌تر
+
+بدون Faceted Search
+
+پیامدها:
+
+مثبت: جستجوی سریع، Permission-aware
+
+منفی: پیچیدگی CDC، هزینه
+
+ریسک: CDC خطا → Retry + Alert
+
+ADR-005: انتخاب مکانیزم Permission
+وضعیت: پذیرفته شده
+
+زمینه:
+هر Workspace چند کاربر داره با نقش‌های مختلف (Owner، Admin، Member، Guest). هر کاربر باید فقط به داده‌های مجاز دسترسی داشته باشه. Permission باید در سطح Workspace، Project، Task باشه.
+
+تصمیم:
+از RBAC + ABAC (Attribute-Based) + Redis Cache + PostgreSQL (Permission Store) + JWT (Claims) استفاده می‌کنیم.
+
+دلیل تصمیم:
+RBAC برای نقش‌ها. ABAC برای ویژگی‌های خاص (مثلاً تسک‌های محرمانه). Redis Cache برای سرعت. PostgreSQL برای Permission Store. JWT Claims برای دسترسی سریع.
+
+مزایا:
+
+کنترل دقیق (RBAC + ABAC)
+
+سرعت بالا (Redis + JWT)
+
+مقیاس‌پذیری
+
+Audit Trail
+
+معایب:
+
+پیچیدگی RBAC + ABAC
+
+نیاز به Cache Invalidation
+
+مدیریت Permission Store
+
+JWT Size (Claims زیاد)
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط RBAC:
+مزایا:
+
+سادگی
+
+شفافیت
+معایب:
+
+inflexible
+
+برای موارد خاص مناسب نیست
+
+نیاز به Role زیاد
+
+ب) فقط ABAC:
+مزایا:
+
+انعطاف بالا
+
+دقیق
+معایب:
+
+پیچیدگی
+
+Performance پایین
+
+Debugging سخت
+
+ج) Permission در Application Layer:
+مزایا:
+
+سادگی
+
+کنترل کامل
+معایب:
+
+کندی
+
+بدون Cache
+
+بار روی Application
+
+پیامدها:
+
+مثبت: کنترل دقیق، سرعت بالا
+
+منفی: پیچیدگی، Cache Invalidation
+
+ریسک: Permission اشتباه → Audit + بازبینی
+
+ADR-006: انتخاب مکانیزم Integration
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان با GitHub، Slack، Google Calendar، و... یکپارچه بشن. این Integrationها باید Real-time باشه و از Webhook استفاده کنه.
+
+تصمیم:
+از API Gateway (Kong) + OAuth 2.0 + Webhook + Kafka (Event Bus) + Integration Service (Plugin) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Kong برای API Gateway. OAuth 2.0 برای احراز هویت. Webhook برای Real-time. Kafka برای Event Bus. Integration Service برای Plugin.
+
+مزایا:
+
+یکپارچگی با سرویس‌های خارجی
+
+Real-time (Webhook)
+
+مقیاس‌پذیری (Kafka)
+
+Plugin Architecture
+
+معایب:
+
+پیچیدگی OAuth 2.0
+
+نیاز به نگهداری Webhook
+
+وابستگی به سرویس‌های خارجی
+
+Debugging سخت
+
+موارد دیگر بررسی‌شده:
+
+الف) Polling:
+مزایا:
+
+سادگی
+
+بدون Webhook
+معایب:
+
+تأخیر بالا
+
+بار روی سرور
+
+بدون Real-time
+
+ب) فقط API:
+مزایا:
+
+سادگی
+
+کنترل کامل
+معایب:
+
+بدون Real-time
+
+نیاز به Polling
+
+کاربر ناراضی
+
+ج) Integration مستقیم:
+مزایا:
+
+سرعت
+
+کنترل
+معایب:
+
+وابستگی کد
+
+نگهداری سخت
+
+بدون Plugin
+
+پیامدها:
+
+مثبت: یکپارچگی، Real-time
+
+منفی: پیچیدگی، وابستگی
+
+ریسک: Webhook خطا → Retry + DLQ
+
+ADR-007: انتخاب مکانیزم Reporting
+وضعیت: پذیرفته شده
+
+زمینه:
+مدیرا می‌خوان بدونن تیم چقدر پیشرفت داشته، چند تسک تموم شده، Velocity چقدره. این گزارش‌ها باید Real-time و دقیق باشن.
+
+تصمیم:
+از ClickHouse (Columnar DB) + Kafka (Event Stream) + Grafana (Dashboard) + Materialized View استفاده می‌کنیم.
+
+دلیل تصمیم:
+ClickHouse برای Analytics سریع (Columnar). Kafka برای Event Stream. Grafana برای Dashboard. Materialized View برای Aggregation خودکار.
+
+مزایا:
+
+Analytics سریع (ClickHouse)
+
+Real-time (Kafka)
+
+Dashboard (Grafana)
+
+Aggregation خودکار
+
+معایب:
+
+پیچیدگی ClickHouse
+
+هزینه Kafka
+
+نیاز به تیم Data
+
+Storage زیاد
+
+موارد دیگر بررسی‌شده:
+
+الف) فقط PostgreSQL:
+مزایا:
+
+سادگی
+
+ACID
+معایب:
+
+کندی در Aggregation
+
+مقیاس‌پذیری محدود
+
+ب) Elasticsearch:
+مزایا:
+
+سرعت بالا
+
+Aggregation
+معایب:
+
+برای Analytics سنگین مناسب نیست
+
+هزینه بالا
+
+ج) بدون Reporting:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+مدیر نمی‌دونه آمار
+
+تجربه ضعیف
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: Analytics سریع، Real-time
+
+منفی: پیچیدگی، هزینه
+
+ریسک: ClickHouse Down → Multi-Node
+
+ADR-008: انتخاب مکانیزم Attachment
+وضعیت: پذیرفته شده
+
+زمینه:
+هر تسک می‌تونه فایل ضمیمه داشته باشه. این فایل‌ها حجم زیادی دارن. اگه تو دیتابیس ذخیره بشن، DB منفجر می‌شه. اگه از سرور خودمون توزیع کنیم، Bandwidth نجومی می‌شه.
+
+تصمیم:
+از S3 + CDN (CloudFront) + Presigned URL + Virus Scan (ClamAV) + Versioning استفاده می‌کنیم.
+
+دلیل تصمیم:
+S3 مقیاس‌پذیری نامحدود. CDN برای توزیع سریع. Presigned URL برای آپلود مستقیم. ClamAV برای Virus Scan. Versioning برای نسخه‌های فایل.
+
+مزایا:
+
+مقیاس‌پذیری نامحدود
+
+توزیع سریع (CDN)
+
+Virus Scan
+
+Versioning
+
+معایب:
+
+هزینه S3 + CDN
+
+نیاز به Presigned URL
+
+مدیریت Lifecycle
+
+Virus Scan Overhead
+
+موارد دیگر بررسی‌شده:
+
+الف) ذخیره در دیتابیس:
+مزایا:
+
+یکپارچگی
+
+Backup ساده
+معایب:
+
+DB منفجر می‌شه
+
+هزینه نجومی
+
+Query کند
+
+ب) فایل‌سیستم محلی:
+مزایا:
+
+سرعت بالا
+
+سادگی
+معایب:
+
+مقیاس‌پذیری محدود
+
+Backup سخت
+
+بدون CDN
+
+ج) بدون Virus Scan:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+امنیت پایین
+
+Malware
+
+نقض قوانین
+
+پیامدها:
+
+مثبت: مقیاس‌پذیری، امنیت
+
+منفی: هزینه، پیچیدگی
+
+ریسک: S3 Down → Multi-Region Replication
+
+ADR-009: انتخاب مکانیزم Automation
+وضعیت: پذیرفته شده
+
+زمینه:
+کاربرا می‌خوان قوانین خودکار تعریف کنن (مثلاً "اگه تسک به Done رفت، به Slack پیام بده"). این قوانین باید بدون کدنویسی قابل تعریف باشن.
+
+تصمیم:
+از Rule Engine (Drools) + Visual Builder + Kafka (Event Trigger) + Webhook (Action) + Redis (Cache) استفاده می‌کنیم.
+
+دلیل تصمیم:
+Drools برای اجرای قوانین. Visual Builder برای تعریف بدون کد. Kafka برای Event Trigger. Webhook برای Action. Redis برای Cache.
+
+مزایا:
+
+بدون کدنویسی
+
+پویایی کامل
+
+Event Trigger
+
+Action متنوع
+
+معایب:
+
+پیچیدگی Drools
+
+نیاز به Visual Builder
+
+Debugging سخت
+
+ممکنه قانون اشتباه باشه
+
+موارد دیگر بررسی‌شده:
+
+الف) Hardcode:
+مزایا:
+
+سادگی
+
+سرعت
+معایب:
+
+نیاز به Deploy
+
+inflexible
+
+نگهداری سخت
+
+ب) فقط Webhook:
+مزایا:
+
+سادگی
+
+Real-time
+معایب:
+
+بدون Rule Engine
+
+محدود
+
+نیاز به کد
+
+ج) بدون Automation:
+مزایا:
+
+سادگی
+
+هزینه کم
+معایب:
+
+کاربر باید دستی کار کنه
+
+تجربه ضعیف
+
+نقض نیازمندی
+
+پیامدها:
+
+مثبت: بدون کد، پویا
+
+منفی: پیچیدگی Drools
+
+ریسک: قانون اشتباه → Unit Test + Canary
+
+ADR-010: انتخاب مکانیزم چرخه حیات داده و GDPR
+وضعیت: پذیرفته شده
+
+زمینه:
+داده‌های پروژه، تسک، کامنت باید برای Audit نگه‌داری بشن. ولی GDPR حق فراموشی رو الزامی کرده. باید تعادل برقرار بشه.
+
+تصمیم:
+از Tiered Storage + Soft Delete + Anonymization + Key Deletion + Audit Log استفاده می‌کنیم:
+
+Hot (۶ ماه): PostgreSQL + Cassandra
+
+Warm (۶ ماه تا ۲ سال): S3 Infrequent Access
+
+Cold (> ۲ سال): S3 Glacier
+
+GDPR: Soft Delete فوری + Anonymize بعد از ۳۰ روز
+
+دلیل تصمیم:
+هر داده تو دیتابیس مناسب سنش. Soft Delete Foreign Keyها رو سالم نگه می‌داره. Anonymize حریم خصوصی. Job شبانه انتقال‌ها رو انجام می‌ده.
+
+مزایا:
+
+Compliance با GDPR
+
+کاهش هزینه Storage
+
+Foreign Keyها سالم
+
+Audit Trail حفظ
+
+معایب:
+
+تأخیر Restore از Glacier
+
+پیچیدگی Jobهای Archive
+
+نیاز به Monitoring
+
+حجم دیتابیس بیشتر
+
+موارد دیگر بررسی‌شده:
+
+الف) حذف فیزیکی فوری:
+مزایا:
+
+سادگی
+
+آزاد شدن فضا
+معایب:
+
+Foreign Key می‌شکنه
+
+GDPR ناقص
+
+Audit از بین می‌ره
+
+ب) نگه‌داری همه در PostgreSQL:
+مزایا:
+
+سادگی
+
+Query یکپارچه
+معایب:
+
+هزینه نجومی
+
+کندی با حجم زیاد
+
+ج) فقط S3:
+مزایا:
+
+هزینه کم
+
+سادگی
+معایب:
+
+کوئری کند
+
+بدون Index
+
+پیامدها:
+
+مثبت: Compliance، هزینه کم
+
+منفی: تأخیر Restore، پیچیدگی
+
+ریسک: Job خطا → DLQ + Retry + Alert
+
+📦 لایه Container (۱۵ سرویس)
+۱. User Service
+مسئولیت: ثبت‌نام، ورود، پروفایل، نقش‌ها
+APIها:
+
+text
+POST   /api/v1/auth/register          → ثبت‌نام
+POST   /api/v1/auth/login             → ورود
+GET    /api/v1/users/{id}             → پروفایل
+PATCH  /api/v1/users/{id}             → ویرایش
+DELETE /api/v1/users/{id}             → حذف (GDPR)
+۲. Workspace Service
+مسئولیت: مدیریت Workspace، اعضا، نقش‌ها
+APIها:
+
+text
+POST   /api/v1/workspaces              → ساخت Workspace
+GET    /api/v1/workspaces/{id}         → جزئیات
+PATCH  /api/v1/workspaces/{id}         → ویرایش
+POST   /api/v1/workspaces/{id}/members → افزودن عضو
+DELETE /api/v1/workspaces/{id}/members/{userId} → حذف عضو
+GET    /api/v1/workspaces/{id}/members → لیست اعضا
+۳. Project Service
+مسئولیت: مدیریت پروژه، Board، Timeline
+APIها:
+
+text
+POST   /api/v1/projects                → ساخت پروژه
+GET    /api/v1/projects/{id}           → جزئیات
+PATCH  /api/v1/projects/{id}           → ویرایش
+DELETE /api/v1/projects/{id}           → حذف
+POST   /api/v1/projects/{id}/boards    → ساخت Board
+GET    /api/v1/projects/{id}/timeline  → Timeline
+۴. Task Service
+مسئولیت: مدیریت تسک، Subtask، Assignee
+APIها:
+
+text
+POST   /api/v1/tasks                   → ساخت تسک
+GET    /api/v1/tasks/{id}              → جزئیات
+PATCH  /api/v1/tasks/{id}              → ویرایش
+DELETE /api/v1/tasks/{id}              → حذف
+POST   /api/v1/tasks/{id}/assign       → Assign
+POST   /api/v1/tasks/{id}/subtask      → Subtask
+POST   /api/v1/tasks/{id}/status       → تغییر وضعیت
+۵. Collaboration Service
+مسئولیت: Real-time Collaboration (CRDT)
+APIها:
+
+text
+POST   /api/v1/collab/{taskId}/join    → پیوستن
+POST   /api/v1/collab/{taskId}/leave   → خروج
+WS     /ws/collab/{taskId}             → Real-time
+POST   /api/v1/collab/{taskId}/cursor  → Live Cursor
+GET    /api/v1/collab/{taskId}/presence → Presence
+۶. Comment Service
+مسئولیت: Comment، Mention، Reaction
+APIها:
+
+text
+POST   /api/v1/comments                → ثبت کامنت
+GET    /api/v1/comments/{taskId}       → کامنت‌ها
+PATCH  /api/v1/comments/{id}           → ویرایش
+DELETE /api/v1/comments/{id}           → حذف
+POST   /api/v1/comments/{id}/mention   → Mention
+POST   /api/v1/comments/{id}/reaction  → Reaction
+۷. Attachment Service
+مسئولیت: آپلود، Virus Scan، Versioning
+APIها:
+
+text
+POST   /api/v1/attachments/upload/initiate → شروع آپلود
+POST   /api/v1/attachments/upload/complete → تکمیل
+GET    /api/v1/attachments/{id}        → دریافت
+DELETE /api/v1/attachments/{id}        → حذف
+GET    /api/v1/attachments/{id}/versions → نسخه‌ها
+۸. Notification Service
+مسئولیت: Push، Email، In-app
+APIها:
+
+text
+POST   /api/v1/notifications/send      → ارسال
+GET    /api/v1/notifications           → لیست
+PATCH  /api/v1/notifications/{id}/read → خوانده‌شده
+GET    /api/v1/notifications/settings  → تنظیمات
+PATCH  /api/v1/notifications/settings  → ویرایش
+۹. Search Service
+مسئولیت: جستجوی تسک، کامنت، فایل
+APIها:
+
+text
+GET    /api/v1/search/tasks            → جستجوی تسک
+GET    /api/v1/search/comments         → جستجوی کامنت
+GET    /api/v1/search/attachments      → جستجوی فایل
+GET    /api/v1/search/suggest          → Auto-complete
+POST   /api/v1/search/reindex          → Reindex (Admin)
+۱۰. Permission Service
+مسئولیت: RBAC + ABAC، Permission Check
+APIها:
+
+text
+GET    /api/v1/permissions/{userId}    → Permissionها
+POST   /api/v1/permissions/check       → بررسی دسترسی
+POST   /api/v1/permissions/assign      → تخصیص
+DELETE /api/v1/permissions/{id}        → حذف
+GET    /api/v1/permissions/audit       → Audit Log
+۱۱. Integration Service
+مسئولیت: GitHub، Slack، Google Calendar
+APIها:
+
+text
+POST   /api/v1/integrations            → افزودن Integration
+GET    /api/v1/integrations            → لیست
+DELETE /api/v1/integrations/{id}       → حذف
+POST   /api/v1/integrations/{id}/webhook → تنظیم Webhook
+POST   /api/v1/integrations/{id}/test  → تست
+۱۲. Automation Service
+مسئولیت: Rule Engine، Visual Builder
+APIها:
+
+text
+POST   /api/v1/automations             → ساخت Automation
+GET    /api/v1/automations             → لیست
+PATCH  /api/v1/automations/{id}        → ویرایش
+DELETE /api/v1/automations/{id}        → حذف
+POST   /api/v1/automations/{id}/test   → تست
+GET    /api/v1/automations/logs        → لاگ‌ها
+۱۳. Reporting Service
+مسئولیت: Dashboard، Report، Analytics
+APIها:
+
+text
+GET    /api/v1/reports/velocity        → Velocity
+GET    /api/v1/reports/burndown        → Burndown
+GET    /api/v1/reports/team/{id}       → آمار تیم
+GET    /api/v1/reports/project/{id}    → آمار پروژه
+POST   /api/v1/reports/export          → خروجی
+۱۴. Archive Service
+مسئولیت: Tiered Storage، GDPR
+APIها:
+
+text
+POST   /api/v1/archive/request         → درخواست آرشیو
+POST   /api/v1/archive/restore         → بازیابی
+POST   /api/v1/gdpr/export             → خروجی
+DELETE /api/v1/gdpr/delete/{userId}    → حذف (GDPR)
+۱۵. Admin Service
+مسئولیت: مدیریت سیستم، گزارش، تنظیمات
+APIها:
+
+text
+GET    /api/v1/admin/dashboard         → داشبورد
+GET    /api/v1/admin/reports/workspaces → گزارش Workspace
+POST   /api/v1/admin/config            → تنظیمات
+POST   /api/v1/admin/users/{id}/ban    → مسدودسازی
+GET    /api/v1/admin/audit             → Audit Log
+🔧 لایه Component (نمونه برای ۴ سرویس)
+Task Service
+Component	نوع	مسئولیت
+TaskController	@RestController	مدیریت تسک
+TaskService	@Service	منطق تسک
+StatusManager	@Component	وضعیت
+AssigneeManager	@Component	Assignee
+TaskRepository	@Repository	PostgreSQL
+CacheManager	@Component	Redis
+EventPublisher	@Component	Kafka
+Collaboration Service
+Component	نوع	مسئولیت
+CollabController	@RestController	مدیریت Session
+CollabService	@Service	منطق Collab
+CrdtManager	@Component	CRDT (Yjs)
+WebSocketHandler	@Component	WebSocket
+PresenceManager	@Component	Presence
+RedisPublisher	@Component	Redis Pub/Sub
+Permission Service
+Component	نوع	مسئولیت
+PermissionController	@RestController	مدیریت Permission
+PermissionService	@Service	منطق Permission
+RbacEngine	@Component	RBAC
+AbacEngine	@Component	ABAC
+CacheManager	@Component	Redis
+PermissionRepository	@Repository	PostgreSQL
+Automation Service
+Component	نوع	مسئولیت
+AutomationController	@RestController	مدیریت Automation
+AutomationService	@Service	منطق Automation
+RuleEngine	@Component	Drools
+EventTrigger	@Component	Kafka
+ActionExecutor	@Component	Webhook
+AutomationRepository	@Repository	PostgreSQL
+🏗️ زیرساخت مشترک
+سرویس	تکنولوژی	نقش
+API Gateway	Kong	ورودی REST، Auth، Rate Limiting
+WebSocket Gateway	Netty	Collaboration
+Service Discovery	Eureka/Consul	ثبت و کشف
+Config Server	Spring Cloud Config	تنظیمات
+Kafka	Apache Kafka	Event Bus
+Redis	Redis Cluster	Cache + Session + Pub/Sub
+PostgreSQL	Postgres 16	داده ساختاریافته
+Cassandra	Cassandra 4	Comment + Op Log
+Elasticsearch	ES 8	جستجو
+ClickHouse	ClickHouse	Reporting
+S3	AWS S3	Attachment + Backup
+Glacier	AWS Glacier	Cold Archive
+CDN	CloudFront	توزیع Attachment
+Vault	HashiCorp Vault	Secret Management
+🔄 جریان ارتباط بین سرویس‌ها
+text
+┌──────────────┐
+│   Client     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ API Gateway  │ ← Auth, Rate Limit
+└──────┬───────┘
+       │
+       ├──→ User Service ──→ PostgreSQL + Redis
+       ├──→ Workspace Service ──→ PostgreSQL + Redis
+       ├──→ Project Service ──→ PostgreSQL + Redis
+       ├──→ Task Service ──→ PostgreSQL + Redis
+       ├──→ Collaboration ──→ WebSocket + CRDT
+       ├──→ Comment Service ──→ Cassandra + Redis
+       ├──→ Attachment Service ──→ S3 + CDN
+       ├──→ Notification Service ──→ Kafka + Firebase
+       ├──→ Search Service ──→ Elasticsearch
+       ├──→ Permission Service ──→ RBAC + ABAC
+       ├──→ Integration Service ──→ Webhook + OAuth
+       ├──→ Automation Service ──→ Drools + Kafka
+       ├──→ Reporting Service ──→ ClickHouse
+       ├──→ Archive Service ──→ S3 + Glacier
+       └──→ Admin Service ──→ ClickHouse + PostgreSQL
+
+       ▼
+┌──────────────┐
+│    Kafka     │ ← Event Bus
+└──────────────┘

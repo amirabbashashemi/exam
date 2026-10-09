@@ -1,0 +1,35 @@
+صورت سوال
+طراحی یک پلتفرم مدیریت پروژه (مشابه Jira / Asana / Trello / Notion) که:
+
+میلیون‌ها کاربر و میلیون‌ها پروژه در آن مدیریت شود.
+
+کاربران بتوانند پروژه، تسک، برد، تایم‌لاین ایجاد کنند.
+
+Real-time Collaboration با CRDT برای ویرایش همزمان.
+
+Notification برای تغییرات، منشن، ددلاین.
+
+Search پیشرفته در تسک‌ها، کامنت‌ها، فایل‌ها.
+
+Integration با GitHub، Slack، Google Calendar.
+
+Permission بر اساس نقش (Owner، Admin، Member، Guest).
+
+Reporting و Dashboard برای تیم.
+
+File Attachment برای هر تسک.
+
+Time Tracking برای ثبت زمان کار.
+
+GDPR و حذف حساب کاربر.
+
+Multi-language و Multi-currency (برای صورت‌حساب).
+
+🎯 چالش‌های ۶گانه (هر کدام ۱۰ نمره)
+#	چالش	توضیح
+۱	مقیاس‌پذیری و عملکرد در Real-time Collaboration و Search	۱۰
+۲	سازگاری (Consistency) در CRDT، Permission، و Reporting	۱۰
+۳	پیکربندی آسان برای کاربر (Board، Workflow، Automation)	۱۰
+۴	پشتیبانی از چندزبانگی، Integration، و Attachment	۱۰
+۵	مدیریت چرخه حیات داده (Task، Comment، GDPR، Archive)	۱۰
+۶	کاربردپذیری (UX) برای Member، Admin، و Guest	۱۰
